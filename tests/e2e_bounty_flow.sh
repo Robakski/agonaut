@@ -3,17 +3,17 @@
 #  Agonaut E2E Test — Full Bounty Lifecycle on Base Sepolia
 #  Creates bounty → deposits → enters → commits → scores → settles → claims
 # ═══════════════════════════════════════════════════════════════
-set -euo pipefail
+set -uo pipefail
 
 CAST=~/.foundry/bin/cast
 RPC="https://sepolia.base.org"
 CHAIN=84532
 
-# Contract addresses
-BOUNTY_FACTORY="0x8CbD4904d9AD691D779Bc3700e4Bb0ad0A7B1300"
-ARENA_REGISTRY="0xE068f2E4D86a0dD244e3d3Cd26Dd643Ce781F0fc"
-SCORING_ORACLE="0x67F015168061645152D180c4bEea3f861eCCb523"
-TREASURY="0x4352C3544DB832065a465f412B5C68B6FE17a4F4"
+# Contract addresses (V2 — redeployed 2026-03-13, verified from broadcast)
+BOUNTY_FACTORY="0xD83547ccE3F11684c8A3dc12f7f4F28c67324e3a"
+ARENA_REGISTRY="0x4beb403789b1cc5eef1c29718a593fb9a7f19864"
+SCORING_ORACLE="0xf40f73f2e187c33d1afb16284bfb1fb1fa3148aa"
+TREASURY="0xa464f7c3161f5e21f3ba3c1e8eaab322187c7512"
 
 # Wallets (from .env)
 OPERATOR="0x8c35c1930CAd1224e7A1F90E9f7df5486e7489d2"
@@ -86,6 +86,7 @@ run_test "Bounty ID > 0" "$([ $BOUNTY_ID -gt 0 ] && echo PASS || echo FAIL)"
 # ─── Step 2: Spawn Round ───
 echo ""
 echo "▸ Step 2: Spawning BountyRound clone..."
+sleep 3
 SPAWN_TX=$($CAST send $BOUNTY_FACTORY \
     "spawnRound(uint256)" \
     $BOUNTY_ID \
@@ -120,7 +121,7 @@ run_test "Phase = OPEN (0)" "$([ $PHASE -eq 0 ] && echo PASS || echo FAIL)"
 # ─── Step 3: Deposit Bounty ───
 echo ""
 echo "▸ Step 3: Depositing bounty (0.125 ETH minimum)..."
-# The sponsor (creator = operator) deposits
+sleep 3
 DEPOSIT_TX=$($CAST send $ROUND_ADDR \
     "depositBounty()" \
     --value 0.125ether \
@@ -135,7 +136,7 @@ run_test "Phase = FUNDED (1)" "$([ $PHASE -eq 1 ] && echo PASS || echo FAIL: pha
 # ─── Step 4: Enter as Agent ───
 echo ""
 echo "▸ Step 4: Agent entering round..."
-# Agent #1 was registered in the integration test, owned by operator wallet
+sleep 3
 ENTER_TX=$($CAST send $ROUND_ADDR \
     "enter(uint256)" 1 \
     --value 0.003ether \

@@ -1,8 +1,8 @@
 version: "3.8"
 
 services:
-  scoring:
-    build: .
+  scorer:
+    image: python:3.11-slim
     ports:
       - "8001:8001"
     environment:
@@ -11,10 +11,19 @@ services:
       - SCORER_PRIVATE_KEY=${SCORER_PRIVATE_KEY}
       - SCORING_ORACLE=${SCORING_ORACLE}
       - RPC_URL=${RPC_URL:-https://sepolia.base.org}
-      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - CHAIN_ID=${CHAIN_ID:-84532}
+    working_dir: /app
+    volumes:
+      - scorer-data:/app/data
+    command: >
+      bash -c "
+        apt-get update && apt-get install -y git &&
+        pip install --no-cache-dir fastapi uvicorn pydantic httpx cryptography web3 openai &&
+        git clone https://github.com/Robakski/agonaut.git /repo &&
+        cp /repo/scoring-service/*.py /app/ &&
+        uvicorn api:app --host 0.0.0.0 --port 8001
+      "
     restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
+
+volumes:
+  scorer-data:

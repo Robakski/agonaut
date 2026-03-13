@@ -13,12 +13,12 @@ export const ACTIVE_CHAIN_ID = BASE_SEPOLIA_ID;
 // ── Contract Addresses (Base Sepolia Testnet) ──
 // V2 Redeployed: 2026-03-13 with startCommitPhase fix
 export const CONTRACTS = {
-  arenaRegistry:      "0x1621c05f3a22D33aEE6a891E44c1bD42d64B5C83" as Address,
-  eloSystem:          "0xa78e3d2AF35F9c36A7bE10EF13FC0aC5e0532E3c" as Address,
-  stableRegistry:     "0x06f55E1ECA90a43BFE11F08f0a25bC0B28B49644" as Address,
-  seasonManager:      "0x13E06FfA1B85B3d3f87a0BD69A1Cf1Ba39C0f69c" as Address,
-  treasury:           "0x85bBfFC86eCE26e1edfb6d5B0C6a1a3A88f24e37" as Address,
-  scoringOracle:      "0x8DF1AeAe24F0E785B8aa4a41b73de6e2a93Bf4e5" as Address,
+  arenaRegistry:      "0x4beb403789b1cc5eef1c29718a593fb9a7f19864" as Address,
+  eloSystem:          "0xce199214adaa02347a12316c0d63c35ab03dbb40" as Address,
+  stableRegistry:     "0xc35c7b1d96f55a269e55649e7fb57aaf02c69757" as Address,
+  seasonManager:      "0xca0f3044fb4c18a590941326f6252d9e23d9e554" as Address,
+  treasury:           "0xa464f7c3161f5e21f3ba3c1e8eaab322187c7512" as Address,
+  scoringOracle:      "0xf40f73f2e187c33d1afb16284bfb1fb1fa3148aa" as Address,
   bountyRoundImpl:    "0x3B46604A99d65737Ccc7486e54C85Da1daedFf09" as Address,
   bountyFactory:      "0xD83547ccE3F11684c8A3dc12f7f4F28c67324e3a" as Address,
   bountyMarketplace:  "0x90Fa3f817079014aE82A14139d7448Fa229F1653" as Address,
