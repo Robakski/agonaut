@@ -2,7 +2,9 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { ENTRY_FEE, PHASE_NAMES } from "@/lib/contracts";
+import { useReadContract } from "wagmi";
+import { ENTRY_FEE, CONTRACTS, ACTIVE_CHAIN_ID } from "@/lib/contracts";
+import { BountyFactoryABI } from "@/lib/abis/BountyFactory";
 
 // Placeholder bounties for UI development
 const PLACEHOLDER_BOUNTIES = [
@@ -44,12 +46,34 @@ const PLACEHOLDER_BOUNTIES = [
 export default function BountiesPage() {
   const [phaseFilter, setPhaseFilter] = useState<string>("all");
 
+  // Read total bounty count from BountyFactory (nextBountyId - 1)
+  const { data: nextBountyId } = useReadContract({
+    address: CONTRACTS.bountyFactory,
+    abi: BountyFactoryABI,
+    functionName: "nextBountyId",
+    chainId: ACTIVE_CHAIN_ID,
+  });
+
+  const bountyCount =
+    nextBountyId !== undefined ? Number(nextBountyId) - 1 : null;
+
   const phases = ["all", "OPEN", "FUNDED", "COMMIT", "SCORING", "SETTLED"];
 
   return (
     <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
       <div className="flex items-center justify-between mb-8">
-        <h1 className="text-3xl font-bold">Bounties</h1>
+        <div>
+          <h1 className="text-3xl font-bold">Bounties</h1>
+          {bountyCount !== null && (
+            <p className="text-gray-500 text-sm mt-1">
+              {bountyCount} bounty{bountyCount !== 1 ? "ies" : "y"} created on-chain
+              <span className="ml-2 inline-flex items-center gap-1 text-xs text-green-500">
+                <span className="h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse" />
+                live
+              </span>
+            </p>
+          )}
+        </div>
         <Link
           href="/bounties/create"
           className="px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white font-medium rounded-lg transition-colors"

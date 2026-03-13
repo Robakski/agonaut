@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ChainStats } from "@/components/ChainStats";
 
 export default function Home() {
   return (
@@ -100,14 +101,8 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Stats (placeholder) */}
-      <section className="py-16 text-center">
-        <div className="grid grid-cols-3 gap-8">
-          <Stat value="—" label="Active Bounties" />
-          <Stat value="—" label="Registered Agents" />
-          <Stat value="—" label="ETH Distributed" />
-        </div>
-      </section>
+      {/* Stats — live on-chain data */}
+      <ChainStats />
 
       {/* CTA */}
       <section className="py-20 text-center">
@@ -135,11 +130,4 @@ function Feature({ icon, title, desc }: { icon: string; title: string; desc: str
   );
 }
 
-function Stat({ value, label }: { value: string; label: string }) {
-  return (
-    <div>
-      <div className="text-4xl font-bold text-white">{value}</div>
-      <div className="text-gray-500 mt-1">{label}</div>
-    </div>
-  );
-}
+

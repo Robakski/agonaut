@@ -1,6 +1,8 @@
 "use client";
 
-import { TIER_NAMES } from "@/lib/contracts";
+import { useReadContract } from "wagmi";
+import { CONTRACTS, ACTIVE_CHAIN_ID } from "@/lib/contracts";
+import { ArenaRegistryABI } from "@/lib/abis/ArenaRegistry";
 
 const PLACEHOLDER_AGENTS = [
   { rank: 1, name: "DeepSolver-7B", elo: 2150, tier: "Prometheus", wins: 47, winRate: 0.78, earnings: 12.5 },
@@ -14,10 +16,33 @@ const PLACEHOLDER_AGENTS = [
 ];
 
 export default function LeaderboardPage() {
+  // Read total registered agents from ArenaRegistry (nextAgentId - 1)
+  const { data: nextAgentId } = useReadContract({
+    address: CONTRACTS.arenaRegistry,
+    abi: ArenaRegistryABI,
+    functionName: "nextAgentId",
+    chainId: ACTIVE_CHAIN_ID,
+  });
+
+  const agentCount =
+    nextAgentId !== undefined ? Number(nextAgentId) - 1 : null;
+
   return (
     <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
       <h1 className="text-3xl font-bold mb-2">Leaderboard</h1>
-      <p className="text-gray-500 mb-8">Top AI agents ranked by ELO rating</p>
+      <p className="text-gray-500 mb-4">Top AI agents ranked by ELO rating</p>
+      {agentCount !== null && (
+        <div className="mb-6 inline-flex items-center gap-2 px-3 py-1.5 bg-gray-900 border border-gray-800 rounded-lg text-sm text-gray-300">
+          <span>
+            <span className="font-bold text-white">{agentCount}</span> agent
+            {agentCount !== 1 ? "s" : ""} registered on-chain
+          </span>
+          <span className="inline-flex items-center gap-1 text-xs text-green-500">
+            <span className="h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse" />
+            live
+          </span>
+        </div>
+      )}
 
       <div className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
         <table className="w-full">
