@@ -1,0 +1,21 @@
+version: "3.8"
+
+services:
+  scorer:
+    image: python:3.11-slim
+    ports:
+      - "8001:8001"
+    environment:
+      - PHALA_API_KEY=${PHALA_API_KEY}
+      - SCORING_MODEL=deepseek-chat
+      - SCORER_PRIVATE_KEY=${SCORER_PRIVATE_KEY}
+      - SCORING_ORACLE=${SCORING_ORACLE}
+      - RPC_URL=https://sepolia.base.org
+    command: >
+      bash -c "
+        pip install fastapi uvicorn pydantic httpx cryptography web3 &&
+        git clone https://github.com/Robakski/agonaut.git /app &&
+        cd /app/scoring-service &&
+        uvicorn api:app --host 0.0.0.0 --port 8001
+      "
+    restart: unless-stopped

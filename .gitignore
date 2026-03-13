@@ -1,8 +1,24 @@
+# Secrets
+**/.env
+**/.env.*
+!**/.env.example
+
+# Foundry
+contracts/out/
+contracts/cache/
+contracts/broadcast/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Node
 node_modules/
-.next/
-out/
-.env
-.env.*
-!.env.example
+frontend/.next/
+frontend/node_modules/
+
+# OS
 .DS_Store
-*.tsbuildinfo
+Thumbs.db

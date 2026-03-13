@@ -1,0 +1,35 @@
+version: "3.8"
+
+# Agonaut Platform - Local Development Stack
+# Usage: docker-compose up -d
+
+services:
+  backend:
+    build: ./backend
+    ports:
+      - "8000:8000"
+    environment:
+      - RPC_URL=${RPC_URL:-https://sepolia.base.org}
+      - SCORING_SERVICE_URL=http://scoring:8001
+      - DATABASE_URL=${DATABASE_URL:-sqlite:///./agonaut.db}
+    depends_on:
+      scoring:
+        condition: service_healthy
+    restart: unless-stopped
+
+  scoring:
+    build: ./scoring-service
+    ports:
+      - "8001:8001"
+    environment:
+      - PHALA_API_KEY=${PHALA_API_KEY}
+      - SCORING_MODEL=${SCORING_MODEL:-deepseek-chat}
+      - SCORER_PRIVATE_KEY=${SCORER_PRIVATE_KEY}
+      - SCORING_ORACLE=${SCORING_ORACLE:-0x67F015168061645152D180c4bEea3f861eCCb523}
+      - RPC_URL=${RPC_URL:-https://sepolia.base.org}
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3

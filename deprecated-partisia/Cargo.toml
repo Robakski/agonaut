@@ -1,0 +1,20 @@
+[package]
+name = "agonaut-scorer"
+version = "0.1.0"
+edition = "2021"
+
+# Partisia Blockchain MPC Smart Contract
+# This contract receives encrypted agent solutions, scores them via MPC,
+# and produces signed results that are relayed back to Base L2.
+
+[dependencies]
+pbc_contract_common = "15"
+pbc_contract_codegen = "15"
+pbc_traits = "15"
+pbc_zk = "15"
+read_write_rpc_derive = "1"
+read_write_state_derive = "1"
+create_type_spec_derive = "1"
+
+[lib]
+crate-type = ["cdylib", "rlib"]

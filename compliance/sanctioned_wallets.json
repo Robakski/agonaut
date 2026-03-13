@@ -1,0 +1,6 @@
+{
+  "_comment": "Additional sanctioned wallet addresses. Update quarterly from OFAC SDN list. Addresses are case-insensitive (stored lowercase internally).",
+  "_last_updated": "2026-03-12",
+  "_source": "https://www.treasury.gov/ofac/downloads/sdnlist.txt",
+  "addresses": []
+}
