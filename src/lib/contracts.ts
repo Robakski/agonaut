@@ -11,19 +11,20 @@ export const BASE_MAINNET_ID = 8453;
 export const ACTIVE_CHAIN_ID = BASE_SEPOLIA_ID;
 
 // ── Contract Addresses (Base Sepolia Testnet) ──
+// V2 Redeployed: 2026-03-13 with startCommitPhase fix
 export const CONTRACTS = {
-  arenaRegistry:      "0xE068f2E4D86a0dD244e3d3Cd26Dd643Ce781F0fc" as Address,
-  eloSystem:          "0xd14B475eB6886e0FfcC5B8cD9F976eeaD194cF77" as Address,
-  stableRegistry:     "0x9b41997435d4B4806E34C1673b52149A4DEef728" as Address,
-  seasonManager:      "0xc96597A38E08B5562DAd0C9461E73452D31DAa62" as Address,
-  treasury:           "0x4352C3544DB832065a465f412B5C68B6FE17a4F4" as Address,
-  scoringOracle:      "0x67F015168061645152D180c4bEea3f861eCCb523" as Address,
-  bountyRoundImpl:    "0x21820abE0AEc0b467Fb2E24808979F810066485b" as Address,
-  bountyFactory:      "0x8CbD4904d9AD691D779Bc3700e4Bb0ad0A7B1300" as Address,
-  bountyMarketplace:  "0x6A7E4887Fc285B5A6880EaB18bB9C6A668A213c3" as Address,
-  arbitrationDao:     "0xE42f1B74deF83086E034FB0d83e75A444Aa54586" as Address,
-  timelockGovernor:   "0x28477aB4838e0e2dcd004fabeaDE5d862325F53d" as Address,
-  emergencyGuardian:  "0x66c25D62eccED201Af8EBeefe8A001035640d8E8" as Address,
+  arenaRegistry:      "0x1621c05f3a22D33aEE6a891E44c1bD42d64B5C83" as Address,
+  eloSystem:          "0xa78e3d2AF35F9c36A7bE10EF13FC0aC5e0532E3c" as Address,
+  stableRegistry:     "0x06f55E1ECA90a43BFE11F08f0a25bC0B28B49644" as Address,
+  seasonManager:      "0x13E06FfA1B85B3d3f87a0BD69A1Cf1Ba39C0f69c" as Address,
+  treasury:           "0x85bBfFC86eCE26e1edfb6d5B0C6a1a3A88f24e37" as Address,
+  scoringOracle:      "0x8DF1AeAe24F0E785B8aa4a41b73de6e2a93Bf4e5" as Address,
+  bountyRoundImpl:    "0x3B46604A99d65737Ccc7486e54C85Da1daedFf09" as Address,
+  bountyFactory:      "0xD83547ccE3F11684c8A3dc12f7f4F28c67324e3a" as Address,
+  bountyMarketplace:  "0x90Fa3f817079014aE82A14139d7448Fa229F1653" as Address,
+  arbitrationDao:     "0xF9a937bf915063FdF481D08a57d276D380c7CAEB" as Address,
+  timelockGovernor:   "0x439B7b7A00edC420753c0a56E0B7DbF3419b7f00" as Address,
+  emergencyGuardian:  "0x39A2aD5c4be3bD4fAaC905aA1ff917050d6966e3" as Address,
 } as const;
 
 // ── Explorer ──
