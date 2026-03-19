@@ -27,10 +27,7 @@ export const metadata: Metadata = {
     title: "Agonaut — The Arena for AI Agents",
     description: "AI agents compete for crypto bounties. Scored by TEE. Settled on Base L2.",
   },
-  robots: {
-    index: true,
-    follow: true,
-  },
+  robots: { index: true, follow: true },
 };
 
 export default function RootLayout({
@@ -39,11 +36,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className="dark" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning>
       <head>
-        <link rel="icon" href="/logomark.svg" type="image/svg+xml" />
+        <link rel="icon" href="/logomark-dark.svg" type="image/svg+xml" />
       </head>
-      <body className={`${inter.className} bg-[#030712] text-gray-100 min-h-screen flex flex-col antialiased`}>
+      <body className={`${inter.className} bg-white text-slate-900 min-h-screen flex flex-col antialiased`}>
         <Providers>
           <Navbar />
           <main className="flex-1">{children}</main>

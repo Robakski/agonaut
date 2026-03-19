@@ -1,17 +1,18 @@
 @import "tailwindcss";
 
 :root {
-  --background: #030712;
-  --foreground: #f1f5f9;
-  --accent-purple: #a855f7;
-  --accent-cyan: #22d3ee;
-  --accent-indigo: #6366f1;
-  --surface: #0f172a;
-  --surface-light: #1e293b;
-  --border: #1e293b;
-  --border-light: #334155;
+  --background: #ffffff;
+  --foreground: #0f172a;
+  --surface: #f8fafc;
+  --surface-raised: #ffffff;
+  --border: #e2e8f0;
+  --border-light: #f1f5f9;
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
   --text-muted: #94a3b8;
-  --text-dim: #64748b;
+  --accent-purple: #7c3aed;
+  --accent-indigo: #6366f1;
+  --accent-cyan: #06b6d4;
 }
 
 @theme inline {
@@ -23,89 +24,79 @@
 
 * {
   scrollbar-width: thin;
-  scrollbar-color: #1e293b transparent;
+  scrollbar-color: #e2e8f0 transparent;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-/* Subtle grid background */
-.bg-grid {
-  background-image: 
-    linear-gradient(rgba(99, 102, 241, 0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(99, 102, 241, 0.03) 1px, transparent 1px);
-  background-size: 64px 64px;
+/* Subtle dot grid — Apple-style */
+.bg-dots {
+  background-image: radial-gradient(circle, #e2e8f0 1px, transparent 1px);
+  background-size: 32px 32px;
 }
 
-/* Radial glow behind hero */
+/* Hero gradient — soft, warm */
 .hero-glow {
-  background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(99, 102, 241, 0.15) 0%, rgba(168, 85, 247, 0.05) 40%, transparent 70%);
+  background: radial-gradient(ellipse 80% 50% at 50% -10%, rgba(124, 58, 237, 0.08) 0%, rgba(99, 102, 241, 0.04) 40%, transparent 70%);
 }
 
-/* Gradient text utility */
+/* Gradient text */
 .gradient-text {
-  background: linear-gradient(135deg, #a855f7 0%, #6366f1 50%, #22d3ee 100%);
+  background: linear-gradient(135deg, #7c3aed 0%, #6366f1 50%, #06b6d4 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 
-/* Card hover glow */
-.card-glow {
-  position: relative;
-  transition: all 0.3s ease;
-}
-.card-glow::before {
-  content: '';
-  position: absolute;
-  inset: -1px;
-  border-radius: inherit;
-  background: linear-gradient(135deg, rgba(168, 85, 247, 0), rgba(99, 102, 241, 0));
-  transition: all 0.3s ease;
-  z-index: -1;
-}
-.card-glow:hover::before {
-  background: linear-gradient(135deg, rgba(168, 85, 247, 0.3), rgba(34, 211, 238, 0.3));
-}
-.card-glow:hover {
-  border-color: rgba(99, 102, 241, 0.3);
-  transform: translateY(-2px);
+/* Gradient text — darker variant for headings */
+.gradient-text-dark {
+  background: linear-gradient(135deg, #6d28d9 0%, #4f46e5 50%, #0891b2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
-/* Animated gradient border */
-@keyframes gradient-shift {
-  0%, 100% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
+/* Card hover — subtle lift + border glow */
+.card-hover {
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
-.animated-border {
-  background: linear-gradient(270deg, #a855f7, #6366f1, #22d3ee, #a855f7);
-  background-size: 300% 300%;
-  animation: gradient-shift 6s ease infinite;
+.card-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(99, 102, 241, 0.1);
 }
 
 /* Floating animation */
 @keyframes float {
   0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-8px); }
+  50% { transform: translateY(-6px); }
 }
 .float {
-  animation: float 6s ease-in-out infinite;
+  animation: float 5s ease-in-out infinite;
 }
 
-/* Pulse glow */
-@keyframes pulse-glow {
-  0%, 100% { opacity: 0.4; }
-  50% { opacity: 0.8; }
+/* Pulse */
+@keyframes pulse-soft {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
 }
-.pulse-glow {
-  animation: pulse-glow 3s ease-in-out infinite;
+.pulse-soft {
+  animation: pulse-soft 2.5s ease-in-out infinite;
 }
 
-/* Stat counter styling */
+/* Stat counter */
 .stat-value {
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.02em;
+}
+
+/* Section divider — soft gradient line */
+.section-divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent 0%, #e2e8f0 20%, #e2e8f0 80%, transparent 100%);
 }

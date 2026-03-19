@@ -1,11 +1,21 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
   <defs>
-    <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#a855f7"/>
-      <stop offset="100%" stop-color="#22d3ee"/>
+    <linearGradient id="pl" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#7c3aed"/>
+      <stop offset="100%" stop-color="#6366f1"/>
+    </linearGradient>
+    <linearGradient id="pr" x1="100%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#06b6d4"/>
+      <stop offset="100%" stop-color="#6366f1"/>
+    </linearGradient>
+    <linearGradient id="po" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#818cf8"/>
+      <stop offset="100%" stop-color="#a78bfa"/>
     </linearGradient>
   </defs>
-  <path d="M32 4 L56 16 L56 40 L32 60 L8 40 L8 16 Z" stroke="url(#g)" stroke-width="2.5" fill="rgba(139,92,246,0.08)"/>
-  <path d="M32 14 L22 48 L27 48 L29.5 40 L34.5 40 L37 48 L42 48 Z" fill="url(#g)"/>
-  <rect x="28.5" y="33" width="7" height="3" rx="1" fill="#0a0a0a"/>
+  <path d="M32 7 L12 57 L29 57 L32 49 Z" fill="url(#pl)"/>
+  <path d="M32 7 L52 57 L35 57 L32 49 Z" fill="url(#pr)"/>
+  <path d="M32 7 L29 57 L35 57 Z" fill="url(#po)" opacity="0.9"/>
+  <rect x="21" y="40" width="22" height="4.5" rx="1" fill="white" opacity="0.95"/>
+  <circle cx="32" cy="5.5" r="1.8" fill="url(#po)"/>
 </svg>

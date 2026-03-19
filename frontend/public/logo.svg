@@ -1,52 +1,31 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
   <defs>
-    <linearGradient id="glow" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#a855f7"/>
-      <stop offset="50%" stop-color="#6366f1"/>
-      <stop offset="100%" stop-color="#22d3ee"/>
+    <linearGradient id="prism-left" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#7c3aed"/>
+      <stop offset="100%" stop-color="#6366f1"/>
     </linearGradient>
-    <linearGradient id="shield" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#c084fc"/>
-      <stop offset="100%" stop-color="#38bdf8"/>
+    <linearGradient id="prism-right" x1="100%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#06b6d4"/>
+      <stop offset="100%" stop-color="#6366f1"/>
     </linearGradient>
-    <filter id="glowFilter">
-      <feGaussianBlur stdDeviation="8" result="blur"/>
-      <feMerge>
-        <feMergeNode in="blur"/>
-        <feMergeNode in="SourceGraphic"/>
-      </feMerge>
-    </filter>
+    <linearGradient id="prism-overlap" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#818cf8"/>
+      <stop offset="100%" stop-color="#a78bfa"/>
+    </linearGradient>
   </defs>
   
-  <!-- Outer hexagonal shield -->
-  <path d="M256 32 L448 128 L448 320 L256 480 L64 320 L64 128 Z" 
-        stroke="url(#glow)" stroke-width="6" fill="none" opacity="0.3"/>
+  <!-- Left triangle of the A -->
+  <path d="M256 56 L96 456 L232 456 L256 392 Z" fill="url(#prism-left)"/>
   
-  <!-- Inner hexagonal shield -->
-  <path d="M256 64 L420 148 L420 308 L256 448 L92 308 L92 148 Z" 
-        stroke="url(#glow)" stroke-width="3" fill="rgba(139,92,246,0.05)"/>
+  <!-- Right triangle of the A -->
+  <path d="M256 56 L416 456 L280 456 L256 392 Z" fill="url(#prism-right)"/>
   
-  <!-- Central "A" letterform — angular, futuristic -->
-  <path d="M256 100 L168 380 L200 380 L220 320 L292 320 L312 380 L344 380 Z" 
-        fill="url(#shield)" filter="url(#glowFilter)"/>
-  <!-- Crossbar of A -->
-  <rect x="210" y="260" width="92" height="24" rx="4" fill="#0f172a"/>
+  <!-- Overlap/intersection zone — the "solution" completing the A -->
+  <path d="M256 56 L232 456 L280 456 Z" fill="url(#prism-overlap)" opacity="0.9"/>
   
-  <!-- Neural network nodes -->
-  <circle cx="160" cy="180" r="6" fill="#a855f7" opacity="0.7"/>
-  <circle cx="352" cy="180" r="6" fill="#22d3ee" opacity="0.7"/>
-  <circle cx="130" cy="280" r="5" fill="#a855f7" opacity="0.5"/>
-  <circle cx="382" cy="280" r="5" fill="#22d3ee" opacity="0.5"/>
-  <circle cx="160" cy="360" r="4" fill="#6366f1" opacity="0.4"/>
-  <circle cx="352" cy="360" r="4" fill="#6366f1" opacity="0.4"/>
+  <!-- Crossbar — slightly rounded, modern -->
+  <rect x="168" y="320" width="176" height="36" rx="6" fill="white" opacity="0.95"/>
   
-  <!-- Connection lines (neural net) -->
-  <line x1="160" y1="180" x2="220" y2="260" stroke="#a855f7" stroke-width="1.5" opacity="0.3"/>
-  <line x1="352" y1="180" x2="292" y2="260" stroke="#22d3ee" stroke-width="1.5" opacity="0.3"/>
-  <line x1="130" y1="280" x2="210" y2="272" stroke="#a855f7" stroke-width="1" opacity="0.2"/>
-  <line x1="382" y1="280" x2="302" y2="272" stroke="#22d3ee" stroke-width="1" opacity="0.2"/>
-  
-  <!-- Crossed swords behind the A (competition/arena) -->
-  <line x1="176" y1="140" x2="336" y2="400" stroke="url(#shield)" stroke-width="4" opacity="0.25" stroke-linecap="round"/>
-  <line x1="336" y1="140" x2="176" y2="400" stroke="url(#shield)" stroke-width="4" opacity="0.25" stroke-linecap="round"/>
+  <!-- Solution dot — small circle at the apex representing "the answer" -->
+  <circle cx="256" cy="44" r="12" fill="url(#prism-overlap)"/>
 </svg>
