@@ -205,16 +205,14 @@ echo "  Round: $ROUND_ADDR"
 PHASE=$($CAST call "$ROUND_ADDR" "phase()" --rpc-url "$RPC" | $CAST to-dec)
 run_test "Phase = OPEN (0)" "$([ "$PHASE" -eq 0 ] && echo PASS || echo "FAIL: phase=$PHASE")"
 
-# ─── Step 2b: Grant cross-contract roles to round (factory doesn't do this yet) ───
+# ─── Step 2b: Verify factory auto-granted cross-contract roles ───
 echo ""
-echo "▸ Step 2b: Granting cross-contract roles to round..."
-TX=$(cast_send "$ELO_SYSTEM" "grantRole(bytes32,address)" "$ROUND_ROLE" "$ROUND_ADDR" \
-    --private-key "$ADMIN_PK" 2>&1)
-run_test "Grant ROUND_ROLE on EloSystem" "$([ $? -eq 0 ] && echo PASS || echo "FAILED: $TX")"
+echo "▸ Step 2b: Verifying auto-granted roles..."
+HAS_ROUND_ROLE=$($CAST call "$ELO_SYSTEM" "hasRole(bytes32,address)(bool)" "$ROUND_ROLE" "$ROUND_ADDR" --rpc-url "$RPC")
+run_test "Round has ROUND_ROLE on EloSystem" "$(echo "$HAS_ROUND_ROLE" | grep -q 'true' && echo PASS || echo "FAIL: $HAS_ROUND_ROLE")"
 
-TX=$(cast_send "$ARENA_REGISTRY" "grantRole(bytes32,address)" "$BOUNTY_ROUND_ROLE" "$ROUND_ADDR" \
-    --private-key "$ADMIN_PK" 2>&1)
-run_test "Grant BOUNTY_ROUND_ROLE on ArenaRegistry" "$([ $? -eq 0 ] && echo PASS || echo "FAILED: $TX")"
+HAS_BR_ROLE=$($CAST call "$ARENA_REGISTRY" "hasRole(bytes32,address)(bool)" "$BOUNTY_ROUND_ROLE" "$ROUND_ADDR" --rpc-url "$RPC")
+run_test "Round has BOUNTY_ROUND_ROLE on ArenaRegistry" "$(echo "$HAS_BR_ROLE" | grep -q 'true' && echo PASS || echo "FAIL: $HAS_BR_ROLE")"
 
 # ─── Step 3: Deposit Bounty ───
 echo ""

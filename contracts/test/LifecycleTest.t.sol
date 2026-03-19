@@ -97,7 +97,10 @@ contract LifecycleTest is Test {
         // Grant roles
         factory.grantRole(Constants.BOUNTY_CREATOR_ROLE, operator);
         factory.grantRole(Constants.OPERATOR_ROLE, operator);
-        elo.grantRole(elo.ROUND_ROLE(), address(factory));
+        // Factory needs DEFAULT_ADMIN on EloSystem + ArenaRegistry to auto-grant
+        // ROUND_ROLE / BOUNTY_ROUND_ROLE to each spawned round
+        elo.grantRole(elo.DEFAULT_ADMIN_ROLE(), address(factory));
+        IAccessControl(address(registry)).grantRole(0x00, address(factory));
         IAccessControl(address(registry)).grantRole(Constants.OPERATOR_ROLE, operator);
 
         vm.stopPrank();
@@ -149,12 +152,10 @@ contract LifecycleTest is Test {
 
         assertEq(uint256(round.phase()), 0, "Should be OPEN");
 
-        // Grant cross-contract roles to the new round
-        // In production, the factory should auto-grant these during spawnRound
-        vm.startPrank(admin);
-        elo.grantRole(elo.ROUND_ROLE(), roundAddr);
-        IAccessControl(address(registry)).grantRole(Constants.BOUNTY_ROUND_ROLE, roundAddr);
-        vm.stopPrank();
+        // Factory auto-grants ROUND_ROLE (EloSystem) + BOUNTY_ROUND_ROLE (ArenaRegistry)
+        // to the new round during spawnRound(). Verify:
+        assertTrue(elo.hasRole(elo.ROUND_ROLE(), roundAddr), "Round should have ROUND_ROLE on EloSystem");
+        assertTrue(registry.hasRole(Constants.BOUNTY_ROUND_ROLE, roundAddr), "Round should have BOUNTY_ROUND_ROLE on ArenaRegistry");
 
         // ═══════════════════════════════════════════
         //  Deposit → FUNDED

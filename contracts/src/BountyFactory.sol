@@ -14,6 +14,7 @@ import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Ini
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import {AccessControlUpgradeable} from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
+import {IAccessControl} from "@openzeppelin/contracts/access/IAccessControl.sol";
 
 import {Constants} from "./Constants.sol";
 
@@ -401,6 +402,11 @@ contract BountyFactory is
 
         // Initialize the round via helper to avoid stack too deep
         _initializeRound(roundAddr, bountyId, roundIndex, cfg);
+
+        // Grant cross-contract roles so the round can update ELO + agent stats on finalize.
+        // Factory must hold DEFAULT_ADMIN_ROLE on both contracts (set during deployment wiring).
+        IAccessControl(eloSystem).grantRole(Constants.ROUND_ROLE, roundAddr);
+        IAccessControl(arenaRegistry).grantRole(Constants.BOUNTY_ROUND_ROLE, roundAddr);
 
         emit RoundSpawned(bountyId, roundIndex, roundAddr);
     }

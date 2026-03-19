@@ -195,8 +195,10 @@ contract Deploy is Script {
         // Treasury: governance can withdraw
         Treasury(payable(treasury)).grantRole(Constants.GOVERNOR_ROLE, timelockGovernorAddr);
 
-        // EloSystem: grant ROUND_ROLE to factory (factory's rounds update ELO)
-        elo.grantRole(elo.ROUND_ROLE(), bountyFactory);
+        // EloSystem & ArenaRegistry: factory needs DEFAULT_ADMIN_ROLE so it can
+        // grant ROUND_ROLE / BOUNTY_ROUND_ROLE to each newly spawned round.
+        elo.grantRole(0x00, bountyFactory);  // DEFAULT_ADMIN on EloSystem
+        IAccessControl(arenaRegistry).grantRole(0x00, bountyFactory);  // DEFAULT_ADMIN on ArenaRegistry
 
         // ════════════════════════════════════════════
         //  6. Transfer all roles: deployer → admin/operator

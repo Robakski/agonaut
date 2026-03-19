@@ -2,62 +2,62 @@
   "chainId": 84532,
   "chainName": "base-sepolia",
   "rpcUrl": "https://sepolia.base.org",
-  "deployedAt": "2026-03-19T11:59:47Z",
+  "deployedAt": "2026-03-19T14:46:40Z",
   "contracts": {
     "eloSystem": {
-      "address": "0x6fdbf63d40daf4a48c45bfc5720206125da417cb",
+      "address": "0x92fcf0e3cc587d6656de79725ae01badb3026d21",
       "proxied": false
     },
     "bountyRound": {
-      "address": "0xe9c542cfc7251a3aec31096477f0f75f1e4e9f57",
+      "address": "0x552b47f8ec1cad24c33e657019811be444e8701a",
       "proxied": false
     },
     "treasury": {
-      "proxy": "0x7dffa752f0336327a880b3a0024117beaeda9182",
-      "implementation": "0x5a8afa3e4badaaf630248b4c8d54c96215fa6254",
+      "proxy": "0xd5503c65d01e8d22a8bac4eed347dd5ad744cbd5",
+      "implementation": "0x616a447ed8d32c722ccb4961a148977ba29e4af8",
       "proxied": true
     },
     "scoringOracle": {
-      "proxy": "0x0eea4ed07c153c9f1eb74e53471855875e1e88db",
-      "implementation": "0xabceaa488f272132a3560032c32e75b7483c17ad",
+      "proxy": "0xb7597d71e00cd1c45c51dd093ce0d3dbd5b86e91",
+      "implementation": "0x1b637d2efdd8565565511926b09a890322f4fa28",
       "proxied": true
     },
     "arenaRegistry": {
-      "proxy": "0x2e3f7a611516a9e181c377141dbbed7e8a34f1ec",
-      "implementation": "0x661fa79f8e053967748774a04d1758305df43983",
+      "proxy": "0xc8096d0db341e3a4b372bccfe95b840bc680c2d5",
+      "implementation": "0x576ddc1104776a09bf4ec92114b28301ae625913",
       "proxied": true
     },
     "stableRegistry": {
-      "proxy": "0x42bb09cf2182ac1f6b22787ef617b83aa7b4b94c",
-      "implementation": "0x93a754e7c9525debf8cf6a8aa61ec47a327f3f94",
+      "proxy": "0x5894cc167d53ce33fec45c6e9bdcd80e9c4c1618",
+      "implementation": "0x5cf7e256d57dc586182c2c17f95168eb9961f2fc",
       "proxied": true
     },
     "bountyFactory": {
-      "proxy": "0x81a4c7cf6fce39108d674470d3fdfd19b739dd92",
-      "implementation": "0xa4a9d28beb98200a5203a958edf2ae9d964460d0",
+      "proxy": "0x99c1500edfd3cbd70b6be258db033c7a8dd5a8b8",
+      "implementation": "0x533e6919ff706d5d9de725ab070ed7f7164cdd85",
       "proxied": true
     },
     "seasonManager": {
-      "proxy": "0x3419a3a2d410266c88f043068baa6c564cbf37d0",
-      "implementation": "0x5eb3df42668ab874d01bf3477355df540b2f3304",
+      "proxy": "0x446a0b6f91ebe62615664c19eee2983e36244268",
+      "implementation": "0x03b2715e66ebebcd81eef2e773fc58f4dae2b5da",
       "proxied": true
     },
     "bountyMarketplace": {
-      "proxy": "0x2a6af2e255adb5139b3416835fa0dbef78cd0508",
-      "implementation": "0x3e9817816110d4c99e57dc7d547298ff07b21edf",
+      "proxy": "0x343635bc16b819d145f2f7e254164e2545af9dc3",
+      "implementation": "0x0e8fc0d34a58d9ebc0a8ea274a1cc27139ed505c",
       "proxied": true
     },
     "arbitrationDAO": {
-      "proxy": "0xd55e30ecbf63ad5d75044a630bb55a37ca264e1a",
-      "implementation": "0x9bcd7fce4a880556ffa9a4c1a773801f1f725d23",
+      "proxy": "0xb4b0add468f024bf6268b2c9f913cc9f83586fba",
+      "implementation": "0x8a67c43f076c82d74b1555fbeea5040244c959d9",
       "proxied": true
     },
     "timelockGovernor": {
-      "address": "0x62cd74606cf39bd89127b397f2a183f936d0ba26",
+      "address": "0x26ec86440f4a2075289135f992bf6a4e1e7033cb",
       "proxied": false
     },
     "emergencyGuardian": {
-      "address": "0x69464cd83c7473a7de93a84465ba0876de48096b",
+      "address": "0x6b7127e727aa4ebf0d6502b94f97af90b3eec1b1",
       "proxied": false
     }
   },
