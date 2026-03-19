@@ -184,7 +184,7 @@ contract MarketplaceTest is Test {
 
         // Contribute less than the goal
         vm.prank(contributor1);
-        marketplace.contribute{value: 0.125 ether}(id);
+        marketplace.contribute{value: Constants.MIN_BOUNTY_DEPOSIT}(id);
 
         // Warp past deadline
         BountyMarketplace.BountyProposal memory snap = marketplace.getProposal(id);
@@ -197,7 +197,7 @@ contract MarketplaceTest is Test {
         marketplace.claimRefund(id);
 
         // Full contribution returned
-        assertEq(contributor1.balance - balBefore, 0.125 ether, "refund amount mismatch");
+        assertEq(contributor1.balance - balBefore, Constants.MIN_BOUNTY_DEPOSIT, "refund amount mismatch");
 
         // Status must now be EXPIRED
         BountyMarketplace.BountyProposal memory p = marketplace.getProposal(id);
@@ -240,21 +240,22 @@ contract MarketplaceTest is Test {
     // ── Test 4: Multiple contributors → all tracked correctly ─────────────────
 
     function test_MultipleContributors() public {
-        uint256 id = _propose(0.375 ether, 0);
+        uint256 goal = Constants.MIN_BOUNTY_DEPOSIT * 3;
+        uint256 id = _propose(goal, 0);
 
         vm.prank(contributor1);
-        marketplace.contribute{value: 0.125 ether}(id);
+        marketplace.contribute{value: Constants.MIN_BOUNTY_DEPOSIT}(id);
 
         vm.prank(contributor2);
-        marketplace.contribute{value: 0.125 ether}(id);
+        marketplace.contribute{value: Constants.MIN_BOUNTY_DEPOSIT}(id);
 
         vm.prank(contributor3);
-        marketplace.contribute{value: 0.125 ether}(id);
+        marketplace.contribute{value: Constants.MIN_BOUNTY_DEPOSIT}(id);
 
         // Individual contribution amounts
-        assertEq(marketplace.getContribution(id, contributor1), 0.125 ether);
-        assertEq(marketplace.getContribution(id, contributor2), 0.125 ether);
-        assertEq(marketplace.getContribution(id, contributor3), 0.125 ether);
+        assertEq(marketplace.getContribution(id, contributor1), Constants.MIN_BOUNTY_DEPOSIT);
+        assertEq(marketplace.getContribution(id, contributor2), Constants.MIN_BOUNTY_DEPOSIT);
+        assertEq(marketplace.getContribution(id, contributor3), Constants.MIN_BOUNTY_DEPOSIT);
 
         // isContributor flags
         assertTrue(marketplace.isContributor(id, contributor1));
@@ -272,7 +273,7 @@ contract MarketplaceTest is Test {
         // Aggregate counters
         BountyMarketplace.BountyProposal memory p = marketplace.getProposal(id);
         assertEq(p.contributorCount, 3,          "contributorCount mismatch");
-        assertEq(p.totalFunded,      0.375 ether, "totalFunded mismatch");
+        assertEq(p.totalFunded,      goal,        "totalFunded mismatch");
     }
 
     // ── Test 5: Cannot contribute after deadline ──────────────────────────────
@@ -294,7 +295,7 @@ contract MarketplaceTest is Test {
                 deadline
             )
         );
-        marketplace.contribute{value: 0.125 ether}(id);
+        marketplace.contribute{value: Constants.MIN_BOUNTY_DEPOSIT}(id);
     }
 
     // ── Test 6: Cannot contribute above funding cap ───────────────────────────
@@ -321,7 +322,7 @@ contract MarketplaceTest is Test {
 
         // Contribute — deadline has NOT yet passed
         vm.prank(contributor1);
-        marketplace.contribute{value: 0.125 ether}(id);
+        marketplace.contribute{value: Constants.MIN_BOUNTY_DEPOSIT}(id);
 
         // claimRefund must revert: status is FUNDING and deadline not passed
         vm.prank(contributor1);
@@ -379,7 +380,7 @@ contract MarketplaceTest is Test {
         uint256 id = _propose(0.25 ether, 0);
 
         vm.prank(contributor1);
-        marketplace.contribute{value: 0.125 ether}(id);
+        marketplace.contribute{value: Constants.MIN_BOUNTY_DEPOSIT}(id);
 
         vm.prank(proposer);
         vm.expectRevert(
@@ -397,7 +398,7 @@ contract MarketplaceTest is Test {
         uint256 id = _propose(0.5 ether, 0);
 
         vm.prank(contributor1);
-        marketplace.contribute{value: 0.125 ether}(id);
+        marketplace.contribute{value: Constants.MIN_BOUNTY_DEPOSIT}(id);
 
         vm.prank(contributor1);
         vm.expectRevert(
@@ -407,7 +408,7 @@ contract MarketplaceTest is Test {
                 contributor1
             )
         );
-        marketplace.contribute{value: 0.125 ether}(id);
+        marketplace.contribute{value: Constants.MIN_BOUNTY_DEPOSIT}(id);
     }
 
     // ── Additional: Cannot activate before deadline ───────────────────────────
@@ -436,7 +437,7 @@ contract MarketplaceTest is Test {
         uint256 id = _propose(1 ether, 0);
 
         vm.prank(contributor1);
-        marketplace.contribute{value: 0.125 ether}(id);
+        marketplace.contribute{value: Constants.MIN_BOUNTY_DEPOSIT}(id);
 
         BountyMarketplace.BountyProposal memory snap = marketplace.getProposal(id);
         vm.warp(uint256(snap.fundingDeadline) + 1);
@@ -445,7 +446,7 @@ contract MarketplaceTest is Test {
             abi.encodeWithSelector(
                 BountyMarketplace.FundingGoalNotMet.selector,
                 id,
-                uint256(0.125 ether),
+                uint256(Constants.MIN_BOUNTY_DEPOSIT),
                 uint256(1 ether)
             )
         );
@@ -480,10 +481,10 @@ contract MarketplaceTest is Test {
         uint256 id = _propose(1 ether, 0); // goal that won't be met
 
         vm.prank(contributor1);
-        marketplace.contribute{value: 0.125 ether}(id);
+        marketplace.contribute{value: Constants.MIN_BOUNTY_DEPOSIT}(id);
 
         vm.prank(contributor2);
-        marketplace.contribute{value: 0.125 ether}(id);
+        marketplace.contribute{value: Constants.MIN_BOUNTY_DEPOSIT}(id);
 
         BountyMarketplace.BountyProposal memory snap = marketplace.getProposal(id);
         vm.warp(uint256(snap.fundingDeadline) + 1);
@@ -492,13 +493,13 @@ contract MarketplaceTest is Test {
         uint256 bal1Before = contributor1.balance;
         vm.prank(contributor1);
         marketplace.claimRefund(id);
-        assertEq(contributor1.balance - bal1Before, 0.125 ether);
+        assertEq(contributor1.balance - bal1Before, Constants.MIN_BOUNTY_DEPOSIT);
 
         // contributor2 refunds second — proposal already EXPIRED
         uint256 bal2Before = contributor2.balance;
         vm.prank(contributor2);
         marketplace.claimRefund(id);
-        assertEq(contributor2.balance - bal2Before, 0.125 ether);
+        assertEq(contributor2.balance - bal2Before, Constants.MIN_BOUNTY_DEPOSIT);
     }
 
     // Required so that this test contract can receive ETH (proposer deposit refunds etc.)

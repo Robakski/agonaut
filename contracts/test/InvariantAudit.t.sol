@@ -47,13 +47,13 @@ contract InvariantAudit is Test {
     // ============================================================
 
     function test_INV_2_4_MinBountyDepositExists() public pure {
-        assertEq(Constants.MIN_BOUNTY_DEPOSIT, 0.125 ether, "INV-2.4: Min bounty deposit must be 0.125 ETH");
+        assertEq(Constants.MIN_BOUNTY_DEPOSIT, 0.009 ether, "INV-2.4: Min bounty deposit check"); // TESTNET: mainnet = 0.125 ether
     }
 
     function test_INV_2_4_MinBountyDepositMakesEconomicSense() public pure {
         // 2% of MIN_BOUNTY_DEPOSIT should cover base costs (~$5+)
         uint256 minFee = (Constants.MIN_BOUNTY_DEPOSIT * Constants.PROTOCOL_FEE_BPS) / Constants.BPS_DENOMINATOR;
-        assertTrue(minFee >= 0.002 ether, "INV-2.4: 2% of min deposit must be >= 0.002 ETH (~$4)");
+        assertTrue(minFee >= 0.00018 ether, "INV-2.4: 2% of min deposit must cover gas"); // TESTNET: mainnet check is >= 0.002 ETH
     }
 
     // ============================================================

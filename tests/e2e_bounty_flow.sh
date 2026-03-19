@@ -139,9 +139,9 @@ if [ "$SCORER_BAL" = "0" ]; then
     echo "  Scorer funded with 0.01 ETH"
 fi
 
-# Check if we have enough for deposit (0.125 ETH + gas)
+# Check if we have enough for deposit (0.009 ETH + gas)
 OPERATOR_WEI=$($CAST balance "$OPERATOR" --rpc-url "$RPC")
-MIN_NEEDED=130000000000000000  # 0.13 ETH
+MIN_NEEDED=12000000000000000  # 0.13 ETH
 if [ "$OPERATOR_WEI" -lt "$MIN_NEEDED" ] 2>/dev/null; then
     echo "  ⚠️  Operator has $OPERATOR_BAL ETH — need at least 0.13 ETH"
     echo "  Get testnet ETH from: https://faucet.quicknode.com/base/sepolia"
@@ -207,8 +207,8 @@ run_test "Phase = OPEN (0)" "$([ "$PHASE" -eq 0 ] && echo PASS || echo "FAIL: ph
 
 # ─── Step 3: Deposit Bounty ───
 echo ""
-echo "▸ Step 3: Depositing 0.125 ETH..."
-TX=$(cast_send "$ROUND_ADDR" "depositBounty()" --value 0.125ether \
+echo "▸ Step 3: Depositing 0.009 ETH..."
+TX=$(cast_send "$ROUND_ADDR" "depositBounty()" --value 0.009ether \
     --private-key "$OPERATOR_PK" 2>&1)
 
 if [ $? -eq 0 ]; then

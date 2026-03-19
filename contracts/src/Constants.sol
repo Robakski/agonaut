@@ -52,7 +52,7 @@ library Constants {
     //                        BOUNTY ECONOMICS (Sponsor-funded)
     // ============================================================
     /// @dev Minimum bounty deposit (~$250) ensures 2% protocol fee covers base costs.
-    uint256 internal constant MIN_BOUNTY_DEPOSIT = 0.125 ether;
+    uint256 internal constant MIN_BOUNTY_DEPOSIT = 0.009 ether; // TESTNET: was 0.125 ether for mainnet
 
     // ── ETH Entry Fees (Phase 1 — ETH-only launch) ─────────────
     /// @dev Entry fee per agent per round, paid in ETH (~$6 at launch).

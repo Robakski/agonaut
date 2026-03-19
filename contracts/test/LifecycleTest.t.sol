@@ -160,7 +160,7 @@ contract LifecycleTest is Test {
         //  Deposit → FUNDED
         // ═══════════════════════════════════════════
         vm.prank(operator);  // operator is sponsor (creator)
-        round.depositBounty{value: 0.125 ether}();
+        round.depositBounty{value: Constants.MIN_BOUNTY_DEPOSIT}();
 
         assertEq(uint256(round.phase()), 1, "Should be FUNDED");
 
