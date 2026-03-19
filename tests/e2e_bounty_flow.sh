@@ -47,6 +47,15 @@ SCORER="$SCORER_ADDRESS"
 SCORER_PK="$SCORER_PRIVATE_KEY"
 DEPLOYER="$DEPLOYER_ADDRESS"
 DEPLOYER_PK="$DEPLOYER_PRIVATE_KEY"
+ADMIN="$ADMIN_ADDRESS"
+ADMIN_PK="$ADMIN_PRIVATE_KEY"
+
+# Contract addresses for role granting
+ELO_SYSTEM=$(addr eloSystem)
+
+# Role hashes
+ROUND_ROLE="0x23e7bb4b6a61553996cf43d3472fac37dab458c1869b80d70c8f0a8ff7c8a50e"
+BOUNTY_ROUND_ROLE="0x254da2e83ffaed08942ed7a56e3922c2668dd897b6f2308dca1a349b9de33b34"
 
 # ── Test framework ──
 PASS=0
@@ -195,6 +204,17 @@ echo "  Round: $ROUND_ADDR"
 
 PHASE=$($CAST call "$ROUND_ADDR" "phase()" --rpc-url "$RPC" | $CAST to-dec)
 run_test "Phase = OPEN (0)" "$([ "$PHASE" -eq 0 ] && echo PASS || echo "FAIL: phase=$PHASE")"
+
+# ─── Step 2b: Grant cross-contract roles to round (factory doesn't do this yet) ───
+echo ""
+echo "▸ Step 2b: Granting cross-contract roles to round..."
+TX=$(cast_send "$ELO_SYSTEM" "grantRole(bytes32,address)" "$ROUND_ROLE" "$ROUND_ADDR" \
+    --private-key "$ADMIN_PK" 2>&1)
+run_test "Grant ROUND_ROLE on EloSystem" "$([ $? -eq 0 ] && echo PASS || echo "FAILED: $TX")"
+
+TX=$(cast_send "$ARENA_REGISTRY" "grantRole(bytes32,address)" "$BOUNTY_ROUND_ROLE" "$ROUND_ADDR" \
+    --private-key "$ADMIN_PK" 2>&1)
+run_test "Grant BOUNTY_ROUND_ROLE on ArenaRegistry" "$([ $? -eq 0 ] && echo PASS || echo "FAILED: $TX")"
 
 # ─── Step 3: Deposit Bounty ───
 echo ""
