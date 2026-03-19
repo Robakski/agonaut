@@ -496,3 +496,4 @@ Plus supporting:
 - **2026-03-19:** Confirmed: 90-day claim expiry + treasury sweep works correctly
 - **2026-03-19:** Confirmed: graduated payouts + full refund on below-threshold scores
 - **2026-03-19:** Known limitation: ScoringOracle accepts duplicate agent IDs — TEE trusted, flagged for v2
+- **2026-03-19:** CRITICAL BUG FIXED: Fund lockup when fewer agents than prize slots — now refunds undistributed slots to sponsor
