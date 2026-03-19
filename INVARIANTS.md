@@ -448,8 +448,8 @@ Plus supporting:
 |-----------|--------|-------|-------------|
 | INV-1.1 | ✅ FIXED | Solutions not on-chain | Only commit hashes stored |
 | INV-1.5 | ✅ FIXED | No REVEAL phase | Phase enum clean |
-| INV-1.6 | 🔴 NOT BUILT | Phala TEE scoring integration | Build scoring service |
-| INV-1.7 | 🔴 NOT BUILT | Scoring Service API | Build in products/agonaut/scoring-service/ |
+| INV-1.6 | ✅ BUILT | Phala TEE scoring integration | scoring-service/scorer.py deployed to Phala Cloud |
+| INV-1.7 | ✅ BUILT | Scoring Service API | scoring-service/api.py (FastAPI, port 8001) |
 | INV-1.9 | 🔴 NOT BUILT | Sponsor solution access | Build in scoring service |
 | INV-1.10 | 🔴 NOT BUILT | TEE attestation on-chain | Add attestation hash to ScoringOracle |
 | INV-5.5 | ✅ FIXED | Phase enum correct | OPEN→FUNDED→COMMIT→SCORING→SETTLED |
@@ -488,3 +488,11 @@ Plus supporting:
 - **2026-03-12:** Added Category 9: Regulatory Compliance (INV-9.1–9.7) — website launch checklist
 - **2026-03-12:** Created LAUNCH_CHECKLIST.md — all Robert action items + placeholder locations
 - **2026-03-12:** Built: deploy script, backend API, scoring service API, SDK, Docker, integration tests (47/47 passing)
+- **2026-03-19:** BountyFactory auto-grants ROUND_ROLE + BOUNTY_ROUND_ROLE to spawned rounds (was manual)
+- **2026-03-19:** Full E2E lifecycle verified on Base Sepolia: create→deposit→enter→commit→score→settle→claim
+- **2026-03-19:** Adversarial test suite: 31 tests covering 10 attack categories (143 total, 0 failures)
+- **2026-03-19:** Confirmed: re-entrancy on claim blocked (ReentrancyGuard + CEI pattern)
+- **2026-03-19:** Confirmed: all phase transitions enforced (6 tests)
+- **2026-03-19:** Confirmed: 90-day claim expiry + treasury sweep works correctly
+- **2026-03-19:** Confirmed: graduated payouts + full refund on below-threshold scores
+- **2026-03-19:** Known limitation: ScoringOracle accepts duplicate agent IDs — TEE trusted, flagged for v2
