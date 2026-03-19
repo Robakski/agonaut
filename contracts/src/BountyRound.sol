@@ -506,6 +506,7 @@ contract BountyRound is Initializable, ReentrancyGuard {
         uint256 allocated = 0;
 
         // ── Allocate effective bounty to winner claim balances ──
+        uint256 totalDistributed = 0;
         if (effectiveBounty > 0) {
             uint256 prizeSlots = prizeDistribution.length;
             uint256 winnersCount = len < prizeSlots ? len : prizeSlots;
@@ -515,6 +516,7 @@ contract BountyRound is Initializable, ReentrancyGuard {
                 uint256 grossPrize = (effectiveBounty * prizeDistribution[i]) / Constants.BPS_DENOMINATOR;
 
                 if (grossPrize == 0) continue;
+                totalDistributed += grossPrize;
 
                 // 0. Hardcoded fee cap — safety net against malicious upgrades
                 require(protocolFeeBps <= Constants.MAX_PROTOCOL_FEE_BPS, "Fee exceeds cap");
@@ -544,6 +546,13 @@ contract BountyRound is Initializable, ReentrancyGuard {
                 allocated += agentCut;
 
                 emit PrizeDistributed(agentId, grossPrize, protocolFee, agentCut);
+            }
+
+            // ── Refund undistributed prize slots to sponsor ──
+            // When fewer agents than prize slots, empty slots' share goes back to sponsor
+            uint256 undistributed = effectiveBounty - totalDistributed;
+            if (undistributed > 0) {
+                refundAmount += undistributed;
             }
         }
 

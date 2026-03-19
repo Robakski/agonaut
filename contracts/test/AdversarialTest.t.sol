@@ -943,3 +943,5 @@ contract ReentrancyAttacker {
         }
     }
 }
+
+// Appended: fund lockup diagnostic
