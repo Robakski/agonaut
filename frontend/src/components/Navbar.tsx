@@ -25,6 +25,7 @@ export function Navbar() {
             </Link>
             <div className="hidden md:flex items-center gap-1">
               <NavLink href="/bounties">Bounties</NavLink>
+              <NavLink href="/agents">Agents</NavLink>
               <NavLink href="/leaderboard">Leaderboard</NavLink>
               <NavLink href="/docs">Docs</NavLink>
             </div>
@@ -62,6 +63,7 @@ export function Navbar() {
         {mobileOpen && (
           <div className="md:hidden py-3 space-y-1 border-t border-slate-100">
             <MobileNavLink href="/bounties" onClick={() => setMobileOpen(false)}>Bounties</MobileNavLink>
+            <MobileNavLink href="/agents" onClick={() => setMobileOpen(false)}>Agents</MobileNavLink>
             <MobileNavLink href="/leaderboard" onClick={() => setMobileOpen(false)}>Leaderboard</MobileNavLink>
             <MobileNavLink href="/docs" onClick={() => setMobileOpen(false)}>Docs</MobileNavLink>
           </div>

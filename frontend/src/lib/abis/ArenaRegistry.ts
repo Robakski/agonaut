@@ -54,4 +54,22 @@ export const ArenaRegistryABI = [
     outputs: [{ type: "uint256[]", name: "agentIds" }],
     stateMutability: "view",
   },
+  // ── Write ──
+  {
+    type: "function",
+    name: "registerAgent",
+    inputs: [{ type: "bytes32", name: "metadataHash" }],
+    outputs: [{ type: "uint256", name: "agentId" }],
+    stateMutability: "payable",
+  },
+  // ── Events ──
+  {
+    type: "event",
+    name: "AgentRegistered",
+    inputs: [
+      { type: "uint256", name: "agentId", indexed: true },
+      { type: "address", name: "wallet", indexed: true },
+      { type: "bytes32", name: "metadataHash", indexed: false },
+    ],
+  },
 ] as const;
