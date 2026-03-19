@@ -82,22 +82,13 @@ cast_send() {
         if [[ "$arg" == "--private-key" ]]; then pk="1"; fi
     done
     
-    # Get fresh nonce from chain
-    local nonce=""
-    if [ -n "$sender" ]; then
-        nonce=$($CAST nonce "$sender" --rpc-url "$RPC" 2>/dev/null)
-    fi
-    
+    # Let cast manage nonces automatically (handles pending tx awareness)
     local result
-    if [ -n "$nonce" ]; then
-        result=$($CAST send "$to" "$@" --rpc-url "$RPC" --chain "$CHAIN" --nonce "$nonce" --json 2>&1)
-    else
-        result=$($CAST send "$to" "$@" --rpc-url "$RPC" --chain "$CHAIN" --json 2>&1)
-    fi
+    result=$($CAST send "$to" "$@" --rpc-url "$RPC" --chain "$CHAIN" --json 2>&1)
     local exit_code=$?
     
     # Wait for tx to propagate (Base Sepolia block time ~2s)
-    sleep 4
+    sleep 6
 
     if [ $exit_code -ne 0 ]; then
         echo "TX_ERROR: $result"
