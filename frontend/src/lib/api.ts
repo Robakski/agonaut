@@ -16,6 +16,40 @@ async function fetchApi<T>(path: string, options?: RequestInit): Promise<T> {
   return res.json();
 }
 
+// ── Bounty Creation (relay to operator) ──
+
+export interface CreateBountyRequest {
+  title: string;
+  description: string;
+  tags: string[];
+  bountyEth: string;
+  commitHours: number;
+  maxAgents: number;
+  threshold: number;
+  graduated: boolean;
+  rubric: {
+    criteria: {
+      name: string;
+      checks: { description: string; weight: number; required: boolean }[];
+    }[];
+  };
+  sponsorAddress: string;
+}
+
+export interface CreateBountyResponse {
+  bountyId: number;
+  roundAddress: string;
+  problemCid: string;
+  status: "pending_deposit";
+}
+
+export async function createBountyRelay(data: CreateBountyRequest): Promise<CreateBountyResponse> {
+  return fetchApi<CreateBountyResponse>("/bounties/create", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
 // ── Bounties ──
 
 export async function listBounties(phase?: string, limit = 20, offset = 0) {
