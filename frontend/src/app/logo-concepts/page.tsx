@@ -9,33 +9,38 @@ export default function LogoConceptsPage() {
       {/* ── GRADIENT FAMILY (from F) ── */}
       <div className="text-center"><p className="text-xs font-medium text-slate-400 uppercase tracking-widest">Gradient Family</p></div>
 
-      <Concept num="G1-CAPS" title="G1 All Caps" desc="Full gradient underline with AGONAUT in capitals — bold, authoritative">
+      <Concept num="G1-CAPS" title="G1 All Caps — Tight" desc="AGONAUT with tight letter spacing + silver→gold underline">
         <div className="flex justify-center gap-8 flex-wrap">
           <Variant bg="white">
-            <span className="relative inline-block text-[52px] font-bold tracking-[0.1em] text-slate-900" style={{ fontFamily: "system-ui" }}>
+            <span className="relative inline-block text-[52px] font-bold text-slate-900" style={{ fontFamily: "system-ui", letterSpacing: "-0.02em" }}>
               AGONAUT
               <span className="absolute bottom-0 left-0 right-0 h-[3px] rounded-full" style={{ background: 'linear-gradient(90deg, #d4d4d8, #a1a1aa, #d97706, #f59e0b)' }} />
             </span>
           </Variant>
           <Variant bg="dark">
-            <span className="relative inline-block text-[52px] font-bold tracking-[0.1em] text-white" style={{ fontFamily: "system-ui" }}>
+            <span className="relative inline-block text-[52px] font-bold text-white" style={{ fontFamily: "system-ui", letterSpacing: "-0.02em" }}>
               AGONAUT
               <span className="absolute bottom-0 left-0 right-0 h-[3px] rounded-full" style={{ background: 'linear-gradient(90deg, #e4e4e7, #a1a1aa, #fbbf24, #f59e0b)' }} />
             </span>
           </Variant>
         </div>
-        {/* Variations */}
         <div className="mt-6 flex justify-center gap-8 flex-wrap">
           <Variant bg="white">
-            <span className="relative inline-block text-[52px] font-extrabold tracking-[0.15em] text-slate-900" style={{ fontFamily: "system-ui" }}>
+            <span className="relative inline-block text-[52px] font-extrabold text-slate-900" style={{ fontFamily: "system-ui", letterSpacing: "-0.03em" }}>
               AGONAUT
-              <span className="absolute bottom-0.5 left-0 right-0 h-[3px] rounded-full" style={{ background: 'linear-gradient(90deg, #d4d4d8, #a1a1aa, #d97706, #f59e0b)' }} />
+              <span className="absolute bottom-0 left-0 right-0 h-[3px] rounded-full" style={{ background: 'linear-gradient(90deg, #d4d4d8, #a1a1aa, #d97706, #f59e0b)' }} />
             </span>
           </Variant>
           <Variant bg="white">
-            <span className="relative inline-block text-[52px] font-bold tracking-[0.08em] text-slate-900" style={{ fontFamily: "system-ui" }}>
+            <span className="relative inline-block text-[56px] font-bold text-slate-900" style={{ fontFamily: "system-ui", letterSpacing: "-0.04em" }}>
               AGONAUT
               <span className="absolute -bottom-1 left-0 right-0 h-[4px] rounded-full" style={{ background: 'linear-gradient(90deg, #d4d4d8, #a1a1aa, #d97706, #f59e0b)' }} />
+            </span>
+          </Variant>
+          <Variant bg="white">
+            <span className="relative inline-block text-[52px] font-black text-slate-900" style={{ fontFamily: "system-ui", letterSpacing: "-0.05em" }}>
+              AGONAUT
+              <span className="absolute bottom-0 left-0 right-0 h-[3px] rounded-full" style={{ background: 'linear-gradient(90deg, #d4d4d8, #a1a1aa, #d97706, #f59e0b)' }} />
             </span>
           </Variant>
         </div>
