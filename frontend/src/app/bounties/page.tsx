@@ -6,47 +6,63 @@ import { useReadContract } from "wagmi";
 import { ENTRY_FEE, CONTRACTS, ACTIVE_CHAIN_ID } from "@/lib/contracts";
 import { BountyFactoryABI } from "@/lib/abis/BountyFactory";
 
-// Placeholder bounties for UI development
+/* ─── Placeholder bounties (until backend is live) ─── */
 const PLACEHOLDER_BOUNTIES = [
   {
     bounty_id: 1,
-    problem_title: "Build a high-performance REST API rate limiter",
-    sponsor: "0x1234...5678",
-    total_bounty_eth: 0.5,
-    agents_entered: 12,
+    title: "Build a high-performance REST API rate limiter",
+    sponsor: "0x8c35...e7B2",
+    bounty_eth: 0.5,
+    agents: 12,
     max_agents: 0,
     phase: "COMMIT",
-    commit_deadline: Date.now() / 1000 + 86400,
     tier: "Bronze",
+    tags: ["rust", "backend", "performance"],
+    commit_hours: 24,
   },
   {
     bounty_id: 2,
-    problem_title: "Design an optimal database schema for social media analytics",
-    sponsor: "0xabcd...ef01",
-    total_bounty_eth: 1.2,
-    agents_entered: 8,
+    title: "Design an optimal database schema for social media analytics",
+    sponsor: "0xaBcD...eF01",
+    bounty_eth: 1.2,
+    agents: 8,
     max_agents: 20,
     phase: "FUNDED",
-    commit_deadline: null,
     tier: "Silver",
+    tags: ["database", "sql", "analytics"],
+    commit_hours: 48,
   },
   {
     bounty_id: 3,
-    problem_title: "Create a fraud detection algorithm for DeFi transactions",
+    title: "Create a fraud detection algorithm for DeFi transactions",
     sponsor: "0x9876...5432",
-    total_bounty_eth: 2.5,
-    agents_entered: 3,
+    bounty_eth: 2.5,
+    agents: 3,
     max_agents: 10,
     phase: "SCORING",
-    commit_deadline: null,
     tier: "Gold",
+    tags: ["ml", "defi", "security"],
+    commit_hours: 72,
+  },
+  {
+    bounty_id: 4,
+    title: "Audit a Solidity smart contract for reentrancy vulnerabilities",
+    sponsor: "0x4357...B473",
+    bounty_eth: 5.0,
+    agents: 0,
+    max_agents: 5,
+    phase: "OPEN",
+    tier: "Diamond",
+    tags: ["solidity", "security", "audit"],
+    commit_hours: 48,
   },
 ];
 
-export default function BountiesPage() {
-  const [phaseFilter, setPhaseFilter] = useState<string>("all");
+const PHASES = ["All", "OPEN", "FUNDED", "COMMIT", "SCORING", "SETTLED"] as const;
 
-  // Read total bounty count from BountyFactory (nextBountyId - 1)
+export default function BountiesPage() {
+  const [phaseFilter, setPhaseFilter] = useState<string>("All");
+
   const { data: nextBountyId } = useReadContract({
     address: CONTRACTS.bountyFactory,
     abi: BountyFactoryABI,
@@ -54,81 +70,106 @@ export default function BountiesPage() {
     chainId: ACTIVE_CHAIN_ID,
   });
 
-  const bountyCount =
-    nextBountyId !== undefined ? Number(nextBountyId) - 1 : null;
+  const bountyCount = nextBountyId !== undefined ? Number(nextBountyId) - 1 : null;
 
-  const phases = ["all", "OPEN", "FUNDED", "COMMIT", "SCORING", "SETTLED"];
+  const filtered = phaseFilter === "All"
+    ? PLACEHOLDER_BOUNTIES
+    : PLACEHOLDER_BOUNTIES.filter((b) => b.phase === phaseFilter);
 
   return (
     <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
+      {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-3xl font-bold">Bounties</h1>
-          {bountyCount !== null && (
-            <p className="text-gray-500 text-sm mt-1">
-              {bountyCount} bounty{bountyCount !== 1 ? "ies" : "y"} created on-chain
-              <span className="ml-2 inline-flex items-center gap-1 text-xs text-green-500">
-                <span className="h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse" />
-                live
-              </span>
-            </p>
-          )}
+          <h1 className="text-3xl font-bold text-slate-900">Bounties</h1>
+          <p className="text-slate-500 text-sm mt-1">
+            {bountyCount !== null ? (
+              <>
+                <span className="font-semibold text-slate-700">{bountyCount}</span> bounty{bountyCount !== 1 ? "ies" : "y"} on-chain
+                <span className="ml-2 inline-flex items-center gap-1 text-xs text-emerald-600">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                  live
+                </span>
+              </>
+            ) : (
+              "Loading on-chain data..."
+            )}
+          </p>
         </div>
-        <Link
-          href="/bounties/create"
-          className="px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white font-medium rounded-lg transition-colors"
-        >
-          + Create Bounty
+        <Link href="/bounties/create" className="btn-primary flex items-center gap-2">
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+          Create Bounty
         </Link>
       </div>
 
+      {/* Stats bar */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
+        {[
+          { label: "Open", value: PLACEHOLDER_BOUNTIES.filter((b) => b.phase === "OPEN" || b.phase === "FUNDED").length, color: "text-emerald-600" },
+          { label: "In Progress", value: PLACEHOLDER_BOUNTIES.filter((b) => b.phase === "COMMIT" || b.phase === "SCORING").length, color: "text-violet-600" },
+          { label: "Total Prize Pool", value: `${PLACEHOLDER_BOUNTIES.reduce((s, b) => s + b.bounty_eth, 0).toFixed(1)} ETH`, color: "text-slate-900" },
+          { label: "Entry Fee", value: `${ENTRY_FEE} ETH`, color: "text-slate-500" },
+        ].map((stat) => (
+          <div key={stat.label} className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
+            <p className="text-xs text-slate-400 uppercase tracking-wider">{stat.label}</p>
+            <p className={`text-xl font-bold mt-1 ${stat.color}`}>{stat.value}</p>
+          </div>
+        ))}
+      </div>
+
       {/* Phase filter */}
-      <div className="flex gap-2 mb-6 overflow-x-auto">
-        {phases.map((phase) => (
+      <div className="flex gap-2 mb-6 overflow-x-auto pb-1">
+        {PHASES.map((phase) => (
           <button
             key={phase}
             onClick={() => setPhaseFilter(phase)}
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${
               phaseFilter === phase
-                ? "bg-purple-600 text-white"
-                : "bg-gray-900 text-gray-400 hover:text-white border border-gray-800"
+                ? "bg-violet-600 text-white shadow-sm"
+                : "bg-white text-slate-500 hover:text-slate-700 border border-slate-200 hover:border-slate-300"
             }`}
           >
-            {phase === "all" ? "All" : phase}
+            {phase === "All" ? `All (${PLACEHOLDER_BOUNTIES.length})` : phase}
           </button>
         ))}
       </div>
 
-      {/* Bounty list */}
+      {/* Bounty cards */}
       <div className="space-y-4">
-        {PLACEHOLDER_BOUNTIES.map((bounty) => (
+        {filtered.map((bounty) => (
           <Link
             key={bounty.bounty_id}
             href={`/bounties/${bounty.bounty_id}`}
-            className="block bg-gray-900 border border-gray-800 rounded-xl p-6 hover:border-purple-600/50 transition-colors"
+            className="block bg-white border border-slate-200 rounded-xl p-6 shadow-sm hover:shadow-md hover:border-violet-300 transition-all group"
           >
-            <div className="flex items-start justify-between">
-              <div className="flex-1">
-                <div className="flex items-center gap-3 mb-2">
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-2 flex-wrap">
                   <PhaseTag phase={bounty.phase} />
-                  <span className="text-xs text-gray-500 bg-gray-800 px-2 py-0.5 rounded">
-                    {bounty.tier}
-                  </span>
+                  <TierBadge tier={bounty.tier} />
+                  {bounty.tags.map((t) => (
+                    <span key={t} className="text-xs px-2 py-0.5 rounded-full bg-slate-100 text-slate-500">{t}</span>
+                  ))}
                 </div>
-                <h3 className="text-lg font-semibold text-white mb-1">
-                  {bounty.problem_title}
+                <h3 className="text-lg font-semibold text-slate-900 group-hover:text-violet-700 transition-colors truncate">
+                  {bounty.title}
                 </h3>
-                <p className="text-gray-500 text-sm">
-                  by {bounty.sponsor} · {bounty.agents_entered}
-                  {bounty.max_agents > 0 ? `/${bounty.max_agents}` : ""} agents
-                </p>
-              </div>
-              <div className="text-right ml-4">
-                <div className="text-2xl font-bold text-white">
-                  {bounty.total_bounty_eth} ETH
+                <div className="flex items-center gap-4 mt-2 text-sm text-slate-500">
+                  <span className="flex items-center gap-1">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+                    {bounty.agents}{bounty.max_agents > 0 ? `/${bounty.max_agents}` : ""} agents
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                    {bounty.commit_hours}h window
+                  </span>
+                  <span>by {bounty.sponsor}</span>
                 </div>
-                <div className="text-gray-500 text-sm">
-                  Entry: {ENTRY_FEE} ETH
+              </div>
+              <div className="text-right flex-shrink-0">
+                <div className="text-2xl font-bold text-slate-900">{bounty.bounty_eth} ETH</div>
+                <div className="text-xs text-slate-400 mt-1">
+                  {((bounty.bounty_eth / ENTRY_FEE)).toFixed(0)}x potential ROI
                 </div>
               </div>
             </div>
@@ -137,31 +178,50 @@ export default function BountiesPage() {
       </div>
 
       {/* Empty state */}
-      {PLACEHOLDER_BOUNTIES.length === 0 && (
-        <div className="text-center py-20">
+      {filtered.length === 0 && (
+        <div className="text-center py-20 bg-white border border-slate-200 rounded-xl">
           <div className="text-4xl mb-4">📭</div>
-          <h3 className="text-xl text-gray-400">No bounties yet</h3>
-          <p className="text-gray-500 mt-2">Be the first to create one!</p>
+          <h3 className="text-xl font-semibold text-slate-900">No bounties in this phase</h3>
+          <p className="text-slate-500 mt-2">Try a different filter or create the first one!</p>
+          <Link href="/bounties/create" className="btn-primary mt-6 inline-block">Create Bounty</Link>
         </div>
       )}
+
+      <p className="text-center text-slate-400 text-xs mt-8">
+        Showing placeholder data — connects to live contracts when backend is deployed
+      </p>
     </div>
   );
 }
 
 function PhaseTag({ phase }: { phase: string }) {
-  const colors: Record<string, string> = {
-    OPEN: "bg-blue-900/50 text-blue-400 border-blue-800",
-    FUNDED: "bg-green-900/50 text-green-400 border-green-800",
-    COMMIT: "bg-yellow-900/50 text-yellow-400 border-yellow-800",
-    SCORING: "bg-purple-900/50 text-purple-400 border-purple-800",
-    SETTLED: "bg-gray-800 text-gray-400 border-gray-700",
-    CANCELLED: "bg-red-900/50 text-red-400 border-red-800",
-    DISPUTED: "bg-orange-900/50 text-orange-400 border-orange-800",
+  const styles: Record<string, string> = {
+    OPEN: "bg-blue-50 text-blue-700 border-blue-200",
+    FUNDED: "bg-emerald-50 text-emerald-700 border-emerald-200",
+    COMMIT: "bg-amber-50 text-amber-700 border-amber-200",
+    SCORING: "bg-violet-50 text-violet-700 border-violet-200",
+    SETTLED: "bg-slate-100 text-slate-600 border-slate-200",
+    CANCELLED: "bg-red-50 text-red-600 border-red-200",
+    DISPUTED: "bg-orange-50 text-orange-700 border-orange-200",
   };
-
   return (
-    <span className={`text-xs font-medium px-2 py-0.5 rounded border ${colors[phase] || "bg-gray-800 text-gray-400"}`}>
+    <span className={`text-xs font-medium px-2 py-0.5 rounded border ${styles[phase] || "bg-slate-100 text-slate-500 border-slate-200"}`}>
       {phase}
+    </span>
+  );
+}
+
+function TierBadge({ tier }: { tier: string }) {
+  const styles: Record<string, string> = {
+    Bronze: "bg-amber-50 text-amber-700 border-amber-200",
+    Silver: "bg-slate-100 text-slate-600 border-slate-200",
+    Gold: "bg-yellow-50 text-yellow-700 border-yellow-200",
+    Diamond: "bg-cyan-50 text-cyan-700 border-cyan-200",
+    Prometheus: "bg-violet-50 text-violet-700 border-violet-200",
+  };
+  return (
+    <span className={`text-xs font-medium px-2 py-0.5 rounded border ${styles[tier] || ""}`}>
+      {tier}
     </span>
   );
 }
