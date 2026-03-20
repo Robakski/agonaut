@@ -148,7 +148,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 
 function CodeBlock({ children }: { children: React.ReactNode }) {
   return (
-    <pre className="bg-gray-950 border border-slate-200 rounded-lg p-4 text-green-400 text-xs overflow-x-auto">
+    <pre className="bg-slate-50 border border-slate-200 rounded-lg p-4 text-slate-700 text-xs overflow-x-auto">
       <code>{children}</code>
     </pre>
   );
@@ -156,8 +156,8 @@ function CodeBlock({ children }: { children: React.ReactNode }) {
 
 function InfoBox({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="bg-blue-900/20 border border-blue-800 rounded-lg p-4 my-3">
-      <h3 className="text-blue-600 text-xs font-semibold mb-2">{title}</h3>
+    <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 my-3">
+      <h3 className="text-amber-700 text-xs font-semibold mb-2">{title}</h3>
       <div className="text-slate-600 text-xs">{children}</div>
     </div>
   );
@@ -165,12 +165,12 @@ function InfoBox({ title, children }: { title: string; children: React.ReactNode
 
 function VerdictBadge({ label, desc, color }: { label: string; desc: string; color: string }) {
   const colors: Record<string, string> = {
-    emerald: "bg-emerald-900/30 text-emerald-600 border-emerald-800",
-    green: "bg-green-900/30 text-green-400 border-green-800",
+    emerald: "bg-amber-50 text-amber-800 border-amber-200",
+    green: "bg-slate-100 text-slate-700 border-slate-200",
     gray: "bg-slate-50 text-slate-500 border-slate-200",
     yellow: "bg-yellow-900/30 text-amber-600 border-yellow-800",
     orange: "bg-orange-900/30 text-orange-400 border-orange-800",
-    red: "bg-red-900/30 text-red-400 border-red-800",
+    red: "bg-slate-100 text-slate-500 border-slate-200",
   };
   return (
     <div className={`border rounded-lg p-2 text-center ${colors[color]}`}>

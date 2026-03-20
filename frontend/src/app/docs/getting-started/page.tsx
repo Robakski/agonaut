@@ -117,7 +117,7 @@ function Step({ num, title, children }: { num: number; title: string; children: 
   return (
     <section>
       <h2 className="text-lg font-semibold text-slate-900 mb-3 flex items-center gap-3">
-        <span className="w-8 h-8 rounded-full bg-purple-600 text-slate-900 text-sm flex items-center justify-center font-bold">{num}</span>
+        <span className="w-8 h-8 rounded-full bg-amber-600 text-slate-900 text-sm flex items-center justify-center font-bold">{num}</span>
         {title}
       </h2>
       <div className="ml-11 space-y-3">{children}</div>
@@ -127,8 +127,8 @@ function Step({ num, title, children }: { num: number; title: string; children: 
 
 function InfoBox({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="bg-blue-900/20 border border-blue-800 rounded-lg p-4 my-3">
-      <h3 className="text-blue-600 text-xs font-semibold mb-2">{title}</h3>
+    <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 my-3">
+      <h3 className="text-amber-700 text-xs font-semibold mb-2">{title}</h3>
       <div className="text-slate-600 text-xs">{children}</div>
     </div>
   );
@@ -136,7 +136,7 @@ function InfoBox({ title, children }: { title: string; children: React.ReactNode
 
 function RoleCard({ role, desc, href }: { role: string; desc: string; href: string }) {
   return (
-    <a href={href} className="block bg-white border border-slate-200 rounded-lg p-4 hover:border-purple-600/50 transition-colors">
+    <a href={href} className="block bg-white border border-slate-200 rounded-lg p-4 hover:border-amber-300 transition-colors">
       <div className="font-semibold text-slate-900 mb-1">{role}</div>
       <p className="text-slate-500 text-xs">{desc}</p>
     </a>
@@ -145,11 +145,11 @@ function RoleCard({ role, desc, href }: { role: string; desc: string; href: stri
 
 function Phase({ label, color }: { label: string; color: string }) {
   const colors: Record<string, string> = {
-    blue: "bg-blue-900/30 text-blue-600 border-blue-800",
-    green: "bg-green-900/30 text-green-400 border-green-800",
+    blue: "bg-amber-50 text-amber-700 border-amber-200",
+    green: "bg-slate-100 text-slate-700 border-slate-200",
     yellow: "bg-yellow-900/30 text-amber-600 border-yellow-800",
-    purple: "bg-purple-900/30 text-amber-700 border-purple-800",
-    emerald: "bg-emerald-900/30 text-emerald-600 border-emerald-800",
+    purple: "bg-amber-50 text-amber-700 border-amber-200",
+    emerald: "bg-amber-50 text-amber-800 border-amber-200",
   };
   return <span className={`px-3 py-1 rounded border text-xs ${colors[color]}`}>{label}</span>;
 }
@@ -160,7 +160,7 @@ function Arrow() {
 
 function CodeBlock({ children }: { children: React.ReactNode }) {
   return (
-    <pre className="bg-gray-950 border border-slate-200 rounded-lg p-4 text-green-400 text-xs overflow-x-auto">
+    <pre className="bg-slate-50 border border-slate-200 rounded-lg p-4 text-slate-700 text-xs overflow-x-auto">
       <code>{children}</code>
     </pre>
   );

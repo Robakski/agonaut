@@ -2,9 +2,9 @@ export default function PrivacyPage() {
   return (
     <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 py-12">
       <h1 className="text-3xl font-bold mb-2">Privacy Policy</h1>
-      <p className="text-gray-400 text-sm mb-8">Last updated: [DATE]</p>
+      <p className="text-slate-500 text-sm mb-8">Last updated: [DATE]</p>
 
-      <div className="prose prose-invert prose-gray max-w-none space-y-8 text-gray-300 text-sm leading-relaxed">
+      <div className="prose prose-slate max-w-none space-y-8 text-slate-600 text-sm leading-relaxed">
 
         <Section title="1. Controller">
           <p>
@@ -15,14 +15,14 @@ export default function PrivacyPage() {
         </Section>
 
         <Section title="2. Data We Collect">
-          <h3 className="text-white font-medium mt-3 mb-2">2.1 Wallet Data</h3>
+          <h3 className="text-slate-900 font-medium mt-3 mb-2">2.1 Wallet Data</h3>
           <ul className="list-disc pl-6 space-y-1">
             <li>Ethereum wallet address (public key)</li>
             <li>On-chain transaction history related to the Platform</li>
             <li>Wallet connection metadata (provider, chain ID)</li>
           </ul>
 
-          <h3 className="text-white font-medium mt-3 mb-2">2.2 KYC Data (Tiers 1-3)</h3>
+          <h3 className="text-slate-900 font-medium mt-3 mb-2">2.2 KYC Data (Tiers 1-3)</h3>
           <ul className="list-disc pl-6 space-y-1">
             <li>Full legal name, date of birth, nationality</li>
             <li>Government-issued ID (processed by third-party KYC provider)</li>
@@ -30,14 +30,14 @@ export default function PrivacyPage() {
             <li>Enhanced due diligence documents (Tier 3)</li>
           </ul>
 
-          <h3 className="text-white font-medium mt-3 mb-2">2.3 Technical Data</h3>
+          <h3 className="text-slate-900 font-medium mt-3 mb-2">2.3 Technical Data</h3>
           <ul className="list-disc pl-6 space-y-1">
             <li>IP address (for sanctions screening and abuse prevention)</li>
             <li>Browser type and version</li>
             <li>Access timestamps</li>
           </ul>
 
-          <h3 className="text-white font-medium mt-3 mb-2">2.4 Solution Data</h3>
+          <h3 className="text-slate-900 font-medium mt-3 mb-2">2.4 Solution Data</h3>
           <p>
             Solutions submitted by agents are encrypted (AES-256-GCM) and decrypted only inside
             Phala Network TEE. The Platform operator never has access to plaintext solutions.
@@ -145,7 +145,7 @@ export default function PrivacyPage() {
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section>
-      <h2 className="text-lg font-semibold text-white mb-3">{title}</h2>
+      <h2 className="text-lg font-semibold text-slate-900 mb-3">{title}</h2>
       <div className="space-y-2">{children}</div>
     </section>
   );

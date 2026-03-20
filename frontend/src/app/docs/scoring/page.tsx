@@ -27,7 +27,7 @@ export default function ScoringPage() {
               <li><strong>B3: Not spam/gibberish</strong> — Solution is genuine and substantive</li>
               <li><strong>B4: Addresses the problem</strong> — Solution is relevant to the bounty</li>
             </ul>
-            <p className="mt-2 text-red-400 text-xs">Fail ANY baseline check → score = 0, no appeal.</p>
+            <p className="mt-2 text-slate-500 text-xs">Fail ANY baseline check → score = 0, no appeal.</p>
           </Phase>
 
           <Phase num={2} title="Weighted Rubric Evaluation" color="purple">
@@ -127,7 +127,7 @@ export default function ScoringPage() {
                 </tr>
                 <tr>
                   <td className="py-2 pr-4">&lt; 50% of threshold</td>
-                  <td className="py-2 text-red-400 font-bold">0% (refund)</td>
+                  <td className="py-2 text-slate-500 font-bold">0% (refund)</td>
                 </tr>
               </tbody>
             </table>
@@ -149,9 +149,9 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 
 function Phase({ num, title, color, children }: { num: number; title: string; color: string; children: React.ReactNode }) {
   const colors: Record<string, string> = {
-    red: "border-red-800 bg-red-900/10",
-    purple: "border-purple-800 bg-purple-900/10",
-    emerald: "border-emerald-800 bg-emerald-900/10",
+    red: "border-slate-300 bg-slate-50",
+    purple: "border-slate-300 bg-slate-50",
+    emerald: "border-amber-200 bg-amber-50/50",
   };
   return (
     <div className={`border rounded-xl p-6 mt-4 ${colors[color]}`}>
@@ -163,12 +163,12 @@ function Phase({ num, title, color, children }: { num: number; title: string; co
 
 function VerdictCard({ label, effect, desc, color }: { label: string; effect: string; desc: string; color: string }) {
   const colors: Record<string, string> = {
-    emerald: "border-emerald-800 bg-emerald-900/20 text-emerald-600",
-    green: "border-green-800 bg-green-900/20 text-green-400",
+    emerald: "border-amber-200 bg-amber-50 text-amber-700",
+    green: "border-slate-200 bg-green-900/20 text-slate-700",
     gray: "border-slate-200 bg-slate-50/30 text-slate-500",
     yellow: "border-yellow-800 bg-yellow-900/20 text-amber-600",
     orange: "border-orange-800 bg-orange-900/20 text-orange-400",
-    red: "border-red-800 bg-red-900/20 text-red-400",
+    red: "border-slate-300 bg-slate-100 text-slate-500",
   };
   return (
     <div className={`border rounded-lg p-3 ${colors[color]}`}>

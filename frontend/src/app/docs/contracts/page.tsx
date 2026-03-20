@@ -45,7 +45,7 @@ export default function ContractsPage() {
               href="https://sepolia.basescan.org/address/0x4357862Ee5e8EDCD2918742cAc9b1e2D4454B473"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-blue-600 underline"
+              className="text-amber-700 underline"
             >
               Basescan
             </a>.
@@ -82,7 +82,7 @@ export default function ContractsPage() {
                         href={`https://sepolia.basescan.org/address/${address}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-blue-600 hover:text-blue-300"
+                        className="text-amber-700 hover:text-amber-800"
                       >
                         ↗
                       </a>
@@ -111,9 +111,9 @@ export default function ContractsPage() {
         <Section title="BountyRound Lifecycle">
           <p>Each bounty round is a minimal clone deployed via BountyFactory using CREATE2:</p>
           <div className="bg-white border border-slate-200 rounded-xl p-4 mt-3 font-mono text-xs space-y-2">
-            <p className="text-blue-600">OPEN</p>
+            <p className="text-amber-700">OPEN</p>
             <p className="text-slate-500 pl-4">Sponsor creates round, sets rubric + funding</p>
-            <p className="text-green-400">FUNDED</p>
+            <p className="text-slate-700">FUNDED</p>
             <p className="text-slate-500 pl-4">Minimum deposit reached, crowdfunding may continue</p>
             <p className="text-amber-600">COMMIT</p>
             <p className="text-slate-500 pl-4">Agents submit solution hashes (0.003 ETH entry fee each)</p>
@@ -174,8 +174,8 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 
 function InfoBox({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="bg-blue-900/20 border border-blue-800 rounded-lg p-4">
-      <h3 className="text-blue-600 text-xs font-semibold mb-2">{title}</h3>
+    <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+      <h3 className="text-amber-700 text-xs font-semibold mb-2">{title}</h3>
       <div className="text-slate-600 text-xs">{children}</div>
     </div>
   );
@@ -183,7 +183,7 @@ function InfoBox({ title, children }: { title: string; children: React.ReactNode
 
 function CodeBlock({ children }: { children: React.ReactNode }) {
   return (
-    <pre className="bg-gray-950 border border-slate-200 rounded-lg p-4 text-green-400 text-xs overflow-x-auto">
+    <pre className="bg-slate-50 border border-slate-200 rounded-lg p-4 text-slate-700 text-xs overflow-x-auto">
       <code>{children}</code>
     </pre>
   );

@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
 import { ConnectKitButton } from "connectkit";
 import { useState } from "react";
 
@@ -15,9 +14,9 @@ export function Navbar() {
           {/* Logo */}
           <div className="flex items-center gap-8">
             <Link href="/" className="flex items-center gap-2.5 group">
-              <Image src="/logomark-dark.svg" alt="Agonaut" width={26} height={26} className="group-hover:scale-105 transition-transform" />
-              <span className="text-lg font-extrabold tracking-tight text-slate-900" style={{ letterSpacing: "-0.03em" }}>
+              <span className="relative inline-block text-lg font-extrabold tracking-tight text-slate-900 group-hover:text-slate-700 transition-colors" style={{ letterSpacing: "-0.03em" }}>
                 AGONAUT
+                <span className="absolute bottom-0 left-0 right-0 h-[2px] rounded-full" style={{ background: 'linear-gradient(90deg, #d4d4d8, #a1a1aa, #d97706, #f59e0b)' }} />
               </span>
               <span className="hidden sm:inline-block px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wider bg-amber-50 text-amber-700 border border-amber-200 rounded-md">
                 Testnet

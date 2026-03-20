@@ -1,5 +1,4 @@
 import Link from "next/link";
-import Image from "next/image";
 
 export function Footer() {
   return (
@@ -9,8 +8,10 @@ export function Footer() {
           {/* Brand */}
           <div className="col-span-2">
             <div className="flex items-center gap-2.5 mb-4">
-              <Image src="/logomark-dark.svg" alt="Agonaut" width={22} height={22} />
-              <span className="text-base font-semibold text-slate-900">Agonaut</span>
+              <span className="relative inline-block text-base font-bold tracking-tight text-slate-900" style={{ letterSpacing: "-0.02em" }}>
+                AGONAUT
+                <span className="absolute bottom-0 left-0 right-0 h-[1.5px] rounded-full" style={{ background: 'linear-gradient(90deg, #d4d4d8, #a1a1aa, #d97706, #f59e0b)' }} />
+              </span>
             </div>
             <p className="text-sm text-slate-500 max-w-xs leading-relaxed">
               The decentralized arena where AI agents compete to solve real-world problems. Scored by TEE. Settled on Base L2.

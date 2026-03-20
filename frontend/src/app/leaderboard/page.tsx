@@ -15,7 +15,7 @@ const TIER_STYLES: Record<string, string> = {
   Bronze: "bg-amber-50 text-amber-700 border-amber-200",
   Silver: "bg-slate-100 text-slate-600 border-slate-200",
   Gold: "bg-yellow-50 text-yellow-700 border-yellow-200",
-  Diamond: "bg-cyan-50 text-cyan-700 border-cyan-200",
+  Diamond: "bg-slate-100 text-slate-800 border-slate-300",
   Prometheus: "bg-amber-50 text-amber-800 border-amber-200",
 };
 
@@ -82,8 +82,8 @@ export default function LeaderboardPage() {
                 <td className="py-3.5 px-4">
                   <span className={`text-xs font-medium px-2 py-0.5 rounded border ${TIER_STYLES[a.tier] || ""}`}>{a.tier}</span>
                 </td>
-                <td className="py-3.5 px-4 text-right font-mono font-bold text-amber-700">{a.elo}</td>
-                <td className="py-3.5 px-4 text-right text-emerald-600 font-medium">{a.wins}/{a.rounds}</td>
+                <td className="py-3.5 px-4 text-right font-mono font-bold text-slate-900">{a.elo}</td>
+                <td className="py-3.5 px-4 text-right text-slate-700 font-medium">{a.wins}/{a.rounds}</td>
                 <td className="py-3.5 px-4 text-right text-slate-700">{((a.wins / a.rounds) * 100).toFixed(0)}%</td>
                 <td className="py-3.5 px-4 text-right font-mono font-semibold text-slate-900">{a.earnings} ETH</td>
               </tr>

@@ -23,12 +23,12 @@ export default function LegalPage() {
         />
       </div>
 
-      <div className="mt-12 bg-gray-900 border border-gray-800 rounded-xl p-6">
-        <h2 className="text-xl font-semibold text-white mb-4">Compliance</h2>
+      <div className="mt-12 bg-white border border-slate-200 rounded-xl p-6">
+        <h2 className="text-xl font-semibold text-slate-900 mb-4">Compliance</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
           <div>
-            <h3 className="text-gray-400 font-medium mb-2">KYC/AML</h3>
-            <ul className="text-gray-500 space-y-1">
+            <h3 className="text-slate-500 font-medium mb-2">KYC/AML</h3>
+            <ul className="text-slate-400 space-y-1">
               <li>• Tiered identity verification</li>
               <li>• Sanctions screening on every wallet interaction</li>
               <li>• OFAC, EU, UN sanctions lists enforced</li>
@@ -36,8 +36,8 @@ export default function LegalPage() {
             </ul>
           </div>
           <div>
-            <h3 className="text-gray-400 font-medium mb-2">Data Protection</h3>
-            <ul className="text-gray-500 space-y-1">
+            <h3 className="text-slate-500 font-medium mb-2">Data Protection</h3>
+            <ul className="text-slate-400 space-y-1">
               <li>• GDPR compliant (EU Regulation 2016/679)</li>
               <li>• BDSG compliant (German Federal Data Protection Act)</li>
               <li>• No tracking cookies or advertising</li>
@@ -47,14 +47,14 @@ export default function LegalPage() {
         </div>
       </div>
 
-      <div className="mt-8 bg-gray-900/50 border border-gray-800 rounded-xl p-6">
-        <h2 className="text-xl font-semibold text-white mb-4">Blocked Jurisdictions</h2>
-        <p className="text-gray-400 text-sm mb-4">
+      <div className="mt-8 bg-slate-50 border border-slate-200 rounded-xl p-6">
+        <h2 className="text-xl font-semibold text-slate-900 mb-4">Blocked Jurisdictions</h2>
+        <p className="text-slate-500 text-sm mb-4">
           In compliance with international sanctions, the platform is unavailable in:
         </p>
         <div className="flex flex-wrap gap-2">
           {["North Korea", "Iran", "Syria", "Cuba", "Myanmar", "Russia"].map((country) => (
-            <span key={country} className="text-xs bg-red-900/30 text-red-400 border border-red-800 px-3 py-1 rounded">
+            <span key={country} className="text-xs bg-slate-100 text-slate-600 border border-slate-300 px-3 py-1 rounded">
               {country}
             </span>
           ))}
@@ -68,11 +68,11 @@ function LegalCard({ title, desc, href }: { title: string; desc: string; href: s
   return (
     <Link
       href={href}
-      className="block bg-gray-900 border border-gray-800 rounded-xl p-6 hover:border-purple-600/50 transition-colors"
+      className="block bg-white border border-slate-200 rounded-xl p-6 hover:border-amber-300 transition-colors"
     >
-      <h2 className="text-xl font-semibold text-white mb-2">{title}</h2>
-      <p className="text-gray-400 text-sm">{desc}</p>
-      <span className="text-purple-400 text-sm mt-3 inline-block">Read →</span>
+      <h2 className="text-xl font-semibold text-slate-900 mb-2">{title}</h2>
+      <p className="text-slate-500 text-sm">{desc}</p>
+      <span className="text-amber-700 text-sm mt-3 inline-block">Read →</span>
     </Link>
   );
 }

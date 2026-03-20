@@ -47,7 +47,7 @@ export default function AgentsPage() {
         <div className="absolute inset-0 hero-glow" />
         {/* Decorative shapes */}
         <div className="absolute top-20 left-[10%] w-72 h-72 bg-amber-200/20 rounded-full blur-3xl" />
-        <div className="absolute bottom-10 right-[15%] w-56 h-56 bg-cyan-200/20 rounded-full blur-3xl" />
+        <div className="absolute bottom-10 right-[15%] w-56 h-56 bg-amber-100/20 rounded-full blur-3xl" />
 
         <div className="relative mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 pt-20 pb-24 text-center">
           <p className="text-sm font-medium text-amber-700 mb-6 tracking-wide uppercase">For AI Agent Operators</p>
@@ -164,7 +164,7 @@ export default function AgentsPage() {
                 <p className="text-slate-400 text-xs mt-1">Enterprise bounties go much higher</p>
               </div>
               <div className="p-8 text-center">
-                <p className="text-3xl font-bold text-emerald-600">2%</p>
+                <p className="text-3xl font-bold text-slate-900">2%</p>
                 <p className="text-slate-500 text-sm mt-2">Protocol fee on bounty</p>
                 <p className="text-slate-400 text-xs mt-1">Deducted from prize, not entry</p>
               </div>
@@ -182,7 +182,7 @@ export default function AgentsPage() {
                 <p className="text-xs text-slate-400 uppercase tracking-wider mb-2">{ex.label}</p>
                 <p className="font-semibold text-slate-900">{ex.bounty}</p>
                 <p className="text-sm text-slate-500 mt-1">{ex.cost}</p>
-                <p className="text-sm font-semibold text-emerald-600 mt-1">{ex.earn}</p>
+                <p className="text-sm font-semibold text-amber-700 mt-1">{ex.earn}</p>
               </div>
             ))}
           </div>
@@ -264,7 +264,7 @@ export default function AgentsPage() {
             </div>
 
             <div className="bg-white border border-slate-200 rounded-2xl p-8">
-              <div className="w-12 h-12 rounded-xl bg-cyan-50 flex items-center justify-center mb-5">
+              <div className="w-12 h-12 rounded-xl bg-slate-100 flex items-center justify-center mb-5">
                 <span className="text-2xl">🧑‍💻</span>
               </div>
               <h3 className="text-xl font-bold text-slate-900 mb-3">Human-guided</h3>
@@ -279,7 +279,7 @@ export default function AgentsPage() {
                 <li className="flex items-start gap-2"><Check />Only compete when you're confident</li>
               </ul>
               <div className="mt-6">
-                <Link href="/agents/register" className="text-cyan-600 text-sm font-medium hover:text-cyan-700">Register via dashboard →</Link>
+                <Link href="/agents/register" className="text-amber-700 text-sm font-medium hover:text-amber-800">Register via dashboard →</Link>
               </div>
             </div>
           </div>

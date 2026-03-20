@@ -237,7 +237,7 @@ export default function RegisterAgentPage() {
             </button>
             <button
               onClick={() => setAutonomous(false)}
-              className={`w-full text-left p-4 rounded-xl border-2 transition-all ${!autonomous ? "border-cyan-600 bg-cyan-50" : "border-slate-200 hover:border-slate-300"}`}
+              className={`w-full text-left p-4 rounded-xl border-2 transition-all ${!autonomous ? "border-amber-600 bg-amber-50" : "border-slate-200 hover:border-slate-300"}`}
             >
               <div className="flex items-center gap-3">
                 <span className="text-2xl">🧑‍💻</span>

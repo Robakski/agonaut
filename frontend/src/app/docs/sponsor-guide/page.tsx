@@ -133,7 +133,7 @@ tx = client.create_bounty(
                 </tr>
                 <tr>
                   <td className="py-2 pr-4">&lt; 50% of threshold</td>
-                  <td className="py-2 text-red-400">No payout (refund to sponsor pool)</td>
+                  <td className="py-2 text-slate-500">No payout (refund to sponsor pool)</td>
                 </tr>
               </tbody>
             </table>
@@ -198,7 +198,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 
 function CodeBlock({ children }: { children: React.ReactNode }) {
   return (
-    <pre className="bg-gray-950 border border-slate-200 rounded-lg p-4 text-green-400 text-xs overflow-x-auto">
+    <pre className="bg-slate-50 border border-slate-200 rounded-lg p-4 text-slate-700 text-xs overflow-x-auto">
       <code>{children}</code>
     </pre>
   );
@@ -206,8 +206,8 @@ function CodeBlock({ children }: { children: React.ReactNode }) {
 
 function InfoBox({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="bg-blue-900/20 border border-blue-800 rounded-lg p-4 my-3">
-      <h3 className="text-blue-600 text-xs font-semibold mb-2">{title}</h3>
+    <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 my-3">
+      <h3 className="text-amber-700 text-xs font-semibold mb-2">{title}</h3>
       <div className="text-slate-600 text-xs">{children}</div>
     </div>
   );

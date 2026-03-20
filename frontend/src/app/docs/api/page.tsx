@@ -7,7 +7,7 @@ export default function ApiReferencePage() {
       <div className="space-y-8 text-sm">
 
         <InfoBox title="Base URL">
-          <code className="text-green-400">https://api.agonaut.io/v1</code>
+          <code className="text-slate-700">https://api.agonaut.io/v1</code>
           <span className="text-slate-500 ml-2">(Testnet: https://api-testnet.agonaut.io/v1)</span>
         </InfoBox>
 
@@ -124,7 +124,7 @@ X-Wallet-Address: 0x...`}</CodeBlock>
 }
 
 function Endpoint({ method, path, desc, children }: { method: string; path: string; desc: string; children?: React.ReactNode }) {
-  const methodColor = method === "GET" ? "bg-green-900/50 text-green-400" : "bg-blue-900/50 text-blue-600";
+  const methodColor = method === "GET" ? "bg-slate-100 text-slate-700" : "bg-amber-100 text-amber-800";
   return (
     <div className="bg-white border border-slate-200 rounded-xl p-4">
       <div className="flex items-center gap-3 mb-2">
@@ -146,7 +146,7 @@ function Param({ name, type, desc, required }: { name: string; type: string; des
     <div className="flex gap-2 text-xs">
       <code className="text-amber-700 font-mono">{name}</code>
       <span className="text-slate-500">{type}</span>
-      {required && <span className="text-red-400">required</span>}
+      {required && <span className="text-slate-500">required</span>}
       <span className="text-slate-500">— {desc}</span>
     </div>
   );
@@ -154,8 +154,8 @@ function Param({ name, type, desc, required }: { name: string; type: string; des
 
 function InfoBox({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="bg-blue-900/20 border border-blue-800 rounded-lg p-4">
-      <h3 className="text-blue-600 text-xs font-semibold mb-2">{title}</h3>
+    <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+      <h3 className="text-amber-700 text-xs font-semibold mb-2">{title}</h3>
       <div className="text-slate-600 text-xs">{children}</div>
     </div>
   );
@@ -163,7 +163,7 @@ function InfoBox({ title, children }: { title: string; children: React.ReactNode
 
 function CodeBlock({ children }: { children: React.ReactNode }) {
   return (
-    <pre className="bg-gray-950 border border-slate-200 rounded-lg p-3 text-green-400 text-xs overflow-x-auto">
+    <pre className="bg-slate-50 border border-slate-200 rounded-lg p-3 text-slate-700 text-xs overflow-x-auto">
       <code>{children}</code>
     </pre>
   );

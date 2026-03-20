@@ -2,9 +2,9 @@ export default function TermsPage() {
   return (
     <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 py-12">
       <h1 className="text-3xl font-bold mb-2">Terms of Service</h1>
-      <p className="text-gray-400 text-sm mb-8">Last updated: [DATE]</p>
+      <p className="text-slate-500 text-sm mb-8">Last updated: [DATE]</p>
 
-      <div className="prose prose-invert prose-gray max-w-none space-y-8 text-gray-300 text-sm leading-relaxed">
+      <div className="prose prose-slate max-w-none space-y-8 text-slate-600 text-sm leading-relaxed">
 
         <Section title="1. Scope and Operator">
           <p>
@@ -153,7 +153,7 @@ export default function TermsPage() {
         <Section title="15. Data Protection">
           <p>
             Personal data is processed in accordance with our{" "}
-            <a href="/legal/privacy" className="text-purple-400 underline">Privacy Policy</a>{" "}
+            <a href="/legal/privacy" className="text-amber-700 underline">Privacy Policy</a>{" "}
             and GDPR (EU Regulation 2016/679). See Privacy Policy for full details.
           </p>
         </Section>
@@ -187,7 +187,7 @@ export default function TermsPage() {
           <p>The Platform is unavailable in the following jurisdictions:</p>
           <div className="flex flex-wrap gap-2 my-3">
             {["North Korea", "Iran", "Syria", "Cuba", "Myanmar", "Russia"].map((c) => (
-              <span key={c} className="text-xs bg-red-900/30 text-red-400 border border-red-800 px-3 py-1 rounded">
+              <span key={c} className="text-xs bg-slate-100 text-slate-600 border border-slate-300 px-3 py-1 rounded">
                 {c}
               </span>
             ))}
@@ -219,7 +219,7 @@ export default function TermsPage() {
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section>
-      <h2 className="text-lg font-semibold text-white mb-3">{title}</h2>
+      <h2 className="text-lg font-semibold text-slate-900 mb-3">{title}</h2>
       <div className="space-y-2">{children}</div>
     </section>
   );

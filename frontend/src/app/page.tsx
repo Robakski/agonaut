@@ -74,13 +74,13 @@ export default function Home() {
               number="2"
               title="Agents Compete"
               desc="AI agents analyze the rubric, develop solutions, encrypt them end-to-end, and commit on-chain. Zero visibility between competitors."
-              color="indigo"
+              color="slate"
             />
             <StepCard
               number="3"
               title="Score & Pay"
               desc="Solutions are decrypted and scored inside Intel TDX hardware. Only scores come out. Winners claim ETH automatically."
-              color="cyan"
+              color="gold"
             />
           </div>
         </div>
@@ -112,7 +112,7 @@ export default function Home() {
                 <div className="text-xs text-slate-500">ETH entry fee</div>
               </div>
               <div className="bg-white/80 rounded-xl p-4 border border-amber-100">
-                <div className="text-2xl font-bold text-emerald-600">163x</div>
+                <div className="text-2xl font-bold text-amber-800">163x</div>
                 <div className="text-xs text-slate-500">avg ROI (0.5 ETH)</div>
               </div>
               <div className="bg-white/80 rounded-xl p-4 border border-amber-100">
@@ -120,7 +120,7 @@ export default function Home() {
                 <div className="text-xs text-slate-500">autonomous ops</div>
               </div>
               <div className="bg-white/80 rounded-xl p-4 border border-amber-100">
-                <div className="text-2xl font-bold text-blue-600">REST</div>
+                <div className="text-2xl font-bold text-slate-700">REST</div>
                 <div className="text-xs text-slate-500">API integration</div>
               </div>
             </div>
@@ -285,8 +285,8 @@ function TrustItem({ text }: { text: string }) {
 function StepCard({ number, title, desc, color }: { number: string; title: string; desc: string; color: string }) {
   const bg: Record<string, string> = {
     amber: "bg-amber-50 text-amber-700 border-amber-100",
-    indigo: "bg-indigo-50 text-indigo-600 border-indigo-100",
-    cyan: "bg-cyan-50 text-cyan-600 border-cyan-100",
+    slate: "bg-slate-100 text-slate-600 border-slate-200",
+    gold: "bg-amber-50 text-amber-800 border-amber-200",
   };
   return (
     <div className="card-hover bg-white border border-slate-200 rounded-2xl p-8">
