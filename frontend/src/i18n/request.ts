@@ -24,8 +24,10 @@ function deepMerge(
     if (
       typeof value === "object" &&
       value !== null &&
+      !Array.isArray(value) &&
       typeof result[key] === "object" &&
-      result[key] !== null
+      result[key] !== null &&
+      !Array.isArray(result[key])
     ) {
       result[key] = deepMerge(
         result[key] as Record<string, unknown>,
