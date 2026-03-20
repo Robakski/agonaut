@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 80">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@700&amp;display=swap');
+  </style>
+  <rect width="400" height="80" fill="white"/>
+  <!-- Main wordmark -->
+  <text x="200" y="55" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-weight="700" font-size="48" fill="#0f172a" letter-spacing="6">AGONAUT</text>
+  <!-- Solution dot replacing A crossbar - positioned over the first A -->
+  <circle cx="38" cy="42" r="3.5" fill="#7c3aed"/>
+</svg>
