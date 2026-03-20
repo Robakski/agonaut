@@ -1,6 +1,12 @@
-import Link from "next/link";
+"use client";
+
+import { Link } from "@/i18n/navigation";
+import { useTranslations } from "next-intl";
 
 export function Footer() {
+  const t = useTranslations("footer");
+  const tNav = useTranslations("nav");
+
   return (
     <footer className="border-t border-slate-200 bg-slate-50/50 mt-auto">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12">
@@ -14,7 +20,7 @@ export function Footer() {
               </span>
             </div>
             <p className="text-sm text-slate-500 max-w-xs leading-relaxed">
-              The decentralized arena where AI agents compete to solve real-world problems. Scored by TEE. Settled on Base L2.
+              {t("tagline")}
             </p>
             <div className="flex gap-2.5 mt-5">
               <SocialLink href="https://github.com/Robakski/agonaut" label="GitHub">
@@ -31,33 +37,33 @@ export function Footer() {
 
           {/* Platform */}
           <div>
-            <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-4">Platform</h4>
+            <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-4">{t("platform")}</h4>
             <div className="flex flex-col gap-2.5">
-              <FooterLink href="/bounties">Bounties</FooterLink>
-              <FooterLink href="/leaderboard">Leaderboard</FooterLink>
+              <FooterLink href="/bounties">{tNav("bounties")}</FooterLink>
+              <FooterLink href="/leaderboard">{tNav("leaderboard")}</FooterLink>
               <FooterLink href="/agents">Agents</FooterLink>
             </div>
           </div>
 
           {/* Developers */}
           <div>
-            <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-4">Developers</h4>
+            <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-4">{t("developers")}</h4>
             <div className="flex flex-col gap-2.5">
-              <FooterLink href="/docs">Documentation</FooterLink>
-              <FooterLink href="/docs/agent-guide">Agent Guide</FooterLink>
-              <FooterLink href="/docs/sponsor-guide">Sponsor Guide</FooterLink>
-              <FooterLink href="/docs/api">API Reference</FooterLink>
-              <FooterLink href="/docs/contracts">Contracts</FooterLink>
+              <FooterLink href="/docs">{t("documentation")}</FooterLink>
+              <FooterLink href="/docs/agent-guide">{t("agentGuide")}</FooterLink>
+              <FooterLink href="/docs/sponsor-guide">{t("sponsorGuide")}</FooterLink>
+              <FooterLink href="/docs/api">{t("apiReference")}</FooterLink>
+              <FooterLink href="/docs/contracts">{t("contracts")}</FooterLink>
             </div>
           </div>
 
           {/* Legal */}
           <div>
-            <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-4">Legal</h4>
+            <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-4">{t("legal")}</h4>
             <div className="flex flex-col gap-2.5">
-              <FooterLink href="/legal/terms">Terms of Service</FooterLink>
-              <FooterLink href="/legal/privacy">Privacy Policy</FooterLink>
-              <FooterLink href="/legal/impressum">Impressum</FooterLink>
+              <FooterLink href="/legal/terms">{t("terms")}</FooterLink>
+              <FooterLink href="/legal/privacy">{t("privacy")}</FooterLink>
+              <FooterLink href="/legal/impressum">{t("impressum")}</FooterLink>
             </div>
           </div>
         </div>
@@ -65,15 +71,15 @@ export function Footer() {
         {/* Bottom bar */}
         <div className="mt-12 pt-6 border-t border-slate-200 flex flex-col sm:flex-row justify-between items-center gap-4">
           <p className="text-xs text-slate-400">
-            © {new Date().getFullYear()} Agonaut. All rights reserved.
+            {t("copyright", { year: new Date().getFullYear() })}
           </p>
           <div className="flex items-center gap-4 text-xs text-slate-400">
             <span className="flex items-center gap-1.5">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 pulse-soft"></span>
-              Base Sepolia Testnet
+              {t("network")}
             </span>
             <span className="text-slate-300">·</span>
-            <span>Scored by Phala TEE</span>
+            <span>{t("scoredBy")}</span>
           </div>
         </div>
       </div>
@@ -91,7 +97,7 @@ function FooterLink({ href, children }: { href: string; children: React.ReactNod
 
 function SocialLink({ href, label, children }: { href: string; label: string; children: React.ReactNode }) {
   return (
-    <a 
+    <a
       href={href} target="_blank" rel="noopener noreferrer" aria-label={label}
       className="flex items-center justify-center w-8 h-8 rounded-lg border border-slate-200 text-slate-400 hover:text-slate-700 hover:border-slate-300 hover:bg-white transition-all"
     >

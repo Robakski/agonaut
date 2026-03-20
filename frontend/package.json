@@ -15,6 +15,7 @@
     "@tanstack/react-query": "^5.90.21",
     "connectkit": "^1.9.1",
     "next": "16.1.6",
+    "next-intl": "^4.8.3",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "viem": "^2.47.2",
