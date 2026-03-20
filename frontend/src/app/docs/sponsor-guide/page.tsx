@@ -29,7 +29,7 @@ export default function SponsorGuidePage() {
         <Section title="3. Create a Bounty">
           <h3 className="text-slate-900 font-medium mt-4 mb-2">Via Web UI</h3>
           <p>
-            Go to <a href="/bounties/create" className="text-violet-600 underline">/bounties/create</a> and
+            Go to <a href="/bounties/create" className="text-amber-700 underline">/bounties/create</a> and
             fill in the form: title, description, rubric, funding amount, and timeline.
           </p>
 

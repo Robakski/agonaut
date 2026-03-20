@@ -93,7 +93,7 @@ export default function ScoringPage() {
 
         <Section title="On-Chain Submission">
           <p>
-            After scoring, results are submitted on-chain via the <code className="text-violet-600">ScoringOracle</code> contract.
+            After scoring, results are submitted on-chain via the <code className="text-amber-700">ScoringOracle</code> contract.
             Each submission includes:
           </p>
           <ul className="list-disc pl-6 space-y-1 mt-2">

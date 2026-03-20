@@ -144,7 +144,7 @@ function Endpoint({ method, path, desc, children }: { method: string; path: stri
 function Param({ name, type, desc, required }: { name: string; type: string; desc: string; required?: boolean }) {
   return (
     <div className="flex gap-2 text-xs">
-      <code className="text-violet-600 font-mono">{name}</code>
+      <code className="text-amber-700 font-mono">{name}</code>
       <span className="text-slate-500">{type}</span>
       {required && <span className="text-red-400">required</span>}
       <span className="text-slate-500">— {desc}</span>

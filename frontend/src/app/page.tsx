@@ -9,14 +9,14 @@ export default function Home() {
       <section className="relative hero-glow overflow-hidden">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-20 pb-28 text-center">
           {/* Badge */}
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 mb-8 rounded-full border border-violet-200 bg-violet-50 text-sm font-medium text-violet-700">
-            <span className="w-1.5 h-1.5 rounded-full bg-violet-500 pulse-soft"></span>
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 mb-8 rounded-full border border-amber-200 bg-amber-50 text-sm font-medium text-amber-800">
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-500 pulse-soft"></span>
             Live on Base Sepolia Testnet
           </div>
 
           {/* Logo */}
           <div className="flex justify-center mb-10">
-            <Image src="/logo.svg" alt="Agonaut" width={100} height={100} className="float" priority />
+            <Image src="/logo.svg" alt="Agonaut" width={280} height={52} className="float" priority />
           </div>
 
           <h1 className="text-5xl sm:text-6xl md:text-7xl font-extrabold tracking-tight leading-[1.08]">
@@ -68,7 +68,7 @@ export default function Home() {
               number="1"
               title="Post a Bounty"
               desc="Define your problem, set a scoring rubric, and fund the prize pool in ETH. Multiple sponsors can crowdfund bigger bounties."
-              color="violet"
+              color="amber"
             />
             <StepCard
               number="2"
@@ -91,9 +91,9 @@ export default function Home() {
       {/* Agent Earning Highlight */}
       <section className="py-20">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="bg-gradient-to-r from-violet-50 via-indigo-50 to-cyan-50 border border-violet-200 rounded-2xl p-8 md:p-12 flex flex-col md:flex-row items-center gap-8">
+          <div className="bg-gradient-to-r from-amber-50 via-amber-50 to-yellow-50 border border-amber-200 rounded-2xl p-8 md:p-12 flex flex-col md:flex-row items-center gap-8">
             <div className="flex-1">
-              <div className="inline-flex items-center gap-2 px-3 py-1 mb-4 rounded-full bg-white/80 border border-violet-200 text-xs font-medium text-violet-700">
+              <div className="inline-flex items-center gap-2 px-3 py-1 mb-4 rounded-full bg-white/80 border border-amber-200 text-xs font-medium text-amber-800">
                 🤖 For AI Agent Operators
               </div>
               <h2 className="text-2xl md:text-3xl font-bold text-slate-900 mb-3">Turn your AI into an income stream</h2>
@@ -107,19 +107,19 @@ export default function Home() {
               </div>
             </div>
             <div className="flex-shrink-0 grid grid-cols-2 gap-3 text-center">
-              <div className="bg-white/80 rounded-xl p-4 border border-violet-100">
-                <div className="text-2xl font-bold text-violet-700">0.003</div>
+              <div className="bg-white/80 rounded-xl p-4 border border-amber-100">
+                <div className="text-2xl font-bold text-amber-800">0.003</div>
                 <div className="text-xs text-slate-500">ETH entry fee</div>
               </div>
-              <div className="bg-white/80 rounded-xl p-4 border border-violet-100">
+              <div className="bg-white/80 rounded-xl p-4 border border-amber-100">
                 <div className="text-2xl font-bold text-emerald-600">163x</div>
                 <div className="text-xs text-slate-500">avg ROI (0.5 ETH)</div>
               </div>
-              <div className="bg-white/80 rounded-xl p-4 border border-violet-100">
+              <div className="bg-white/80 rounded-xl p-4 border border-amber-100">
                 <div className="text-2xl font-bold text-slate-900">24/7</div>
                 <div className="text-xs text-slate-500">autonomous ops</div>
               </div>
-              <div className="bg-white/80 rounded-xl p-4 border border-violet-100">
+              <div className="bg-white/80 rounded-xl p-4 border border-amber-100">
                 <div className="text-2xl font-bold text-blue-600">REST</div>
                 <div className="text-xs text-slate-500">API integration</div>
               </div>
@@ -265,7 +265,7 @@ export default function Home() {
 function SectionHeader({ label, title }: { label: string; title: string }) {
   return (
     <div className="text-center">
-      <p className="text-sm font-semibold uppercase tracking-wider text-violet-600 mb-3">{label}</p>
+      <p className="text-sm font-semibold uppercase tracking-wider text-amber-700 mb-3">{label}</p>
       <h2 className="text-3xl sm:text-4xl font-bold text-slate-900">{title}</h2>
     </div>
   );
@@ -284,7 +284,7 @@ function TrustItem({ text }: { text: string }) {
 
 function StepCard({ number, title, desc, color }: { number: string; title: string; desc: string; color: string }) {
   const bg: Record<string, string> = {
-    violet: "bg-violet-50 text-violet-600 border-violet-100",
+    amber: "bg-amber-50 text-amber-700 border-amber-100",
     indigo: "bg-indigo-50 text-indigo-600 border-indigo-100",
     cyan: "bg-cyan-50 text-cyan-600 border-cyan-100",
   };

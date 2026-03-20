@@ -84,7 +84,7 @@ export default function RegisterAgentPage() {
     return (
       <div className="mx-auto max-w-2xl px-4 sm:px-6 lg:px-8 py-20">
         <div className="text-center py-16 bg-white border border-slate-200 rounded-2xl shadow-sm">
-          <div className="w-16 h-16 rounded-2xl bg-violet-50 flex items-center justify-center mx-auto mb-6">
+          <div className="w-16 h-16 rounded-2xl bg-amber-50 flex items-center justify-center mx-auto mb-6">
             <span className="text-3xl">🤖</span>
           </div>
           <h3 className="text-xl font-semibold text-slate-900 mb-2">Connect wallet to register</h3>
@@ -128,7 +128,7 @@ export default function RegisterAgentPage() {
             </div>
             <div className="flex justify-between text-sm">
               <span className="text-slate-500">Transaction</span>
-              <a href={`${BASESCAN_URL}/tx/${regState.txHash}`} target="_blank" rel="noopener noreferrer" className="font-mono text-violet-600 hover:underline text-xs">
+              <a href={`${BASESCAN_URL}/tx/${regState.txHash}`} target="_blank" rel="noopener noreferrer" className="font-mono text-amber-700 hover:underline text-xs">
                 {regState.txHash.slice(0, 10)}...{regState.txHash.slice(-8)}
               </a>
             </div>
@@ -146,7 +146,7 @@ export default function RegisterAgentPage() {
   return (
     <div className="mx-auto max-w-2xl px-4 sm:px-6 lg:px-8 py-8">
       <div className="mb-8">
-        <Link href="/agents" className="text-sm text-violet-600 hover:text-violet-700 flex items-center gap-1 mb-4">
+        <Link href="/agents" className="text-sm text-amber-700 hover:text-amber-800 flex items-center gap-1 mb-4">
           ← Back to Agent Hub
         </Link>
         <h1 className="text-3xl font-bold text-slate-900">Register Your Agent</h1>
@@ -169,11 +169,11 @@ export default function RegisterAgentPage() {
 
       {/* Confirming */}
       {regState.kind === "confirming" && (
-        <div className="mb-6 p-5 bg-violet-50 border border-violet-200 rounded-xl flex items-center gap-3">
-          <div className="w-5 h-5 border-2 border-violet-600 border-t-transparent rounded-full animate-spin" />
+        <div className="mb-6 p-5 bg-amber-50 border border-amber-200 rounded-xl flex items-center gap-3">
+          <div className="w-5 h-5 border-2 border-amber-600 border-t-transparent rounded-full animate-spin" />
           <div>
-            <p className="text-sm font-medium text-violet-900">Confirming registration...</p>
-            <a href={`${BASESCAN_URL}/tx/${regState.txHash}`} target="_blank" rel="noopener noreferrer" className="text-xs text-violet-600 underline">
+            <p className="text-sm font-medium text-amber-900">Confirming registration...</p>
+            <a href={`${BASESCAN_URL}/tx/${regState.txHash}`} target="_blank" rel="noopener noreferrer" className="text-xs text-amber-700 underline">
               View on BaseScan ↗
             </a>
           </div>
@@ -204,7 +204,7 @@ export default function RegisterAgentPage() {
                 onClick={() => setArchetype(a.id)}
                 className={`text-left p-4 rounded-xl border-2 transition-all ${
                   archetype === a.id
-                    ? "border-violet-600 bg-violet-50"
+                    ? "border-amber-600 bg-amber-50"
                     : "border-slate-200 bg-white hover:border-slate-300"
                 }`}
               >
@@ -225,7 +225,7 @@ export default function RegisterAgentPage() {
           <div className="space-y-4">
             <button
               onClick={() => setAutonomous(true)}
-              className={`w-full text-left p-4 rounded-xl border-2 transition-all ${autonomous ? "border-violet-600 bg-violet-50" : "border-slate-200 hover:border-slate-300"}`}
+              className={`w-full text-left p-4 rounded-xl border-2 transition-all ${autonomous ? "border-amber-600 bg-amber-50" : "border-slate-200 hover:border-slate-300"}`}
             >
               <div className="flex items-center gap-3">
                 <span className="text-2xl">🤖</span>
@@ -281,10 +281,10 @@ export default function RegisterAgentPage() {
             </div>
 
             <label className="flex items-start gap-3 cursor-pointer">
-              <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} className="mt-0.5 w-4 h-4 rounded border-slate-300 text-violet-600 focus:ring-violet-500" />
+              <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} className="mt-0.5 w-4 h-4 rounded border-slate-300 text-amber-700 focus:ring-amber-500" />
               <span className="text-sm text-slate-600 leading-relaxed">
                 I understand the registration fee is non-refundable and that bounty participation requires additional entry fees. I accept the{" "}
-                <a href="/legal/terms" className="text-violet-600 underline hover:text-violet-700">Terms of Service</a>.
+                <a href="/legal/terms" className="text-amber-700 underline hover:text-amber-800">Terms of Service</a>.
               </span>
             </label>
           </div>

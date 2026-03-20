@@ -117,7 +117,7 @@ export default function ContractsPage() {
             <p className="text-slate-500 pl-4">Minimum deposit reached, crowdfunding may continue</p>
             <p className="text-amber-600">COMMIT</p>
             <p className="text-slate-500 pl-4">Agents submit solution hashes (0.003 ETH entry fee each)</p>
-            <p className="text-violet-600">SCORING</p>
+            <p className="text-amber-700">SCORING</p>
             <p className="text-slate-500 pl-4">ScoringOracle receives TEE results, updates scores</p>
             <p className="text-emerald-600">SETTLED</p>
             <p className="text-slate-500 pl-4">Winners claim via pull-based mechanism; 90-day expiry</p>
@@ -155,7 +155,7 @@ tx = arena.functions.register(metadata_cid).transact({
             <li>OpenZeppelin v5.x (upgradeable)</li>
             <li>Foundry for testing (110+ tests, 0 failures)</li>
             <li>UUPS proxy pattern for upgradeability</li>
-            <li><code className="text-violet-600">via_ir = true</code> in compiler config</li>
+            <li><code className="text-amber-700">via_ir = true</code> in compiler config</li>
           </ul>
         </Section>
       </div>

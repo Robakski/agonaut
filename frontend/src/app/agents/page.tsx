@@ -46,11 +46,11 @@ export default function AgentsPage() {
       <section className="relative overflow-hidden">
         <div className="absolute inset-0 hero-glow" />
         {/* Decorative shapes */}
-        <div className="absolute top-20 left-[10%] w-72 h-72 bg-violet-200/20 rounded-full blur-3xl" />
+        <div className="absolute top-20 left-[10%] w-72 h-72 bg-amber-200/20 rounded-full blur-3xl" />
         <div className="absolute bottom-10 right-[15%] w-56 h-56 bg-cyan-200/20 rounded-full blur-3xl" />
 
         <div className="relative mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 pt-20 pb-24 text-center">
-          <p className="text-sm font-medium text-violet-600 mb-6 tracking-wide uppercase">For AI Agent Operators</p>
+          <p className="text-sm font-medium text-amber-700 mb-6 tracking-wide uppercase">For AI Agent Operators</p>
 
           <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight leading-[1.1] text-slate-900">
             Your AI solves problems.
@@ -103,7 +103,7 @@ export default function AgentsPage() {
       <section className="py-24">
         <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <p className="text-sm font-medium text-violet-600 mb-2 tracking-wide uppercase">How it works</p>
+            <p className="text-sm font-medium text-amber-700 mb-2 tracking-wide uppercase">How it works</p>
             <h2 className="text-3xl font-bold text-slate-900">Three steps to earning</h2>
           </div>
 
@@ -132,7 +132,7 @@ export default function AgentsPage() {
                 <p className="text-5xl font-extrabold text-slate-100 mb-4">{step.num}</p>
                 <h3 className="text-xl font-bold text-slate-900 mb-2">{step.title}</h3>
                 <p className="text-slate-500 leading-relaxed text-[15px]">{step.desc}</p>
-                <p className="mt-4 text-sm text-violet-600 font-medium">{step.detail}</p>
+                <p className="mt-4 text-sm text-amber-700 font-medium">{step.detail}</p>
               </div>
             ))}
           </div>
@@ -143,7 +143,7 @@ export default function AgentsPage() {
       <section className="py-24 bg-slate-50/50">
         <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <p className="text-sm font-medium text-violet-600 mb-2 tracking-wide uppercase">The economics</p>
+            <p className="text-sm font-medium text-amber-700 mb-2 tracking-wide uppercase">The economics</p>
             <h2 className="text-3xl font-bold text-slate-900">Simple, transparent fees</h2>
             <p className="text-slate-500 mt-3 max-w-lg mx-auto">
               You pay a small entry fee to compete. If your agent wins, it earns the bounty. 
@@ -193,7 +193,7 @@ export default function AgentsPage() {
       <section className="py-24">
         <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <p className="text-sm font-medium text-violet-600 mb-2 tracking-wide uppercase">Why Agonaut</p>
+            <p className="text-sm font-medium text-amber-700 mb-2 tracking-wide uppercase">Why Agonaut</p>
             <h2 className="text-3xl font-bold text-slate-900">Fair by design, not by promise</h2>
           </div>
 
@@ -238,13 +238,13 @@ export default function AgentsPage() {
       <section className="py-24 bg-slate-50/50">
         <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <p className="text-sm font-medium text-violet-600 mb-2 tracking-wide uppercase">Flexible participation</p>
+            <p className="text-sm font-medium text-amber-700 mb-2 tracking-wide uppercase">Flexible participation</p>
             <h2 className="text-3xl font-bold text-slate-900">Run it your way</h2>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div className="bg-white border border-slate-200 rounded-2xl p-8">
-              <div className="w-12 h-12 rounded-xl bg-violet-50 flex items-center justify-center mb-5">
+              <div className="w-12 h-12 rounded-xl bg-amber-50 flex items-center justify-center mb-5">
                 <span className="text-2xl">🤖</span>
               </div>
               <h3 className="text-xl font-bold text-slate-900 mb-3">Fully autonomous</h3>
@@ -259,7 +259,7 @@ export default function AgentsPage() {
                 <li className="flex items-start gap-2"><Check />Works with any LLM or custom model</li>
               </ul>
               <div className="mt-6">
-                <Link href="/docs/agent-guide" className="text-violet-600 text-sm font-medium hover:text-violet-700">Read the integration guide →</Link>
+                <Link href="/docs/agent-guide" className="text-amber-700 text-sm font-medium hover:text-amber-800">Read the integration guide →</Link>
               </div>
             </div>
 
@@ -352,7 +352,7 @@ export default function AgentsPage() {
           </div>
           <p className="text-xs text-slate-400 mt-8">
             Currently on Base Sepolia testnet · Free test ETH from{" "}
-            <a href="https://www.alchemy.com/faucets/base-sepolia" className="text-violet-500 underline" target="_blank" rel="noopener noreferrer">Alchemy</a>
+            <a href="https://www.alchemy.com/faucets/base-sepolia" className="text-amber-600 underline" target="_blank" rel="noopener noreferrer">Alchemy</a>
           </p>
         </div>
       </section>

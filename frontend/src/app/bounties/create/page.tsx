@@ -334,8 +334,8 @@ export default function CreateBountyPage() {
     return (
       <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 py-20">
         <div className="text-center py-20 bg-white border border-slate-200 rounded-2xl shadow-sm">
-          <div className="w-16 h-16 rounded-2xl bg-violet-50 flex items-center justify-center mx-auto mb-6">
-            <svg className="w-8 h-8 text-violet-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="w-16 h-16 rounded-2xl bg-amber-50 flex items-center justify-center mx-auto mb-6">
+            <svg className="w-8 h-8 text-amber-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
             </svg>
           </div>
@@ -367,13 +367,13 @@ export default function CreateBountyPage() {
             </div>
             <div className="flex justify-between text-sm">
               <span className="text-slate-500">Round Address</span>
-              <a href={`${BASESCAN_URL}/address/${submitState.roundAddress}`} target="_blank" rel="noopener noreferrer" className="font-mono text-violet-600 hover:underline text-xs">
+              <a href={`${BASESCAN_URL}/address/${submitState.roundAddress}`} target="_blank" rel="noopener noreferrer" className="font-mono text-amber-700 hover:underline text-xs">
                 {submitState.roundAddress.slice(0, 10)}...{submitState.roundAddress.slice(-8)}
               </a>
             </div>
             <div className="flex justify-between text-sm">
               <span className="text-slate-500">Deposit TX</span>
-              <a href={`${BASESCAN_URL}/tx/${submitState.txHash}`} target="_blank" rel="noopener noreferrer" className="font-mono text-violet-600 hover:underline text-xs">
+              <a href={`${BASESCAN_URL}/tx/${submitState.txHash}`} target="_blank" rel="noopener noreferrer" className="font-mono text-amber-700 hover:underline text-xs">
                 {submitState.txHash.slice(0, 10)}...{submitState.txHash.slice(-8)}
               </a>
             </div>
@@ -412,11 +412,11 @@ export default function CreateBountyPage() {
             <button
               onClick={() => i < stepIdx && !isSubmitting && setStepIdx(i)}
               className={`flex items-center gap-2 text-sm font-medium transition-colors ${
-                i === stepIdx ? "text-violet-700" : i < stepIdx ? "text-slate-900 cursor-pointer hover:text-violet-600" : "text-slate-400"
+                i === stepIdx ? "text-amber-800" : i < stepIdx ? "text-slate-900 cursor-pointer hover:text-amber-700" : "text-slate-400"
               }`}
             >
               <span className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold border-2 transition-colors ${
-                i === stepIdx ? "border-violet-600 bg-violet-600 text-white"
+                i === stepIdx ? "border-amber-600 bg-slate-900 text-white"
                   : i < stepIdx ? "border-emerald-500 bg-emerald-50 text-emerald-600"
                   : "border-slate-300 text-slate-400"
               }`}>
@@ -445,17 +445,17 @@ export default function CreateBountyPage() {
 
       {/* Submission progress overlay */}
       {isSubmitting && (
-        <div className="mb-6 p-5 bg-violet-50 border border-violet-200 rounded-xl">
+        <div className="mb-6 p-5 bg-amber-50 border border-amber-200 rounded-xl">
           <div className="flex items-center gap-3">
-            <div className="w-5 h-5 border-2 border-violet-600 border-t-transparent rounded-full animate-spin" />
+            <div className="w-5 h-5 border-2 border-amber-600 border-t-transparent rounded-full animate-spin" />
             <div>
-              <p className="text-sm font-medium text-violet-900">
+              <p className="text-sm font-medium text-amber-900">
                 {submitState.kind === "creating" && "Creating bounty on-chain..."}
                 {submitState.kind === "awaiting_deposit" && "Waiting for wallet signature..."}
                 {submitState.kind === "depositing" && "Depositing ETH to round contract..."}
                 {submitState.kind === "confirming" && "Confirming transaction..."}
               </p>
-              <p className="text-xs text-violet-600 mt-1">
+              <p className="text-xs text-amber-700 mt-1">
                 {submitState.kind === "creating" && "Our relay is calling the factory contract"}
                 {submitState.kind === "awaiting_deposit" && "Please confirm the deposit in your wallet"}
                 {submitState.kind === "confirming" && (
@@ -467,9 +467,9 @@ export default function CreateBountyPage() {
             </div>
           </div>
           {/* Progress bar */}
-          <div className="mt-4 h-1.5 bg-violet-100 rounded-full overflow-hidden">
+          <div className="mt-4 h-1.5 bg-amber-100 rounded-full overflow-hidden">
             <div
-              className="h-full bg-violet-600 rounded-full transition-all duration-500"
+              className="h-full bg-slate-900 rounded-full transition-all duration-500"
               style={{
                 width: submitState.kind === "creating" ? "25%" : submitState.kind === "awaiting_deposit" ? "50%" : submitState.kind === "depositing" ? "70%" : "90%",
               }}
@@ -489,7 +489,7 @@ export default function CreateBountyPage() {
                 onClick={() => selectTemplate(key)}
                 className={`text-left p-5 rounded-xl border-2 transition-all ${
                   selectedTemplate === key
-                    ? "border-violet-600 bg-violet-50 shadow-sm"
+                    ? "border-amber-600 bg-amber-50 shadow-sm"
                     : "border-slate-200 bg-white hover:border-slate-300 hover:shadow-sm"
                 }`}
               >
@@ -497,8 +497,8 @@ export default function CreateBountyPage() {
                 <div className="font-semibold text-slate-900">{t.label}</div>
                 <div className="text-sm text-slate-500 mt-1">{t.desc}</div>
                 {selectedTemplate === key && (
-                  <div className="mt-3 text-xs text-violet-600 font-medium flex items-center gap-1">
-                    <span className="w-4 h-4 rounded-full bg-violet-600 text-white flex items-center justify-center text-[10px]">✓</span>
+                  <div className="mt-3 text-xs text-amber-700 font-medium flex items-center gap-1">
+                    <span className="w-4 h-4 rounded-full bg-slate-900 text-white flex items-center justify-center text-[10px]">✓</span>
                     {t.criteria.reduce((s, c) => s + c.checks.length, 0)} checks pre-configured
                   </div>
                 )}
@@ -529,9 +529,9 @@ export default function CreateBountyPage() {
               <Field label="Tags" hint="Up to 5 tags to help agents find your bounty">
                 <div className="flex gap-2 flex-wrap mb-2">
                   {tags.map((t) => (
-                    <span key={t} className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-violet-50 text-violet-700 text-sm font-medium">
+                    <span key={t} className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-amber-50 text-amber-800 text-sm font-medium">
                       {t}
-                      <button onClick={() => setTags(tags.filter((x) => x !== t))} className="text-violet-400 hover:text-violet-600">×</button>
+                      <button onClick={() => setTags(tags.filter((x) => x !== t))} className="text-amber-500 hover:text-amber-700">×</button>
                     </span>
                   ))}
                 </div>
@@ -586,7 +586,7 @@ export default function CreateBountyPage() {
                           </button>
                         </div>
                       ))}
-                      <button onClick={() => addCheck(cIdx)} className="text-sm text-violet-600 hover:text-violet-700 font-medium flex items-center gap-1 mt-1">
+                      <button onClick={() => addCheck(cIdx)} className="text-sm text-amber-700 hover:text-amber-800 font-medium flex items-center gap-1 mt-1">
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
                         Add check
                       </button>
@@ -647,7 +647,7 @@ export default function CreateBountyPage() {
                   <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm text-slate-400 font-medium">BPS</span>
                 </div>
                 <div className="mt-2 h-2 bg-slate-100 rounded-full overflow-hidden">
-                  <div className="h-full bg-gradient-to-r from-violet-500 to-indigo-500 rounded-full transition-all" style={{ width: `${Math.min(100, (Number(threshold) / 10000) * 100)}%` }} />
+                  <div className="h-full bg-gradient-to-r from-amber-500 to-amber-600 rounded-full transition-all" style={{ width: `${Math.min(100, (Number(threshold) / 10000) * 100)}%` }} />
                 </div>
                 <div className="flex justify-between text-xs text-slate-400 mt-1">
                   <span>10%</span>
@@ -658,7 +658,7 @@ export default function CreateBountyPage() {
             </div>
             <div className="mt-6 pt-4 border-t border-slate-200">
               <label className="flex items-center gap-3 cursor-pointer">
-                <div onClick={() => setGraduated(!graduated)} className={`w-10 h-6 rounded-full relative transition-colors cursor-pointer ${graduated ? "bg-violet-600" : "bg-slate-300"}`}>
+                <div onClick={() => setGraduated(!graduated)} className={`w-10 h-6 rounded-full relative transition-colors cursor-pointer ${graduated ? "bg-slate-900" : "bg-slate-300"}`}>
                   <div className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-transform ${graduated ? "left-5" : "left-1"}`} />
                 </div>
                 <div>
@@ -681,10 +681,10 @@ export default function CreateBountyPage() {
           </Card>
           <div className="bg-slate-50 border border-slate-200 rounded-xl p-5">
             <label className="flex items-start gap-3 cursor-pointer">
-              <input type="checkbox" checked={withdrawalConsent} onChange={(e) => setWithdrawalConsent(e.target.checked)} className="mt-0.5 w-4 h-4 rounded border-slate-300 text-violet-600 focus:ring-violet-500" />
+              <input type="checkbox" checked={withdrawalConsent} onChange={(e) => setWithdrawalConsent(e.target.checked)} className="mt-0.5 w-4 h-4 rounded border-slate-300 text-amber-700 focus:ring-amber-500" />
               <span className="text-sm text-slate-600 leading-relaxed">
                 I agree that the service begins immediately upon transaction confirmation and I waive my right of withdrawal (Widerrufsrecht). I have read and accept the{" "}
-                <a href="/legal/terms" className="text-violet-600 underline hover:text-violet-700">Terms of Service</a>.
+                <a href="/legal/terms" className="text-amber-700 underline hover:text-amber-800">Terms of Service</a>.
               </span>
             </label>
           </div>
@@ -695,8 +695,8 @@ export default function CreateBountyPage() {
       {step === "Review" && (
         <div className="space-y-6">
           <div className="flex gap-3">
-            <button onClick={() => setShowPreview(false)} className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${!showPreview ? "bg-violet-100 text-violet-700" : "text-slate-500 hover:text-slate-700"}`}>Summary</button>
-            <button onClick={() => setShowPreview(true)} className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${showPreview ? "bg-violet-100 text-violet-700" : "text-slate-500 hover:text-slate-700"}`}>👁 Agent Preview</button>
+            <button onClick={() => setShowPreview(false)} className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${!showPreview ? "bg-amber-100 text-amber-800" : "text-slate-500 hover:text-slate-700"}`}>Summary</button>
+            <button onClick={() => setShowPreview(true)} className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${showPreview ? "bg-amber-100 text-amber-800" : "text-slate-500 hover:text-slate-700"}`}>👁 Agent Preview</button>
           </div>
 
           {!showPreview ? (
@@ -712,7 +712,7 @@ export default function CreateBountyPage() {
                   {tags.length > 0 && (
                     <div className="sm:col-span-2">
                       <dt className="text-slate-400 mb-1">Tags</dt>
-                      <dd className="flex gap-1.5 flex-wrap">{tags.map((t) => <span key={t} className="px-2 py-0.5 rounded-full bg-violet-50 text-violet-700 text-xs font-medium">{t}</span>)}</dd>
+                      <dd className="flex gap-1.5 flex-wrap">{tags.map((t) => <span key={t} className="px-2 py-0.5 rounded-full bg-amber-50 text-amber-800 text-xs font-medium">{t}</span>)}</dd>
                     </div>
                   )}
                 </dl>

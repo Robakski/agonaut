@@ -106,7 +106,7 @@ export default function BountiesPage() {
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
         {[
           { label: "Open", value: PLACEHOLDER_BOUNTIES.filter((b) => b.phase === "OPEN" || b.phase === "FUNDED").length, color: "text-emerald-600" },
-          { label: "In Progress", value: PLACEHOLDER_BOUNTIES.filter((b) => b.phase === "COMMIT" || b.phase === "SCORING").length, color: "text-violet-600" },
+          { label: "In Progress", value: PLACEHOLDER_BOUNTIES.filter((b) => b.phase === "COMMIT" || b.phase === "SCORING").length, color: "text-amber-700" },
           { label: "Total Prize Pool", value: `${PLACEHOLDER_BOUNTIES.reduce((s, b) => s + b.bounty_eth, 0).toFixed(1)} ETH`, color: "text-slate-900" },
           { label: "Entry Fee", value: `${ENTRY_FEE} ETH`, color: "text-slate-500" },
         ].map((stat) => (
@@ -125,7 +125,7 @@ export default function BountiesPage() {
             onClick={() => setPhaseFilter(phase)}
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${
               phaseFilter === phase
-                ? "bg-violet-600 text-white shadow-sm"
+                ? "bg-slate-900 text-white shadow-sm"
                 : "bg-white text-slate-500 hover:text-slate-700 border border-slate-200 hover:border-slate-300"
             }`}
           >
@@ -140,7 +140,7 @@ export default function BountiesPage() {
           <Link
             key={bounty.bounty_id}
             href={`/bounties/${bounty.bounty_id}`}
-            className="block bg-white border border-slate-200 rounded-xl p-6 shadow-sm hover:shadow-md hover:border-violet-300 transition-all group"
+            className="block bg-white border border-slate-200 rounded-xl p-6 shadow-sm hover:shadow-md hover:border-amber-300 transition-all group"
           >
             <div className="flex items-start justify-between gap-4">
               <div className="flex-1 min-w-0">
@@ -151,7 +151,7 @@ export default function BountiesPage() {
                     <span key={t} className="text-xs px-2 py-0.5 rounded-full bg-slate-100 text-slate-500">{t}</span>
                   ))}
                 </div>
-                <h3 className="text-lg font-semibold text-slate-900 group-hover:text-violet-700 transition-colors truncate">
+                <h3 className="text-lg font-semibold text-slate-900 group-hover:text-amber-800 transition-colors truncate">
                   {bounty.title}
                 </h3>
                 <div className="flex items-center gap-4 mt-2 text-sm text-slate-500">
@@ -199,7 +199,7 @@ function PhaseTag({ phase }: { phase: string }) {
     OPEN: "bg-blue-50 text-blue-700 border-blue-200",
     FUNDED: "bg-emerald-50 text-emerald-700 border-emerald-200",
     COMMIT: "bg-amber-50 text-amber-700 border-amber-200",
-    SCORING: "bg-violet-50 text-violet-700 border-violet-200",
+    SCORING: "bg-amber-50 text-amber-800 border-amber-200",
     SETTLED: "bg-slate-100 text-slate-600 border-slate-200",
     CANCELLED: "bg-red-50 text-red-600 border-red-200",
     DISPUTED: "bg-orange-50 text-orange-700 border-orange-200",
@@ -217,7 +217,7 @@ function TierBadge({ tier }: { tier: string }) {
     Silver: "bg-slate-100 text-slate-600 border-slate-200",
     Gold: "bg-yellow-50 text-yellow-700 border-yellow-200",
     Diamond: "bg-cyan-50 text-cyan-700 border-cyan-200",
-    Prometheus: "bg-violet-50 text-violet-700 border-violet-200",
+    Prometheus: "bg-amber-50 text-amber-800 border-amber-200",
   };
   return (
     <span className={`text-xs font-medium px-2 py-0.5 rounded border ${styles[tier] || ""}`}>

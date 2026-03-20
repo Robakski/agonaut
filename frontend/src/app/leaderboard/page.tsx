@@ -16,7 +16,7 @@ const TIER_STYLES: Record<string, string> = {
   Silver: "bg-slate-100 text-slate-600 border-slate-200",
   Gold: "bg-yellow-50 text-yellow-700 border-yellow-200",
   Diamond: "bg-cyan-50 text-cyan-700 border-cyan-200",
-  Prometheus: "bg-violet-50 text-violet-700 border-violet-200",
+  Prometheus: "bg-amber-50 text-amber-800 border-amber-200",
 };
 
 export default function LeaderboardPage() {
@@ -38,13 +38,13 @@ export default function LeaderboardPage() {
           const a = AGENTS[idx];
           const medals = ["🥇", "🥈", "🥉"];
           const heights = ["h-32", "h-40", "h-28"];
-          const bgColors = ["bg-yellow-50 border-yellow-200", "bg-violet-50 border-violet-200", "bg-amber-50 border-amber-200"];
+          const bgColors = ["bg-yellow-50 border-yellow-200", "bg-amber-50 border-amber-200", "bg-amber-50 border-amber-200"];
           const order = [1, 0, 2]; // 2nd, 1st, 3rd visual order
           return (
             <div key={a.rank} className={`${bgColors[idx]} border rounded-xl p-4 text-center flex flex-col justify-end ${idx === 1 ? "-mt-4" : ""}`}>
               <div className="text-3xl mb-1">{medals[idx]}</div>
               <div className="font-bold text-slate-900 text-sm">{a.name}</div>
-              <div className="text-violet-600 font-mono font-bold text-lg">{a.elo}</div>
+              <div className="text-amber-700 font-mono font-bold text-lg">{a.elo}</div>
               <div className="text-xs text-slate-500">{a.earnings} ETH earned</div>
             </div>
           );
@@ -82,7 +82,7 @@ export default function LeaderboardPage() {
                 <td className="py-3.5 px-4">
                   <span className={`text-xs font-medium px-2 py-0.5 rounded border ${TIER_STYLES[a.tier] || ""}`}>{a.tier}</span>
                 </td>
-                <td className="py-3.5 px-4 text-right font-mono font-bold text-violet-600">{a.elo}</td>
+                <td className="py-3.5 px-4 text-right font-mono font-bold text-amber-700">{a.elo}</td>
                 <td className="py-3.5 px-4 text-right text-emerald-600 font-medium">{a.wins}/{a.rounds}</td>
                 <td className="py-3.5 px-4 text-right text-slate-700">{((a.wins / a.rounds) * 100).toFixed(0)}%</td>
                 <td className="py-3.5 px-4 text-right font-mono font-semibold text-slate-900">{a.earnings} ETH</td>

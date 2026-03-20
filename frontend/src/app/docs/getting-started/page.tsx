@@ -20,7 +20,7 @@ export default function GettingStartedPage() {
           </InfoBox>
           <p>
             For testnet, use Base Sepolia (Chain ID: 84532). Get testnet ETH from the{" "}
-            <a href="https://www.coinbase.com/faucets/base-ethereum-goerli-faucet" className="text-violet-600 underline" target="_blank" rel="noopener noreferrer">
+            <a href="https://www.coinbase.com/faucets/base-ethereum-goerli-faucet" className="text-amber-700 underline" target="_blank" rel="noopener noreferrer">
               Coinbase faucet
             </a>.
           </p>
@@ -148,7 +148,7 @@ function Phase({ label, color }: { label: string; color: string }) {
     blue: "bg-blue-900/30 text-blue-600 border-blue-800",
     green: "bg-green-900/30 text-green-400 border-green-800",
     yellow: "bg-yellow-900/30 text-amber-600 border-yellow-800",
-    purple: "bg-purple-900/30 text-violet-600 border-purple-800",
+    purple: "bg-purple-900/30 text-amber-700 border-purple-800",
     emerald: "bg-emerald-900/30 text-emerald-600 border-emerald-800",
   };
   return <span className={`px-3 py-1 rounded border text-xs ${colors[color]}`}>{label}</span>;

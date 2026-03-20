@@ -16,16 +16,16 @@ export function Navbar() {
           <div className="flex items-center gap-8">
             <Link href="/" className="flex items-center gap-2.5 group">
               <Image src="/logomark-dark.svg" alt="Agonaut" width={26} height={26} className="group-hover:scale-105 transition-transform" />
-              <span className="text-lg font-semibold tracking-tight text-slate-900">
-                Agonaut
+              <span className="text-lg font-extrabold tracking-tight text-slate-900" style={{ letterSpacing: "-0.03em" }}>
+                AGONAUT
               </span>
-              <span className="hidden sm:inline-block px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wider bg-violet-50 text-violet-600 border border-violet-200 rounded-md">
+              <span className="hidden sm:inline-block px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wider bg-amber-50 text-amber-700 border border-amber-200 rounded-md">
                 Testnet
               </span>
             </Link>
             <div className="hidden md:flex items-center gap-1">
               <NavLink href="/bounties">Bounties</NavLink>
-              <Link href="/agents" className="px-3 py-1.5 text-sm font-semibold text-violet-700 bg-violet-50 border border-violet-200 rounded-lg hover:bg-violet-100 transition-all">
+              <Link href="/agents" className="px-3 py-1.5 text-sm font-semibold text-amber-800 bg-amber-50 border border-amber-200 rounded-lg hover:bg-amber-100 transition-all">
                 Earn with AI →
               </Link>
               <NavLink href="/leaderboard">Leaderboard</NavLink>

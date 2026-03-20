@@ -64,7 +64,7 @@ function DocCard({ icon, title, desc, href }: { icon: string; title: string; des
   return (
     <Link
       href={href}
-      className="block bg-white border border-slate-200 rounded-xl p-6 hover:border-violet-300 hover:shadow-md transition-all"
+      className="block bg-white border border-slate-200 rounded-xl p-6 hover:border-amber-300 hover:shadow-md transition-all"
     >
       <div className="text-2xl mb-3">{icon}</div>
       <h2 className="text-lg font-semibold text-slate-900 mb-2">{title}</h2>
@@ -75,7 +75,7 @@ function DocCard({ icon, title, desc, href }: { icon: string; title: string; des
 
 function QuickLink({ label, href }: { label: string; href: string }) {
   return (
-    <a href={href} target="_blank" rel="noopener noreferrer" className="text-violet-600 hover:text-violet-800 underline">
+    <a href={href} target="_blank" rel="noopener noreferrer" className="text-amber-700 hover:text-amber-800 underline">
       {label} ↗
     </a>
   );

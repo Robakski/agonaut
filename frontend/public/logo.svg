@@ -1,31 +1,12 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 52">
   <defs>
-    <linearGradient id="prism-left" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#7c3aed"/>
-      <stop offset="100%" stop-color="#6366f1"/>
-    </linearGradient>
-    <linearGradient id="prism-right" x1="100%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" stop-color="#06b6d4"/>
-      <stop offset="100%" stop-color="#6366f1"/>
-    </linearGradient>
-    <linearGradient id="prism-overlap" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#818cf8"/>
-      <stop offset="100%" stop-color="#a78bfa"/>
+    <linearGradient id="metal-line" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#d4d4d8"/>
+      <stop offset="35%" stop-color="#a1a1aa"/>
+      <stop offset="65%" stop-color="#d97706"/>
+      <stop offset="100%" stop-color="#f59e0b"/>
     </linearGradient>
   </defs>
-  
-  <!-- Left triangle of the A -->
-  <path d="M256 56 L96 456 L232 456 L256 392 Z" fill="url(#prism-left)"/>
-  
-  <!-- Right triangle of the A -->
-  <path d="M256 56 L416 456 L280 456 L256 392 Z" fill="url(#prism-right)"/>
-  
-  <!-- Overlap/intersection zone — the "solution" completing the A -->
-  <path d="M256 56 L232 456 L280 456 Z" fill="url(#prism-overlap)" opacity="0.9"/>
-  
-  <!-- Crossbar — slightly rounded, modern -->
-  <rect x="168" y="320" width="176" height="36" rx="6" fill="white" opacity="0.95"/>
-  
-  <!-- Solution dot — small circle at the apex representing "the answer" -->
-  <circle cx="256" cy="44" r="12" fill="url(#prism-overlap)"/>
+  <text x="140" y="38" text-anchor="middle" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-weight="800" font-size="44" fill="#0f172a" letter-spacing="-1.3">AGONAUT</text>
+  <rect x="10" y="46" width="260" height="3" rx="1.5" fill="url(#metal-line)"/>
 </svg>

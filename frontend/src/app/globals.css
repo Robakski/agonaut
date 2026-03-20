@@ -10,9 +10,9 @@
   --text-primary: #0f172a;
   --text-secondary: #475569;
   --text-muted: #94a3b8;
-  --accent-purple: #7c3aed;
-  --accent-indigo: #6366f1;
-  --accent-cyan: #06b6d4;
+  --accent-silver: #a1a1aa;
+  --accent-gold: #d97706;
+  --accent-gold-light: #f59e0b;
 }
 
 @theme inline {
@@ -41,14 +41,14 @@ body {
   background-size: 32px 32px;
 }
 
-/* Hero gradient — soft, warm */
+/* Hero gradient — warm silver/gold glow */
 .hero-glow {
-  background: radial-gradient(ellipse 80% 50% at 50% -10%, rgba(124, 58, 237, 0.08) 0%, rgba(99, 102, 241, 0.04) 40%, transparent 70%);
+  background: radial-gradient(ellipse 80% 50% at 50% -10%, rgba(217, 119, 6, 0.06) 0%, rgba(161, 161, 170, 0.04) 40%, transparent 70%);
 }
 
-/* Gradient text */
+/* Gradient text — silver to gold */
 .gradient-text {
-  background: linear-gradient(135deg, #7c3aed 0%, #6366f1 50%, #06b6d4 100%);
+  background: linear-gradient(90deg, #a1a1aa 0%, #78716c 30%, #d97706 70%, #f59e0b 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -56,10 +56,15 @@ body {
 
 /* Gradient text — darker variant for headings */
 .gradient-text-dark {
-  background: linear-gradient(135deg, #6d28d9 0%, #4f46e5 50%, #0891b2 100%);
+  background: linear-gradient(90deg, #a1a1aa 0%, #0f172a 20%, #0f172a 80%, #d97706 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+}
+
+/* Metal underline gradient */
+.metal-line {
+  background: linear-gradient(90deg, #d4d4d8 0%, #a1a1aa 35%, #d97706 65%, #f59e0b 100%);
 }
 
 /* Card hover — subtle lift + border glow */
@@ -68,7 +73,7 @@ body {
 }
 .card-hover:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(99, 102, 241, 0.1);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(217, 119, 6, 0.1);
 }
 
 /* Floating animation */
@@ -95,10 +100,10 @@ body {
   letter-spacing: -0.02em;
 }
 
-/* Section divider — soft gradient line */
+/* Section divider — silver to gold gradient line */
 .section-divider {
   height: 1px;
-  background: linear-gradient(90deg, transparent 0%, #e2e8f0 20%, #e2e8f0 80%, transparent 100%);
+  background: linear-gradient(90deg, transparent 0%, #d4d4d8 15%, #a1a1aa 35%, #d97706 65%, #f59e0b 85%, transparent 100%);
 }
 
 /* ─── Form components ─── */
@@ -115,20 +120,20 @@ body {
 .input-field::placeholder { color: #94a3b8; }
 .input-field:focus {
   outline: none;
-  border-color: #7c3aed;
-  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
+  border-color: #d97706;
+  box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.1);
 }
 
 .btn-primary {
   padding: 0.625rem 1.5rem;
-  background: #7c3aed;
+  background: #0f172a;
   color: white;
   font-weight: 600;
   font-size: 0.875rem;
   border-radius: 0.5rem;
   transition: all 0.15s;
 }
-.btn-primary:hover { background: #6d28d9; }
+.btn-primary:hover { background: #1e293b; }
 .btn-primary:disabled { background: #e2e8f0; color: #94a3b8; cursor: not-allowed; }
 
 .btn-secondary {
