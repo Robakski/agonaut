@@ -25,6 +25,9 @@ BOUNTY_FACTORY = os.getenv("BOUNTY_FACTORY", "")
 ARBITRATION_DAO = os.getenv("ARBITRATION_DAO", "")
 BOUNTY_MARKETPLACE = os.getenv("BOUNTY_MARKETPLACE", "")
 
+# ── Operator (relay transactions) ──
+OPERATOR_PRIVATE_KEY = os.getenv("OPERATOR_PRIVATE_KEY", "")
+
 # ── Scoring Service ──
 SCORER_PRIVATE_KEY = os.getenv("SCORER_PRIVATE_KEY", "")
 PHALA_API_KEY = os.getenv("PHALA_API_KEY", "")

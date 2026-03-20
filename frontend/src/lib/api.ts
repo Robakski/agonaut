@@ -41,6 +41,8 @@ export interface CreateBountyResponse {
   roundAddress: string;
   problemCid: string;
   status: "pending_deposit";
+  createTxHash: string;
+  spawnTxHash: string;
 }
 
 export async function createBountyRelay(data: CreateBountyRequest): Promise<CreateBountyResponse> {
