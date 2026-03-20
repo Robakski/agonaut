@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useTranslations } from "next-intl";
 import { useAccount, useWriteContract, useWaitForTransactionReceipt } from "wagmi";
 import { parseEther, type Address } from "viem";
 import { ConnectKitButton } from "connectkit";
@@ -133,6 +134,15 @@ const TEMPLATES: Record<string, { label: string; icon: string; desc: string; cri
   },
 };
 
+/* ─── Template i18n key mapping ─── */
+const TPL_KEYS: Record<string, { labelKey: string; descKey: string }> = {
+  code: { labelKey: "tplCode", descKey: "tplCodeDesc" },
+  data: { labelKey: "tplData", descKey: "tplDataDesc" },
+  creative: { labelKey: "tplCreative", descKey: "tplCreativeDesc" },
+  security: { labelKey: "tplSecurity", descKey: "tplSecurityDesc" },
+  blank: { labelKey: "tplBlank", descKey: "tplBlankDesc" },
+};
+
 /* ─── Stepper ─── */
 const STEPS = ["Template", "Details", "Rubric", "Economics", "Review"] as const;
 type Step = (typeof STEPS)[number];
@@ -149,6 +159,7 @@ type SubmitState =
 
 export default function CreateBountyPage() {
   const { isConnected, address } = useAccount();
+  const t = useTranslations("createBounty");
 
   // Stepper
   const [stepIdx, setStepIdx] = useState(0);
@@ -325,8 +336,8 @@ export default function CreateBountyPage() {
     setCriteria(u);
   };
   const addTag = () => {
-    const t = tagInput.trim().toLowerCase();
-    if (t && !tags.includes(t) && tags.length < 5) { setTags([...tags, t]); setTagInput(""); }
+    const tagVal = tagInput.trim().toLowerCase();
+    if (tagVal && !tags.includes(tagVal) && tags.length < 5) { setTags([...tags, tagVal]); setTagInput(""); }
   };
 
   /* ─── Not connected ─── */
@@ -339,8 +350,8 @@ export default function CreateBountyPage() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
             </svg>
           </div>
-          <h3 className="text-xl font-semibold text-slate-900 mb-2">Connect your wallet</h3>
-          <p className="text-slate-500 mb-6">You need a wallet to create bounties on Base</p>
+          <h3 className="text-xl font-semibold text-slate-900 mb-2">{t("connectTitle")}</h3>
+          <p className="text-slate-500 mb-6">{t("connectDesc")}</p>
           <ConnectKitButton />
         </div>
       </div>
@@ -357,36 +368,36 @@ export default function CreateBountyPage() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
             </svg>
           </div>
-          <h2 className="text-2xl font-bold text-slate-900 mb-2">Bounty Created! 🎉</h2>
-          <p className="text-slate-500 mb-6">Your bounty is live and agents can start competing.</p>
+          <h2 className="text-2xl font-bold text-slate-900 mb-2">{t("successTitle")}</h2>
+          <p className="text-slate-500 mb-6">{t("successDesc")}</p>
 
           <div className="bg-slate-50 rounded-xl p-5 text-left space-y-3 mb-6">
             <div className="flex justify-between text-sm">
-              <span className="text-slate-500">Bounty ID</span>
+              <span className="text-slate-500">{t("successBountyId")}</span>
               <span className="font-mono font-semibold text-slate-900">#{submitState.bountyId}</span>
             </div>
             <div className="flex justify-between text-sm">
-              <span className="text-slate-500">Round Address</span>
+              <span className="text-slate-500">{t("successRound")}</span>
               <a href={`${BASESCAN_URL}/address/${submitState.roundAddress}`} target="_blank" rel="noopener noreferrer" className="font-mono text-amber-700 hover:underline text-xs">
                 {submitState.roundAddress.slice(0, 10)}...{submitState.roundAddress.slice(-8)}
               </a>
             </div>
             <div className="flex justify-between text-sm">
-              <span className="text-slate-500">Deposit TX</span>
+              <span className="text-slate-500">{t("successDeposit")}</span>
               <a href={`${BASESCAN_URL}/tx/${submitState.txHash}`} target="_blank" rel="noopener noreferrer" className="font-mono text-amber-700 hover:underline text-xs">
                 {submitState.txHash.slice(0, 10)}...{submitState.txHash.slice(-8)}
               </a>
             </div>
             <div className="flex justify-between text-sm">
-              <span className="text-slate-500">Prize Pool</span>
+              <span className="text-slate-500">{t("successPrize")}</span>
               <span className="font-semibold text-slate-900">{bountyEth} ETH</span>
             </div>
           </div>
 
           <div className="flex gap-3 justify-center">
-            <a href="/bounties" className="btn-secondary">View All Bounties</a>
+            <a href="/bounties" className="btn-secondary">{t("successViewAll")}</a>
             <a href={`${BASESCAN_URL}/address/${submitState.roundAddress}`} target="_blank" rel="noopener noreferrer" className="btn-primary">
-              View on BaseScan ↗
+              {t("successBaseScan")}
             </a>
           </div>
         </div>
@@ -401,8 +412,8 @@ export default function CreateBountyPage() {
     <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 py-8">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-slate-900">Create Bounty</h1>
-        <p className="text-slate-500 mt-1">Define a problem for AI agents to compete on</p>
+        <h1 className="text-3xl font-bold text-slate-900">{t("title")}</h1>
+        <p className="text-slate-500 mt-1">{t("subtitle")}</p>
       </div>
 
       {/* Stepper */}
@@ -422,7 +433,7 @@ export default function CreateBountyPage() {
               }`}>
                 {i < stepIdx ? "✓" : i + 1}
               </span>
-              <span className="hidden sm:inline">{s}</span>
+              <span className="hidden sm:inline">{t(`step${s}` as any)}</span>
             </button>
             {i < STEPS.length - 1 && <div className={`flex-1 h-px mx-2 ${i < stepIdx ? "bg-emerald-300" : "bg-slate-200"}`} />}
           </div>
@@ -436,7 +447,7 @@ export default function CreateBountyPage() {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
           </svg>
           <div>
-            <p className="text-sm font-medium text-red-800">Transaction failed</p>
+            <p className="text-sm font-medium text-red-800">{t("errorTitle")}</p>
             <p className="text-sm text-red-600 mt-1">{submitState.message}</p>
           </div>
           <button onClick={() => setSubmitState({ kind: "idle" })} className="ml-auto text-red-400 hover:text-red-600">✕</button>
@@ -450,17 +461,17 @@ export default function CreateBountyPage() {
             <div className="w-5 h-5 border-2 border-amber-600 border-t-transparent rounded-full animate-spin" />
             <div>
               <p className="text-sm font-medium text-amber-900">
-                {submitState.kind === "creating" && "Creating bounty on-chain..."}
-                {submitState.kind === "awaiting_deposit" && "Waiting for wallet signature..."}
-                {submitState.kind === "depositing" && "Depositing ETH to round contract..."}
-                {submitState.kind === "confirming" && "Confirming transaction..."}
+                {submitState.kind === "creating" && t("stateCreating")}
+                {submitState.kind === "awaiting_deposit" && t("stateWallet")}
+                {submitState.kind === "depositing" && t("stateDepositing")}
+                {submitState.kind === "confirming" && t("stateConfirming")}
               </p>
               <p className="text-xs text-amber-700 mt-1">
-                {submitState.kind === "creating" && "Our relay is calling the factory contract"}
-                {submitState.kind === "awaiting_deposit" && "Please confirm the deposit in your wallet"}
+                {submitState.kind === "creating" && t("stateCreatingHint")}
+                {submitState.kind === "awaiting_deposit" && t("stateWalletHint")}
                 {submitState.kind === "confirming" && (
                   <a href={`${BASESCAN_URL}/tx/${(submitState as any).txHash}`} target="_blank" rel="noopener noreferrer" className="underline">
-                    View on BaseScan ↗
+                    {t("successBaseScan")}
                   </a>
                 )}
               </p>
@@ -481,9 +492,9 @@ export default function CreateBountyPage() {
       {/* ───── Step 1: Template ───── */}
       {step === "Template" && (
         <div className="space-y-4">
-          <p className="text-slate-600 text-sm">Choose a starting template or start from scratch.</p>
+          <p className="text-slate-600 text-sm">{t("templateHint")}</p>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {Object.entries(TEMPLATES).map(([key, t]) => (
+            {Object.entries(TEMPLATES).map(([key, tpl]) => (
               <button
                 key={key}
                 onClick={() => selectTemplate(key)}
@@ -493,13 +504,13 @@ export default function CreateBountyPage() {
                     : "border-slate-200 bg-white hover:border-slate-300 hover:shadow-sm"
                 }`}
               >
-                <div className="text-2xl mb-2">{t.icon}</div>
-                <div className="font-semibold text-slate-900">{t.label}</div>
-                <div className="text-sm text-slate-500 mt-1">{t.desc}</div>
+                <div className="text-2xl mb-2">{tpl.icon}</div>
+                <div className="font-semibold text-slate-900">{t(TPL_KEYS[key].labelKey as any)}</div>
+                <div className="text-sm text-slate-500 mt-1">{t(TPL_KEYS[key].descKey as any)}</div>
                 {selectedTemplate === key && (
                   <div className="mt-3 text-xs text-amber-700 font-medium flex items-center gap-1">
                     <span className="w-4 h-4 rounded-full bg-slate-900 text-white flex items-center justify-center text-[10px]">✓</span>
-                    {t.criteria.reduce((s, c) => s + c.checks.length, 0)} checks pre-configured
+                    {t("checksConfigured", { count: tpl.criteria.reduce((s, c) => s + c.checks.length, 0) })}
                   </div>
                 )}
               </button>
@@ -511,33 +522,33 @@ export default function CreateBountyPage() {
       {/* ───── Step 2: Details ───── */}
       {step === "Details" && (
         <div className="space-y-6">
-          <Card title="Problem Definition">
+          <Card title={t("problemDef")}>
             <div className="space-y-4">
-              <Field label="Title" hint="Clear, specific. What are you asking agents to build?">
-                <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Build a high-performance rate limiter in Rust" className="input-field" maxLength={120} />
+              <Field label={t("titleLabel")} hint={t("titleHint")}>
+                <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} placeholder={t("titlePlaceholder")} className="input-field" maxLength={120} />
                 <div className="text-right text-xs text-slate-400 mt-1">{title.length}/120</div>
               </Field>
-              <Field label="Description" hint="Requirements, constraints, expected I/O, success criteria. The more detail, the better.">
+              <Field label={t("descLabel")} hint={t("descHint")}>
                 <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={8}
                   placeholder={`## Requirements\n- Must handle 10,000 requests/second\n- Token bucket algorithm\n\n## Constraints\n- Rust only, no unsafe blocks\n\n## Expected Output\n- Library crate with documentation`}
                   className="input-field font-mono text-sm" maxLength={5000} />
                 <div className="flex justify-between text-xs text-slate-400 mt-1">
-                  <span>Supports Markdown</span>
+                  <span>{t("supportsMarkdown")}</span>
                   <span>{description.length}/5000</span>
                 </div>
               </Field>
-              <Field label="Tags" hint="Up to 5 tags to help agents find your bounty">
+              <Field label={t("tagsLabel")} hint={t("tagsHint")}>
                 <div className="flex gap-2 flex-wrap mb-2">
-                  {tags.map((t) => (
-                    <span key={t} className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-amber-50 text-amber-800 text-sm font-medium">
-                      {t}
-                      <button onClick={() => setTags(tags.filter((x) => x !== t))} className="text-amber-500 hover:text-amber-700">×</button>
+                  {tags.map((tag) => (
+                    <span key={tag} className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-amber-50 text-amber-800 text-sm font-medium">
+                      {tag}
+                      <button onClick={() => setTags(tags.filter((x) => x !== tag))} className="text-amber-500 hover:text-amber-700">×</button>
                     </span>
                   ))}
                 </div>
                 <div className="flex gap-2">
                   <input type="text" value={tagInput} onChange={(e) => setTagInput(e.target.value)} onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), addTag())} placeholder="rust, performance, backend" className="input-field flex-1" maxLength={24} />
-                  <button onClick={addTag} className="btn-secondary text-sm">Add</button>
+                  <button onClick={addTag} className="btn-secondary text-sm">{t("addTag")}</button>
                 </div>
               </Field>
             </div>
@@ -548,8 +559,8 @@ export default function CreateBountyPage() {
       {/* ───── Step 3: Rubric ───── */}
       {step === "Rubric" && (
         <div className="space-y-6">
-          <Card title="Scoring Rubric" subtitle="Binary YES/NO checks with weights. Total must equal 10,000 BPS."
-            action={<button onClick={autoBalance} className="btn-secondary text-xs">⚖️ Auto-balance</button>}>
+          <Card title={t("rubricTitle")} subtitle={t("rubricSubtitle")}
+            action={<button onClick={autoBalance} className="btn-secondary text-xs">{t("autoBalance")}</button>}>
             <div className="space-y-4">
               {criteria.map((criterion, cIdx) => (
                 <div key={cIdx} className="border border-slate-200 rounded-xl overflow-hidden">
@@ -557,7 +568,7 @@ export default function CreateBountyPage() {
                     <button onClick={() => toggleCollapse(cIdx)} className="text-slate-400 hover:text-slate-600 transition-transform" style={{ transform: criterion.collapsed ? "rotate(-90deg)" : "rotate(0deg)" }}>
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
                     </button>
-                    <input type="text" value={criterion.name} onChange={(e) => updateCriterionName(cIdx, e.target.value)} placeholder="Criterion name" className="flex-1 bg-transparent font-semibold text-slate-900 placeholder-slate-400 focus:outline-none" />
+                    <input type="text" value={criterion.name} onChange={(e) => updateCriterionName(cIdx, e.target.value)} placeholder={t("criterionPlaceholder")} className="flex-1 bg-transparent font-semibold text-slate-900 placeholder-slate-400 focus:outline-none" />
                     <span className="text-xs text-slate-400 font-mono">{criterion.checks.reduce((s, ch) => s + ch.weight, 0)} BPS</span>
                     <button onClick={() => removeCriterion(cIdx)} className="text-slate-400 hover:text-red-500">
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
@@ -573,12 +584,12 @@ export default function CreateBountyPage() {
                       </div>
                       {criterion.checks.map((check, chIdx) => (
                         <div key={chIdx} className="flex items-center gap-2">
-                          <input type="text" value={check.description} onChange={(e) => updateCheck(cIdx, chIdx, "description", e.target.value)} placeholder="Describe what the agent must achieve" className="input-field flex-1 !py-2 text-sm" />
+                          <input type="text" value={check.description} onChange={(e) => updateCheck(cIdx, chIdx, "description", e.target.value)} placeholder={t("checkPlaceholder")} className="input-field flex-1 !py-2 text-sm" />
                           <input type="number" value={check.weight || ""} onChange={(e) => updateCheck(cIdx, chIdx, "weight", Number(e.target.value))} placeholder="BPS" className="input-field w-20 !py-2 text-sm text-center" />
                           <div className="w-20 flex justify-center">
                             <button onClick={() => updateCheck(cIdx, chIdx, "required", !check.required)}
                               className={`px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors ${check.required ? "bg-red-50 text-red-700 border border-red-200" : "bg-slate-50 text-slate-400 border border-slate-200 hover:border-slate-300"}`}>
-                              {check.required ? "Required" : "Optional"}
+                              {check.required ? t("required") : t("optional")}
                             </button>
                           </div>
                           <button onClick={() => removeCheck(cIdx, chIdx)} className="w-8 text-slate-400 hover:text-red-500 flex justify-center">
@@ -588,7 +599,7 @@ export default function CreateBountyPage() {
                       ))}
                       <button onClick={() => addCheck(cIdx)} className="text-sm text-amber-700 hover:text-amber-800 font-medium flex items-center gap-1 mt-1">
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
-                        Add check
+                        {t("addCheck")}
                       </button>
                     </div>
                   )}
@@ -598,7 +609,7 @@ export default function CreateBountyPage() {
             <div className="flex items-center justify-between mt-6 pt-4 border-t border-slate-200">
               <button onClick={addCriterion} className="btn-secondary text-sm flex items-center gap-1">
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
-                Add criterion
+                {t("addCriterion")}
               </button>
               <div className="flex items-center gap-3">
                 <span className={`text-sm font-mono font-semibold ${totalWeight === 10000 ? "text-emerald-600" : totalWeight > 10000 ? "text-red-600" : "text-amber-600"}`}>
@@ -610,12 +621,12 @@ export default function CreateBountyPage() {
           </Card>
           <div className="flex gap-6 text-xs text-slate-500 px-1">
             <div className="flex items-center gap-1.5">
-              <span className="px-2 py-0.5 rounded bg-red-50 text-red-700 border border-red-200 font-medium">Required</span>
-              Failing any required check = zero payout
+              <span className="px-2 py-0.5 rounded bg-red-50 text-red-700 border border-red-200 font-medium">{t("required")}</span>
+              {t("requiredFail")}
             </div>
             <div className="flex items-center gap-1.5">
-              <span className="px-2 py-0.5 rounded bg-slate-50 text-slate-400 border border-slate-200 font-medium">Optional</span>
-              Bonus points — contributes to score
+              <span className="px-2 py-0.5 rounded bg-slate-50 text-slate-400 border border-slate-200 font-medium">{t("optional")}</span>
+              {t("optionalBonus")}
             </div>
           </div>
         </div>
@@ -624,24 +635,24 @@ export default function CreateBountyPage() {
       {/* ───── Step 4: Economics ───── */}
       {step === "Economics" && (
         <div className="space-y-6">
-          <Card title="Bounty Economics">
+          <Card title={t("econTitle")}>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <Field label="Bounty Deposit" hint={`Minimum ${MIN_BOUNTY_DEPOSIT} ETH — this is the prize pool`}>
+              <Field label={t("depositLabel")} hint={t("depositHint", { min: MIN_BOUNTY_DEPOSIT })}>
                 <div className="relative">
                   <input type="number" step="0.001" min={MIN_BOUNTY_DEPOSIT} value={bountyEth} onChange={(e) => setBountyEth(e.target.value)} className="input-field pr-14" />
                   <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm text-slate-400 font-medium">ETH</span>
                 </div>
               </Field>
-              <Field label="Commit Duration" hint="How long agents have to submit solutions">
+              <Field label={t("commitLabel")} hint={t("commitHint")}>
                 <div className="relative">
                   <input type="number" min={1} max={168} value={commitHours} onChange={(e) => setCommitHours(e.target.value)} className="input-field pr-16" />
-                  <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm text-slate-400 font-medium">hours</span>
+                  <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm text-slate-400 font-medium">{t("hours")}</span>
                 </div>
               </Field>
-              <Field label="Max Agents" hint="0 = unlimited. Cap competition if needed.">
+              <Field label={t("maxAgentsLabel")} hint={t("maxAgentsHint")}>
                 <input type="number" min={0} max={255} value={maxAgents} onChange={(e) => setMaxAgents(e.target.value)} className="input-field" />
               </Field>
-              <Field label="Acceptance Threshold" hint="Minimum score (BPS) for full payout">
+              <Field label={t("thresholdLabel")} hint={t("thresholdHint")}>
                 <div className="relative">
                   <input type="number" min={1000} max={9500} value={threshold} onChange={(e) => setThreshold(e.target.value)} className="input-field pr-14" />
                   <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm text-slate-400 font-medium">BPS</span>
@@ -651,7 +662,7 @@ export default function CreateBountyPage() {
                 </div>
                 <div className="flex justify-between text-xs text-slate-400 mt-1">
                   <span>10%</span>
-                  <span className="font-medium text-slate-600">{(Number(threshold) / 100).toFixed(0)}% threshold</span>
+                  <span className="font-medium text-slate-600">{t("thresholdValue", { pct: (Number(threshold) / 100).toFixed(0) })}</span>
                   <span>95%</span>
                 </div>
               </Field>
@@ -662,19 +673,19 @@ export default function CreateBountyPage() {
                   <div className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-transform ${graduated ? "left-5" : "left-1"}`} />
                 </div>
                 <div>
-                  <span className="text-sm font-medium text-slate-900">Graduated payouts</span>
-                  <p className="text-xs text-slate-500">Partial payout for scores below threshold</p>
+                  <span className="text-sm font-medium text-slate-900">{t("graduatedLabel")}</span>
+                  <p className="text-xs text-slate-500">{t("graduatedHint")}</p>
                 </div>
               </label>
             </div>
           </Card>
-          <Card title="Fee Summary">
+          <Card title={t("feeSummary")}>
             <div className="space-y-3">
-              <div className="flex justify-between text-sm"><span className="text-slate-500">Bounty deposit</span><span className="text-slate-900 font-medium">{bountyEth} ETH</span></div>
-              <div className="flex justify-between text-sm"><span className="text-slate-500">Protocol fee (2%)</span><span className="text-slate-900 font-medium">{protocolFee.toFixed(4)} ETH</span></div>
-              <div className="flex justify-between text-sm"><span className="text-slate-500">Agent entry fee (paid by agents)</span><span className="text-slate-400">{ENTRY_FEE} ETH each</span></div>
+              <div className="flex justify-between text-sm"><span className="text-slate-500">{t("feeBounty")}</span><span className="text-slate-900 font-medium">{bountyEth} ETH</span></div>
+              <div className="flex justify-between text-sm"><span className="text-slate-500">{t("feeProtocol")}</span><span className="text-slate-900 font-medium">{protocolFee.toFixed(4)} ETH</span></div>
+              <div className="flex justify-between text-sm"><span className="text-slate-500">{t("feeAgent")}</span><span className="text-slate-400">{t("feeAgentEach", { fee: ENTRY_FEE })}</span></div>
               <div className="border-t border-slate-200 pt-3 flex justify-between">
-                <span className="text-slate-900 font-semibold">You pay</span>
+                <span className="text-slate-900 font-semibold">{t("feeYouPay")}</span>
                 <span className="text-lg font-bold text-slate-900">{(Number(bountyEth) + protocolFee).toFixed(4)} ETH</span>
               </div>
             </div>
@@ -683,8 +694,8 @@ export default function CreateBountyPage() {
             <label className="flex items-start gap-3 cursor-pointer">
               <input type="checkbox" checked={withdrawalConsent} onChange={(e) => setWithdrawalConsent(e.target.checked)} className="mt-0.5 w-4 h-4 rounded border-slate-300 text-amber-700 focus:ring-amber-500" />
               <span className="text-sm text-slate-600 leading-relaxed">
-                I agree that the service begins immediately upon transaction confirmation and I waive my right of withdrawal (Widerrufsrecht). I have read and accept the{" "}
-                <a href="/legal/terms" className="text-amber-700 underline hover:text-amber-800">Terms of Service</a>.
+                {t("consentText")}{" "}
+                <a href="/legal/terms" className="text-amber-700 underline hover:text-amber-800">{t("consentTerms")}</a>.
               </span>
             </label>
           </div>
@@ -695,29 +706,29 @@ export default function CreateBountyPage() {
       {step === "Review" && (
         <div className="space-y-6">
           <div className="flex gap-3">
-            <button onClick={() => setShowPreview(false)} className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${!showPreview ? "bg-amber-100 text-amber-800" : "text-slate-500 hover:text-slate-700"}`}>Summary</button>
-            <button onClick={() => setShowPreview(true)} className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${showPreview ? "bg-amber-100 text-amber-800" : "text-slate-500 hover:text-slate-700"}`}>👁 Agent Preview</button>
+            <button onClick={() => setShowPreview(false)} className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${!showPreview ? "bg-amber-100 text-amber-800" : "text-slate-500 hover:text-slate-700"}`}>{t("reviewSummary")}</button>
+            <button onClick={() => setShowPreview(true)} className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${showPreview ? "bg-amber-100 text-amber-800" : "text-slate-500 hover:text-slate-700"}`}>{t("reviewPreview")}</button>
           </div>
 
           {!showPreview ? (
             <>
-              <Card title="Bounty Details">
+              <Card title={t("reviewTitle")}>
                 <dl className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-                  <div><dt className="text-slate-400 mb-1">Title</dt><dd className="text-slate-900 font-medium">{title}</dd></div>
-                  <div><dt className="text-slate-400 mb-1">Deposit</dt><dd className="text-slate-900 font-medium">{bountyEth} ETH + {protocolFee.toFixed(4)} fee</dd></div>
-                  <div><dt className="text-slate-400 mb-1">Commit window</dt><dd className="text-slate-900 font-medium">{commitHours}h</dd></div>
-                  <div><dt className="text-slate-400 mb-1">Max agents</dt><dd className="text-slate-900 font-medium">{maxAgents === "0" ? "Unlimited" : maxAgents}</dd></div>
-                  <div><dt className="text-slate-400 mb-1">Threshold</dt><dd className="text-slate-900 font-medium">{(Number(threshold) / 100).toFixed(0)}%{graduated ? " (graduated)" : ""}</dd></div>
-                  <div><dt className="text-slate-400 mb-1">Required checks</dt><dd className="text-slate-900 font-medium">{requiredChecks.length} must-pass</dd></div>
+                  <div><dt className="text-slate-400 mb-1">{t("reviewTitleLabel")}</dt><dd className="text-slate-900 font-medium">{title}</dd></div>
+                  <div><dt className="text-slate-400 mb-1">{t("reviewDeposit")}</dt><dd className="text-slate-900 font-medium">{bountyEth} ETH + {protocolFee.toFixed(4)} fee</dd></div>
+                  <div><dt className="text-slate-400 mb-1">{t("reviewCommit")}</dt><dd className="text-slate-900 font-medium">{commitHours}h</dd></div>
+                  <div><dt className="text-slate-400 mb-1">{t("reviewMaxAgents")}</dt><dd className="text-slate-900 font-medium">{maxAgents === "0" ? t("reviewUnlimited") : maxAgents}</dd></div>
+                  <div><dt className="text-slate-400 mb-1">{t("reviewThreshold")}</dt><dd className="text-slate-900 font-medium">{(Number(threshold) / 100).toFixed(0)}%{graduated ? ` (${t("reviewGraduated")})` : ""}</dd></div>
+                  <div><dt className="text-slate-400 mb-1">{t("reviewRequired")}</dt><dd className="text-slate-900 font-medium">{t("reviewMustPass", { count: requiredChecks.length })}</dd></div>
                   {tags.length > 0 && (
                     <div className="sm:col-span-2">
-                      <dt className="text-slate-400 mb-1">Tags</dt>
-                      <dd className="flex gap-1.5 flex-wrap">{tags.map((t) => <span key={t} className="px-2 py-0.5 rounded-full bg-amber-50 text-amber-800 text-xs font-medium">{t}</span>)}</dd>
+                      <dt className="text-slate-400 mb-1">{t("reviewTags")}</dt>
+                      <dd className="flex gap-1.5 flex-wrap">{tags.map((tag) => <span key={tag} className="px-2 py-0.5 rounded-full bg-amber-50 text-amber-800 text-xs font-medium">{tag}</span>)}</dd>
                     </div>
                   )}
                 </dl>
               </Card>
-              <Card title="Scoring Rubric">
+              <Card title={t("reviewRubric")}>
                 {criteria.map((c, i) => (
                   <div key={i} className={i > 0 ? "mt-4 pt-4 border-t border-slate-100" : ""}>
                     <h4 className="font-semibold text-slate-900 mb-2">{c.name}</h4>
@@ -726,7 +737,7 @@ export default function CreateBountyPage() {
                         <div key={j} className="flex items-center gap-2 text-sm">
                           <span className={`px-1.5 py-0.5 rounded text-xs font-medium ${ch.required ? "bg-red-50 text-red-600" : "bg-slate-100 text-slate-500"}`}>{ch.weight}</span>
                           <span className="text-slate-700">{ch.description}</span>
-                          {ch.required && <span className="text-red-500 text-xs">Required</span>}
+                          {ch.required && <span className="text-red-500 text-xs">{t("required")}</span>}
                         </div>
                       ))}
                     </div>
@@ -735,19 +746,19 @@ export default function CreateBountyPage() {
               </Card>
             </>
           ) : (
-            <Card title="🤖 What Agents Will See">
+            <Card title={t("previewTitle")}>
               <div className="space-y-4">
                 <div>
-                  <h3 className="text-lg font-bold text-slate-900">{title || "Untitled Bounty"}</h3>
+                  <h3 className="text-lg font-bold text-slate-900">{title || t("previewUntitled")}</h3>
                   <div className="flex gap-2 mt-2">
                     <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-xs font-medium">{bountyEth} ETH</span>
-                    <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 text-xs font-medium">{commitHours}h window</span>
-                    <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 text-xs font-medium">{maxAgents === "0" ? "Open entry" : `${maxAgents} slots`}</span>
+                    <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 text-xs font-medium">{t("previewWindow", { hours: commitHours })}</span>
+                    <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 text-xs font-medium">{maxAgents === "0" ? t("previewOpenEntry") : t("previewSlots", { count: maxAgents })}</span>
                   </div>
                 </div>
-                <div className="bg-slate-50 rounded-lg p-4 text-sm text-slate-700 whitespace-pre-wrap font-mono">{description || "No description provided."}</div>
+                <div className="bg-slate-50 rounded-lg p-4 text-sm text-slate-700 whitespace-pre-wrap font-mono">{description || t("previewNoDesc")}</div>
                 <div>
-                  <h4 className="font-semibold text-slate-900 text-sm mb-2">Scoring Checklist</h4>
+                  <h4 className="font-semibold text-slate-900 text-sm mb-2">{t("previewChecklist")}</h4>
                   {criteria.map((c, i) => (
                     <div key={i} className="mb-3">
                       <div className="text-xs text-slate-400 uppercase tracking-wider mb-1">{c.name}</div>
@@ -756,7 +767,7 @@ export default function CreateBountyPage() {
                           <div className="w-4 h-4 rounded border-2 border-slate-300 flex-shrink-0" />
                           <span className="text-slate-700 flex-1">{ch.description}</span>
                           <span className="text-xs text-slate-400">{ch.weight} pts</span>
-                          {ch.required && <span className="text-xs bg-red-50 text-red-600 px-1.5 py-0.5 rounded font-medium">Must pass</span>}
+                          {ch.required && <span className="text-xs bg-red-50 text-red-600 px-1.5 py-0.5 rounded font-medium">{t("reviewMustPassLabel")}</span>}
                         </div>
                       ))}
                     </div>
@@ -771,19 +782,19 @@ export default function CreateBountyPage() {
       {/* ───── Navigation ───── */}
       <div className="flex items-center justify-between mt-10 pt-6 border-t border-slate-200">
         <button onClick={() => setStepIdx(Math.max(0, stepIdx - 1))} className={`btn-secondary ${stepIdx === 0 ? "invisible" : ""}`} disabled={isSubmitting}>
-          ← Back
+          {t("back")}
         </button>
         {stepIdx < STEPS.length - 1 ? (
-          <button onClick={() => canNext() && setStepIdx(stepIdx + 1)} disabled={!canNext()} className="btn-primary">Continue →</button>
+          <button onClick={() => canNext() && setStepIdx(stepIdx + 1)} disabled={!canNext()} className="btn-primary">{t("continue")}</button>
         ) : (
           <button onClick={handleSubmit} disabled={!canNext() || totalWeight !== 10000 || !withdrawalConsent || isSubmitting} className="btn-primary flex items-center gap-2">
             {isSubmitting ? (
               <>
                 <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                Processing...
+                {t("processing")}
               </>
             ) : (
-              <>🚀 Create Bounty &amp; Deposit {bountyEth} ETH</>
+              <>{t("submitBtn", { amount: bountyEth })}</>
             )}
           </button>
         )}
