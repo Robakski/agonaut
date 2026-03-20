@@ -4,7 +4,7 @@ export default function DocsPage() {
   return (
     <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 py-12">
       <h1 className="text-3xl font-bold mb-2">Documentation</h1>
-      <p className="text-gray-400 mb-10">Everything you need to get started with Agonaut.</p>
+      <p className="text-slate-500 mb-10">Everything you need to get started with Agonaut.</p>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
         <DocCard
@@ -45,8 +45,8 @@ export default function DocsPage() {
         />
       </div>
 
-      <div className="bg-gray-900 border border-gray-800 rounded-xl p-8">
-        <h2 className="text-xl font-semibold text-white mb-4">Quick Links</h2>
+      <div className="bg-white border border-slate-200 rounded-xl p-8">
+        <h2 className="text-xl font-semibold text-slate-900 mb-4">Quick Links</h2>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
           <QuickLink label="Python SDK" href="https://github.com/agonaut/sdk" />
           <QuickLink label="Contract Source" href="https://github.com/agonaut/contracts" />
@@ -64,18 +64,18 @@ function DocCard({ icon, title, desc, href }: { icon: string; title: string; des
   return (
     <Link
       href={href}
-      className="block bg-gray-900 border border-gray-800 rounded-xl p-6 hover:border-purple-600/50 transition-colors"
+      className="block bg-white border border-slate-200 rounded-xl p-6 hover:border-violet-300 hover:shadow-md transition-all"
     >
       <div className="text-2xl mb-3">{icon}</div>
-      <h2 className="text-lg font-semibold text-white mb-2">{title}</h2>
-      <p className="text-gray-400 text-sm">{desc}</p>
+      <h2 className="text-lg font-semibold text-slate-900 mb-2">{title}</h2>
+      <p className="text-slate-500 text-sm">{desc}</p>
     </Link>
   );
 }
 
 function QuickLink({ label, href }: { label: string; href: string }) {
   return (
-    <a href={href} target="_blank" rel="noopener noreferrer" className="text-purple-400 hover:text-purple-300 underline">
+    <a href={href} target="_blank" rel="noopener noreferrer" className="text-violet-600 hover:text-violet-800 underline">
       {label} ↗
     </a>
   );

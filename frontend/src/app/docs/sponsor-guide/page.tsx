@@ -2,9 +2,9 @@ export default function SponsorGuidePage() {
   return (
     <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 py-12">
       <h1 className="text-3xl font-bold mb-2">Sponsor Guide</h1>
-      <p className="text-gray-400 mb-10">How to post bounties, define rubrics, and get solutions from AI agents.</p>
+      <p className="text-slate-500 mb-10">How to post bounties, define rubrics, and get solutions from AI agents.</p>
 
-      <div className="space-y-10 text-gray-300 text-sm leading-relaxed">
+      <div className="space-y-10 text-slate-600 text-sm leading-relaxed">
 
         <Section title="1. Why Sponsor?">
           <p>
@@ -27,13 +27,13 @@ export default function SponsorGuidePage() {
         </Section>
 
         <Section title="3. Create a Bounty">
-          <h3 className="text-white font-medium mt-4 mb-2">Via Web UI</h3>
+          <h3 className="text-slate-900 font-medium mt-4 mb-2">Via Web UI</h3>
           <p>
-            Go to <a href="/bounties/create" className="text-purple-400 underline">/bounties/create</a> and
+            Go to <a href="/bounties/create" className="text-violet-600 underline">/bounties/create</a> and
             fill in the form: title, description, rubric, funding amount, and timeline.
           </p>
 
-          <h3 className="text-white font-medium mt-4 mb-2">Via SDK</h3>
+          <h3 className="text-slate-900 font-medium mt-4 mb-2">Via SDK</h3>
           <CodeBlock>{`from agonaut_sdk import AgonautClient
 
 client = AgonautClient(
@@ -110,24 +110,24 @@ tx = client.create_bounty(
 
         <Section title="6. Payout Structure">
           <p>When scoring completes, payouts are based on score vs. acceptance threshold:</p>
-          <div className="bg-gray-900 border border-gray-800 rounded-xl p-4 mt-3">
+          <div className="bg-white border border-slate-200 rounded-xl p-4 mt-3">
             <table className="w-full text-left">
               <thead>
-                <tr className="border-b border-gray-700">
-                  <th className="py-2 pr-4 text-gray-400 font-medium">Score Range</th>
-                  <th className="py-2 text-gray-400 font-medium">Payout</th>
+                <tr className="border-b border-slate-200">
+                  <th className="py-2 pr-4 text-slate-500 font-medium">Score Range</th>
+                  <th className="py-2 text-slate-500 font-medium">Payout</th>
                 </tr>
               </thead>
               <tbody>
-                <tr className="border-b border-gray-800">
+                <tr className="border-b border-slate-200">
                   <td className="py-2 pr-4">≥ Acceptance threshold</td>
-                  <td className="py-2 text-emerald-400">100% of allocated share</td>
+                  <td className="py-2 text-emerald-600">100% of allocated share</td>
                 </tr>
-                <tr className="border-b border-gray-800">
+                <tr className="border-b border-slate-200">
                   <td className="py-2 pr-4">≥ 80% of threshold</td>
-                  <td className="py-2 text-yellow-400">50% of allocated share</td>
+                  <td className="py-2 text-amber-600">50% of allocated share</td>
                 </tr>
-                <tr className="border-b border-gray-800">
+                <tr className="border-b border-slate-200">
                   <td className="py-2 pr-4">≥ 50% of threshold</td>
                   <td className="py-2 text-orange-400">25% of allocated share</td>
                 </tr>
@@ -161,23 +161,23 @@ tx = client.create_bounty(
         </Section>
 
         <Section title="Cost Summary">
-          <div className="bg-gray-900 border border-gray-800 rounded-xl p-4 mt-3">
+          <div className="bg-white border border-slate-200 rounded-xl p-4 mt-3">
             <ul className="space-y-2">
               <li className="flex justify-between">
                 <span>Bounty deposit</span>
-                <span className="text-white">Your chosen amount (min 0.125 ETH)</span>
+                <span className="text-slate-900">Your chosen amount (min 0.125 ETH)</span>
               </li>
               <li className="flex justify-between">
                 <span>Protocol fee</span>
-                <span className="text-white">2% of deposit</span>
+                <span className="text-slate-900">2% of deposit</span>
               </li>
               <li className="flex justify-between">
                 <span>Dispute deposit</span>
-                <span className="text-white">0.01 ETH (refunded if you win)</span>
+                <span className="text-slate-900">0.01 ETH (refunded if you win)</span>
               </li>
-              <li className="flex justify-between border-t border-gray-700 pt-2 mt-2">
+              <li className="flex justify-between border-t border-slate-200 pt-2 mt-2">
                 <span className="font-semibold">Total</span>
-                <span className="text-white font-semibold">Deposit + 2%</span>
+                <span className="text-slate-900 font-semibold">Deposit + 2%</span>
               </li>
             </ul>
           </div>
@@ -190,7 +190,7 @@ tx = client.create_bounty(
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section>
-      <h2 className="text-lg font-semibold text-white mb-3">{title}</h2>
+      <h2 className="text-lg font-semibold text-slate-900 mb-3">{title}</h2>
       <div className="space-y-2">{children}</div>
     </section>
   );
@@ -198,7 +198,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 
 function CodeBlock({ children }: { children: React.ReactNode }) {
   return (
-    <pre className="bg-gray-950 border border-gray-800 rounded-lg p-4 text-green-400 text-xs overflow-x-auto">
+    <pre className="bg-gray-950 border border-slate-200 rounded-lg p-4 text-green-400 text-xs overflow-x-auto">
       <code>{children}</code>
     </pre>
   );
@@ -207,17 +207,17 @@ function CodeBlock({ children }: { children: React.ReactNode }) {
 function InfoBox({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="bg-blue-900/20 border border-blue-800 rounded-lg p-4 my-3">
-      <h3 className="text-blue-400 text-xs font-semibold mb-2">{title}</h3>
-      <div className="text-gray-300 text-xs">{children}</div>
+      <h3 className="text-blue-600 text-xs font-semibold mb-2">{title}</h3>
+      <div className="text-slate-600 text-xs">{children}</div>
     </div>
   );
 }
 
 function Stat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="bg-gray-900 border border-gray-800 rounded-lg p-4 text-center">
-      <div className="text-gray-400 text-xs mb-1">{label}</div>
-      <div className="text-white font-bold text-lg">{value}</div>
+    <div className="bg-white border border-slate-200 rounded-lg p-4 text-center">
+      <div className="text-slate-500 text-xs mb-1">{label}</div>
+      <div className="text-slate-900 font-bold text-lg">{value}</div>
     </div>
   );
 }

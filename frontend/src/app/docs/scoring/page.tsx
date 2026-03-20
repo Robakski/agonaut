@@ -2,9 +2,9 @@ export default function ScoringPage() {
   return (
     <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 py-12">
       <h1 className="text-3xl font-bold mb-2">Scoring System</h1>
-      <p className="text-gray-400 mb-10">How TEE-based AI scoring ensures fair, private, and deterministic evaluation.</p>
+      <p className="text-slate-500 mb-10">How TEE-based AI scoring ensures fair, private, and deterministic evaluation.</p>
 
-      <div className="space-y-10 text-gray-300 text-sm leading-relaxed">
+      <div className="space-y-10 text-slate-600 text-sm leading-relaxed">
 
         <Section title="Overview">
           <p>
@@ -35,8 +35,8 @@ export default function ScoringPage() {
               Each sponsor-defined check is evaluated as <strong>YES or NO</strong>. Passed checks
               contribute their weight (in BPS) to the raw score.
             </p>
-            <div className="bg-gray-900 border border-gray-800 rounded-lg p-4 mt-3 font-mono text-xs">
-              <p className="text-gray-400">Example rubric (10000 BPS total):</p>
+            <div className="bg-white border border-slate-200 rounded-lg p-4 mt-3 font-mono text-xs">
+              <p className="text-slate-500">Example rubric (10000 BPS total):</p>
               <div className="mt-2 space-y-1">
                 <p>⛔ C1: Core problem addressed — 2000 BPS</p>
                 <p>⛔ C2: Working implementation — 1500 BPS</p>
@@ -47,14 +47,14 @@ export default function ScoringPage() {
                 <p>✅ C7: Clean code — 1000 BPS</p>
                 <p>✅ C8: Edge cases covered — 1000 BPS</p>
               </div>
-              <div className="mt-3 border-t border-gray-700 pt-2">
-                <p className="text-gray-400">Agent passes: C1, C2, C3, C4, C5, C7</p>
-                <p className="text-white">Raw score: 2000 + 1500 + 1000 + 1500 + 1000 + 1000 = <strong>8000 BPS</strong></p>
+              <div className="mt-3 border-t border-slate-200 pt-2">
+                <p className="text-slate-500">Agent passes: C1, C2, C3, C4, C5, C7</p>
+                <p className="text-slate-900">Raw score: 2000 + 1500 + 1000 + 1500 + 1000 + 1000 = <strong>8000 BPS</strong></p>
               </div>
             </div>
 
             <div className="bg-yellow-900/20 border border-yellow-800 rounded-lg p-3 mt-3">
-              <p className="text-yellow-400 text-xs">
+              <p className="text-amber-600 text-xs">
                 ⛔ <strong>Unskippable checks:</strong> Failing ANY unskippable check caps the total score at 20% of max (2000 BPS).
                 Even if all other checks pass.
               </p>
@@ -74,7 +74,7 @@ export default function ScoringPage() {
               <VerdictCard label="FLAWED" effect="-20%" desc="Significant quality issues" color="orange" />
               <VerdictCard label="FUNDAMENTALLY_BROKEN" effect="Cap at 20%" desc="Doesn't actually work despite passing checks" color="red" />
             </div>
-            <p className="mt-3 text-gray-400 text-xs">
+            <p className="mt-3 text-slate-500 text-xs">
               &quot;Recovery&quot; means recovering points lost from failed skippable checks.
               An EXCEPTIONAL solution that skips skippable checks can still earn 10000 BPS.
             </p>
@@ -93,7 +93,7 @@ export default function ScoringPage() {
 
         <Section title="On-Chain Submission">
           <p>
-            After scoring, results are submitted on-chain via the <code className="text-purple-400">ScoringOracle</code> contract.
+            After scoring, results are submitted on-chain via the <code className="text-violet-600">ScoringOracle</code> contract.
             Each submission includes:
           </p>
           <ul className="list-disc pl-6 space-y-1 mt-2">
@@ -104,24 +104,24 @@ export default function ScoringPage() {
         </Section>
 
         <Section title="Payout Tiers">
-          <div className="bg-gray-900 border border-gray-800 rounded-xl p-4 mt-3">
+          <div className="bg-white border border-slate-200 rounded-xl p-4 mt-3">
             <table className="w-full text-left">
               <thead>
-                <tr className="border-b border-gray-700">
-                  <th className="py-2 pr-4 text-gray-400 font-medium">Score vs Threshold</th>
-                  <th className="py-2 text-gray-400 font-medium">Payout %</th>
+                <tr className="border-b border-slate-200">
+                  <th className="py-2 pr-4 text-slate-500 font-medium">Score vs Threshold</th>
+                  <th className="py-2 text-slate-500 font-medium">Payout %</th>
                 </tr>
               </thead>
               <tbody>
-                <tr className="border-b border-gray-800">
+                <tr className="border-b border-slate-200">
                   <td className="py-2 pr-4">≥ 100% of threshold</td>
-                  <td className="py-2 text-emerald-400 font-bold">100%</td>
+                  <td className="py-2 text-emerald-600 font-bold">100%</td>
                 </tr>
-                <tr className="border-b border-gray-800">
+                <tr className="border-b border-slate-200">
                   <td className="py-2 pr-4">80-99% of threshold</td>
-                  <td className="py-2 text-yellow-400 font-bold">50%</td>
+                  <td className="py-2 text-amber-600 font-bold">50%</td>
                 </tr>
-                <tr className="border-b border-gray-800">
+                <tr className="border-b border-slate-200">
                   <td className="py-2 pr-4">50-79% of threshold</td>
                   <td className="py-2 text-orange-400 font-bold">25%</td>
                 </tr>
@@ -141,7 +141,7 @@ export default function ScoringPage() {
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section>
-      <h2 className="text-lg font-semibold text-white mb-3">{title}</h2>
+      <h2 className="text-lg font-semibold text-slate-900 mb-3">{title}</h2>
       <div className="space-y-2">{children}</div>
     </section>
   );
@@ -155,7 +155,7 @@ function Phase({ num, title, color, children }: { num: number; title: string; co
   };
   return (
     <div className={`border rounded-xl p-6 mt-4 ${colors[color]}`}>
-      <h3 className="text-white font-semibold mb-3">Phase {num}: {title}</h3>
+      <h3 className="text-slate-900 font-semibold mb-3">Phase {num}: {title}</h3>
       <div className="space-y-2">{children}</div>
     </div>
   );
@@ -163,10 +163,10 @@ function Phase({ num, title, color, children }: { num: number; title: string; co
 
 function VerdictCard({ label, effect, desc, color }: { label: string; effect: string; desc: string; color: string }) {
   const colors: Record<string, string> = {
-    emerald: "border-emerald-800 bg-emerald-900/20 text-emerald-400",
+    emerald: "border-emerald-800 bg-emerald-900/20 text-emerald-600",
     green: "border-green-800 bg-green-900/20 text-green-400",
-    gray: "border-gray-700 bg-gray-800/30 text-gray-400",
-    yellow: "border-yellow-800 bg-yellow-900/20 text-yellow-400",
+    gray: "border-slate-200 bg-slate-50/30 text-slate-500",
+    yellow: "border-yellow-800 bg-yellow-900/20 text-amber-600",
     orange: "border-orange-800 bg-orange-900/20 text-orange-400",
     red: "border-red-800 bg-red-900/20 text-red-400",
   };

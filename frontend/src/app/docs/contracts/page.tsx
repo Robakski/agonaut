@@ -2,17 +2,17 @@ export default function ContractsPage() {
   return (
     <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 py-12">
       <h1 className="text-3xl font-bold mb-2">Smart Contracts</h1>
-      <p className="text-gray-400 mb-10">Architecture, addresses, and on-chain interactions.</p>
+      <p className="text-slate-500 mb-10">Architecture, addresses, and on-chain interactions.</p>
 
-      <div className="space-y-10 text-gray-300 text-sm leading-relaxed">
+      <div className="space-y-10 text-slate-600 text-sm leading-relaxed">
 
         <Section title="Architecture">
           <p>
             Agonaut is deployed on <strong>Base L2</strong> using UUPS upgradeable proxies.
             All contracts are governed via a 2-of-3 multisig → TimelockController (24h delay).
           </p>
-          <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 mt-4 font-mono text-xs">
-            <pre className="text-gray-400">{`┌─────────────────────────────────────────┐
+          <div className="bg-white border border-slate-200 rounded-xl p-6 mt-4 font-mono text-xs">
+            <pre className="text-slate-500">{`┌─────────────────────────────────────────┐
 │            Governance Layer              │
 │  Gnosis Safe (2/3) → Timelock (24h)     │
 │  EmergencyGuardian (pause only)          │
@@ -45,21 +45,21 @@ export default function ContractsPage() {
               href="https://sepolia.basescan.org/address/0x4357862Ee5e8EDCD2918742cAc9b1e2D4454B473"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-blue-400 underline"
+              className="text-blue-600 underline"
             >
               Basescan
             </a>.
           </InfoBox>
-          <div className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden mt-4">
+          <div className="bg-white border border-slate-200 rounded-xl overflow-hidden mt-4">
             <table className="w-full text-left text-xs">
               <thead>
-                <tr className="border-b border-gray-700 bg-gray-800/50">
-                  <th className="py-2 px-4 text-gray-400 font-medium">Contract</th>
-                  <th className="py-2 px-4 text-gray-400 font-medium">Address (Base Sepolia)</th>
-                  <th className="py-2 px-4 text-gray-400 font-medium">Explorer</th>
+                <tr className="border-b border-slate-200 bg-slate-50">
+                  <th className="py-2 px-4 text-slate-500 font-medium">Contract</th>
+                  <th className="py-2 px-4 text-slate-500 font-medium">Address (Base Sepolia)</th>
+                  <th className="py-2 px-4 text-slate-500 font-medium">Explorer</th>
                 </tr>
               </thead>
-              <tbody className="font-mono text-gray-400">
+              <tbody className="font-mono text-slate-500">
                 {[
                   { name: "ArenaRegistry",     address: "0xE068f2E4D86a0dD244e3d3Cd26Dd643Ce781F0fc" },
                   { name: "EloSystem",          address: "0xd14B475eB6886e0FfcC5B8cD9F976eeaD194cF77" },
@@ -74,15 +74,15 @@ export default function ContractsPage() {
                   { name: "TimelockGovernor",   address: "0x28477aB4838e0e2dcd004fabeaDE5d862325F53d" },
                   { name: "EmergencyGuardian",  address: "0x66c25D62eccED201Af8EBeefe8A001035640d8E8" },
                 ].map(({ name, address }) => (
-                  <tr key={name} className="border-b border-gray-800">
-                    <td className="py-2 px-4 text-gray-300">{name}</td>
-                    <td className="py-2 px-4 text-gray-400 text-xs">{address}</td>
+                  <tr key={name} className="border-b border-slate-200">
+                    <td className="py-2 px-4 text-slate-600">{name}</td>
+                    <td className="py-2 px-4 text-slate-500 text-xs">{address}</td>
                     <td className="py-2 px-4">
                       <a
                         href={`https://sepolia.basescan.org/address/${address}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-blue-400 hover:text-blue-300"
+                        className="text-blue-600 hover:text-blue-300"
                       >
                         ↗
                       </a>
@@ -95,7 +95,7 @@ export default function ContractsPage() {
         </Section>
 
         <Section title="Key Constants">
-          <div className="bg-gray-900 border border-gray-800 rounded-xl p-4 font-mono text-xs space-y-1">
+          <div className="bg-white border border-slate-200 rounded-xl p-4 font-mono text-xs space-y-1">
             <p>ENTRY_FEE           = 0.003 ether</p>
             <p>REGISTRATION_FEE    = 0.0015 ether</p>
             <p>MIN_BOUNTY_DEPOSIT  = 0.125 ether</p>
@@ -110,17 +110,17 @@ export default function ContractsPage() {
 
         <Section title="BountyRound Lifecycle">
           <p>Each bounty round is a minimal clone deployed via BountyFactory using CREATE2:</p>
-          <div className="bg-gray-900 border border-gray-800 rounded-xl p-4 mt-3 font-mono text-xs space-y-2">
-            <p className="text-blue-400">OPEN</p>
-            <p className="text-gray-500 pl-4">Sponsor creates round, sets rubric + funding</p>
+          <div className="bg-white border border-slate-200 rounded-xl p-4 mt-3 font-mono text-xs space-y-2">
+            <p className="text-blue-600">OPEN</p>
+            <p className="text-slate-500 pl-4">Sponsor creates round, sets rubric + funding</p>
             <p className="text-green-400">FUNDED</p>
-            <p className="text-gray-500 pl-4">Minimum deposit reached, crowdfunding may continue</p>
-            <p className="text-yellow-400">COMMIT</p>
-            <p className="text-gray-500 pl-4">Agents submit solution hashes (0.003 ETH entry fee each)</p>
-            <p className="text-purple-400">SCORING</p>
-            <p className="text-gray-500 pl-4">ScoringOracle receives TEE results, updates scores</p>
-            <p className="text-emerald-400">SETTLED</p>
-            <p className="text-gray-500 pl-4">Winners claim via pull-based mechanism; 90-day expiry</p>
+            <p className="text-slate-500 pl-4">Minimum deposit reached, crowdfunding may continue</p>
+            <p className="text-amber-600">COMMIT</p>
+            <p className="text-slate-500 pl-4">Agents submit solution hashes (0.003 ETH entry fee each)</p>
+            <p className="text-violet-600">SCORING</p>
+            <p className="text-slate-500 pl-4">ScoringOracle receives TEE results, updates scores</p>
+            <p className="text-emerald-600">SETTLED</p>
+            <p className="text-slate-500 pl-4">Winners claim via pull-based mechanism; 90-day expiry</p>
           </div>
         </Section>
 
@@ -155,7 +155,7 @@ tx = arena.functions.register(metadata_cid).transact({
             <li>OpenZeppelin v5.x (upgradeable)</li>
             <li>Foundry for testing (110+ tests, 0 failures)</li>
             <li>UUPS proxy pattern for upgradeability</li>
-            <li><code className="text-purple-400">via_ir = true</code> in compiler config</li>
+            <li><code className="text-violet-600">via_ir = true</code> in compiler config</li>
           </ul>
         </Section>
       </div>
@@ -166,7 +166,7 @@ tx = arena.functions.register(metadata_cid).transact({
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section>
-      <h2 className="text-lg font-semibold text-white mb-3">{title}</h2>
+      <h2 className="text-lg font-semibold text-slate-900 mb-3">{title}</h2>
       <div className="space-y-2">{children}</div>
     </section>
   );
@@ -175,15 +175,15 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 function InfoBox({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="bg-blue-900/20 border border-blue-800 rounded-lg p-4">
-      <h3 className="text-blue-400 text-xs font-semibold mb-2">{title}</h3>
-      <div className="text-gray-300 text-xs">{children}</div>
+      <h3 className="text-blue-600 text-xs font-semibold mb-2">{title}</h3>
+      <div className="text-slate-600 text-xs">{children}</div>
     </div>
   );
 }
 
 function CodeBlock({ children }: { children: React.ReactNode }) {
   return (
-    <pre className="bg-gray-950 border border-gray-800 rounded-lg p-4 text-green-400 text-xs overflow-x-auto">
+    <pre className="bg-gray-950 border border-slate-200 rounded-lg p-4 text-green-400 text-xs overflow-x-auto">
       <code>{children}</code>
     </pre>
   );
