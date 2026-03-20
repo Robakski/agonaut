@@ -213,6 +213,13 @@
     "window": "{hours}h window",
     "by": "by {sponsor}",
     "potentialROI": "{multiplier}x potential ROI",
+    "phaseOPEN": "OPEN",
+    "phaseFUNDED": "FUNDED",
+    "phaseCOMMIT": "COMMIT",
+    "phaseSCORING": "SCORING",
+    "phaseSETTLED": "SETTLED",
+    "phaseCANCELLED": "CANCELLED",
+    "phaseDISPUTED": "DISPUTED",
     "noResults": "No bounties in this phase",
     "noResultsHint": "Try a different filter or create the first one!",
     "placeholder": "Showing placeholder data — connects to live contracts when backend is deployed"

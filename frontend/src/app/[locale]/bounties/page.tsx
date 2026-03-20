@@ -84,7 +84,7 @@ export default function BountiesPage() {
                 : "bg-white text-slate-500 hover:text-slate-700 border border-slate-200 hover:border-slate-300"
             }`}
           >
-            {phase === "All" ? `${t("all")} (${PLACEHOLDER_BOUNTIES.length})` : phase}
+            {phase === "All" ? `${t("all")} (${PLACEHOLDER_BOUNTIES.length})` : t(`phase${phase}` as any)}
           </button>
         ))}
       </div>
@@ -100,7 +100,7 @@ export default function BountiesPage() {
             <div className="flex items-start justify-between gap-4">
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-2 flex-wrap">
-                  <PhaseTag phase={bounty.phase} />
+                  <PhaseTag phase={bounty.phase} label={t(`phase${bounty.phase}` as any)} />
                   <TierBadge tier={bounty.tier} />
                   {bounty.tags.map((tg) => (
                     <span key={tg} className="text-xs px-2 py-0.5 rounded-full bg-slate-100 text-slate-500">{tg}</span>
@@ -144,7 +144,7 @@ export default function BountiesPage() {
   );
 }
 
-function PhaseTag({ phase }: { phase: string }) {
+function PhaseTag({ phase, label }: { phase: string; label: string }) {
   const styles: Record<string, string> = {
     OPEN: "bg-amber-50 text-amber-700 border-amber-200",
     FUNDED: "bg-amber-50 text-amber-800 border-amber-200",
@@ -154,7 +154,7 @@ function PhaseTag({ phase }: { phase: string }) {
     CANCELLED: "bg-slate-50 text-slate-400 border-slate-200",
     DISPUTED: "bg-amber-50 text-amber-800 border-amber-200",
   };
-  return <span className={`text-xs font-medium px-2 py-0.5 rounded border ${styles[phase] || "bg-slate-100 text-slate-500 border-slate-200"}`}>{phase}</span>;
+  return <span className={`text-xs font-medium px-2 py-0.5 rounded border ${styles[phase] || "bg-slate-100 text-slate-500 border-slate-200"}`}>{label}</span>;
 }
 
 function TierBadge({ tier }: { tier: string }) {
