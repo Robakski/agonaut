@@ -395,7 +395,7 @@ export default function CreateBountyPage() {
   }
 
   /* ─── Submitting overlay ─── */
-  const isSubmitting = submitState.kind !== "idle" && submitState.kind !== "error" && submitState.kind !== "success";
+  const isSubmitting = submitState.kind === "creating" || submitState.kind === "awaiting_deposit" || submitState.kind === "depositing" || submitState.kind === "confirming";
 
   return (
     <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 py-8">
