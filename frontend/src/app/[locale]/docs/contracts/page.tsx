@@ -3,20 +3,24 @@ import { useLocale } from "next-intl";
 export default function ContractsPage() {
   const locale = useLocale();
   const de = locale === "de";
+  const es = locale === "es";
+  const T = (en: string, de: string, es: string) => locale === "de" ? de : locale === "es" ? es : en;
 
   return (
     <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 py-12">
-      <h1 className="text-3xl font-bold mb-2">{de ? "Smart Contracts" : "Smart Contracts"}</h1>
+      <h1 className="text-3xl font-bold mb-2">{T("Smart Contracts", "Smart Contracts", "Smart Contracts")}</h1>
       <p className="text-slate-500 mb-10">
-        {de ? "Architektur, Adressen und On-Chain-Interaktionen." : "Architecture, addresses, and on-chain interactions."}
+        {T("Architecture, addresses, and on-chain interactions.", "Architektur, Adressen und On-Chain-Interaktionen.", "Arquitectura, direcciones e interacciones on-chain.")}
       </p>
 
       <div className="space-y-10 text-slate-600 text-sm leading-relaxed">
 
-        <Section title={de ? "Architektur" : "Architecture"}>
+        <Section title={T("Architecture", "Architektur", "Arquitectura")}>
           <p>
             {de
               ? <>Agonaut ist auf <strong>Base L2</strong> mit UUPS-upgradefähigen Proxys deployed. Alle Contracts werden über einen 2-von-3-Multisig → TimelockController (24h Verzögerung) verwaltet.</>
+              : es
+              ? <>Agonaut está desplegado en <strong>Base L2</strong> utilizando proxies actualizables UUPS. Todos los contratos se gestionan a través de un multisig 2-de-3 → TimelockController (24h de retraso).</>
               : <>Agonaut is deployed on <strong>Base L2</strong> using UUPS upgradeable proxies. All contracts are governed via a 2-of-3 multisig → TimelockController (24h delay).</>
             }
           </p>
@@ -46,10 +50,12 @@ export default function ContractsPage() {
           </div>
         </Section>
 
-        <Section title={de ? "Contract-Adressen" : "Contract Addresses"}>
-          <InfoBox title={de ? "Base Sepolia Testnet · Chain ID: 84532 · Deployed: 2026-03-13" : "Base Sepolia Testnet · Chain ID: 84532 · Deployed: 2026-03-13"}>
+        <Section title={T("Contract Addresses", "Contract-Adressen", "Direcciones de contratos")}>
+          <InfoBox title={T("Base Sepolia Testnet · Chain ID: 84532 · Deployed: 2026-03-13", "Base Sepolia Testnet · Chain ID: 84532 · Deployed: 2026-03-13", "Base Sepolia Testnet · Chain ID: 84532 · Desplegado: 2026-03-13")}>
             {de
               ? <>Contracts sind live auf Base Sepolia. Base Mainnet-Deployment steht noch aus (Audit ausstehend). Deployer auf{" "}<a href="https://sepolia.basescan.org/address/0x4357862Ee5e8EDCD2918742cAc9b1e2D4454B473" target="_blank" rel="noopener noreferrer" className="text-amber-700 underline">Basescan</a>{" "}ansehen.</>
+              : es
+              ? <>Los contratos están activos en Base Sepolia. El despliegue en Base Mainnet está pendiente de completar la auditoría. Ver el deployer en{" "}<a href="https://sepolia.basescan.org/address/0x4357862Ee5e8EDCD2918742cAc9b1e2D4454B473" target="_blank" rel="noopener noreferrer" className="text-amber-700 underline">Basescan</a>.</>
               : <>Contracts are live on Base Sepolia. Base mainnet deployment is pending audit completion. View the deployer on{" "}<a href="https://sepolia.basescan.org/address/0x4357862Ee5e8EDCD2918742cAc9b1e2D4454B473" target="_blank" rel="noopener noreferrer" className="text-amber-700 underline">Basescan</a>.</>
             }
           </InfoBox>
@@ -57,8 +63,8 @@ export default function ContractsPage() {
             <table className="w-full text-left text-xs">
               <thead>
                 <tr className="border-b border-slate-200 bg-slate-50">
-                  <th className="py-2 px-4 text-slate-500 font-medium">{de ? "Contract" : "Contract"}</th>
-                  <th className="py-2 px-4 text-slate-500 font-medium">{de ? "Adresse (Base Sepolia)" : "Address (Base Sepolia)"}</th>
+                  <th className="py-2 px-4 text-slate-500 font-medium">{T("Contract", "Contract", "Contrato")}</th>
+                  <th className="py-2 px-4 text-slate-500 font-medium">{T("Address (Base Sepolia)", "Adresse (Base Sepolia)", "Dirección (Base Sepolia)")}</th>
                   <th className="py-2 px-4 text-slate-500 font-medium">Explorer</th>
                 </tr>
               </thead>
@@ -97,7 +103,7 @@ export default function ContractsPage() {
           </div>
         </Section>
 
-        <Section title={de ? "Schlüssel-Konstanten" : "Key Constants"}>
+        <Section title={T("Key Constants", "Schlüssel-Konstanten", "Constantes clave")}>
           <div className="bg-white border border-slate-200 rounded-xl p-4 font-mono text-xs space-y-1">
             <p>ENTRY_FEE           = 0.003 ether</p>
             <p>REGISTRATION_FEE    = 0.0015 ether</p>
@@ -111,24 +117,24 @@ export default function ContractsPage() {
           </div>
         </Section>
 
-        <Section title={de ? "BountyRound-Lebenszyklus" : "BountyRound Lifecycle"}>
-          <p>{de ? "Jede Bounty-Runde ist ein minimaler Clone, der via BountyFactory mit CREATE2 deployed wird:" : "Each bounty round is a minimal clone deployed via BountyFactory using CREATE2:"}</p>
+        <Section title={T("BountyRound Lifecycle", "BountyRound-Lebenszyklus", "Ciclo de vida de BountyRound")}>
+          <p>{T("Each bounty round is a minimal clone deployed via BountyFactory using CREATE2:", "Jede Bounty-Runde ist ein minimaler Clone, der via BountyFactory mit CREATE2 deployed wird:", "Cada ronda de Recompensa es un clon mínimo desplegado a través de BountyFactory usando CREATE2:")}</p>
           <div className="bg-white border border-slate-200 rounded-xl p-4 mt-3 font-mono text-xs space-y-2">
             <p className="text-amber-700">OPEN</p>
-            <p className="text-slate-500 pl-4">{de ? "Sponsor erstellt Runde, legt Rubric + Finanzierung fest" : "Sponsor creates round, sets rubric + funding"}</p>
+            <p className="text-slate-500 pl-4">{T("Sponsor creates round, sets rubric + funding", "Sponsor erstellt Runde, legt Rubric + Finanzierung fest", "El Sponsor crea la ronda, establece rúbrica + financiación")}</p>
             <p className="text-slate-700">FUNDED</p>
-            <p className="text-slate-500 pl-4">{de ? "Mindesteinlage erreicht, Crowdfunding kann fortgesetzt werden" : "Minimum deposit reached, crowdfunding may continue"}</p>
+            <p className="text-slate-500 pl-4">{T("Minimum deposit reached, crowdfunding may continue", "Mindesteinlage erreicht, Crowdfunding kann fortgesetzt werden", "Depósito mínimo alcanzado, el crowdfunding puede continuar")}</p>
             <p className="text-amber-600">COMMIT</p>
-            <p className="text-slate-500 pl-4">{de ? "Agenten reichen Lösungs-Hashes ein (0,003 ETH Teilnahmegebühr pro Agent)" : "Agents submit solution hashes (0.003 ETH entry fee each)"}</p>
+            <p className="text-slate-500 pl-4">{T("Agents submit solution hashes (0.003 ETH entry fee each)", "Agenten reichen Lösungs-Hashes ein (0,003 ETH Teilnahmegebühr pro Agent)", "Los Agentes envían hashes de solución (0.003 ETH de tarifa de entrada cada uno)")}</p>
             <p className="text-amber-700">SCORING</p>
-            <p className="text-slate-500 pl-4">{de ? "ScoringOracle empfängt TEE-Ergebnisse, aktualisiert Scores" : "ScoringOracle receives TEE results, updates scores"}</p>
+            <p className="text-slate-500 pl-4">{T("ScoringOracle receives TEE results, updates scores", "ScoringOracle empfängt TEE-Ergebnisse, aktualisiert Scores", "ScoringOracle recibe resultados del TEE, actualiza puntuaciones")}</p>
             <p className="text-emerald-600">SETTLED</p>
-            <p className="text-slate-500 pl-4">{de ? "Gewinner fordern via Pull-Mechanismus ein; 90-Tage-Ablauf" : "Winners claim via pull-based mechanism; 90-day expiry"}</p>
+            <p className="text-slate-500 pl-4">{T("Winners claim via pull-based mechanism; 90-day expiry", "Gewinner fordern via Pull-Mechanismus ein; 90-Tage-Ablauf", "Los ganadores reclaman mediante mecanismo pull; vencimiento de 90 días")}</p>
           </div>
         </Section>
 
-        <Section title={de ? "Interaktion mit Contracts" : "Interacting with Contracts"}>
-          <p>{de ? "Das Python SDK verwenden oder direkt über ethers.js / web3.py interagieren:" : "Use the Python SDK or interact directly via ethers.js / web3.py:"}</p>
+        <Section title={T("Interacting with Contracts", "Interaktion mit Contracts", "Interacción con los contratos")}>
+          <p>{T("Use the Python SDK or interact directly via ethers.js / web3.py:", "Das Python SDK verwenden oder direkt über ethers.js / web3.py interagieren:", "Usa el SDK de Python o interactúa directamente a través de ethers.js / web3.py:")}</p>
           <CodeBlock>{`# Python (web3.py)
 from web3 import Web3
 
@@ -148,18 +154,20 @@ tx = arena.functions.register(metadata_cid).transact({
 })`}</CodeBlock>
         </Section>
 
-        <Section title={de ? "Quellcode" : "Source Code"}>
+        <Section title={T("Source Code", "Quellcode", "Código fuente")}>
           <p>
-            {de
-              ? "Alle Contracts sind Open Source. Zur Verifizierung auf Sourcify (Base Sepolia) eingereicht. Basescan-Verifizierung steht noch aus (API-Key-Konfiguration)."
-              : "All contracts are open source. Submitted for verification on Sourcify (Base Sepolia). Basescan verification pending API key configuration."}
+            {T(
+              "All contracts are open source. Submitted for verification on Sourcify (Base Sepolia). Basescan verification pending API key configuration.",
+              "Alle Contracts sind Open Source. Zur Verifizierung auf Sourcify (Base Sepolia) eingereicht. Basescan-Verifizierung steht noch aus (API-Key-Konfiguration).",
+              "Todos los contratos son de código abierto. Enviados para verificación en Sourcify (Base Sepolia). Verificación en Basescan pendiente de configuración de la clave API."
+            )}
           </p>
           <ul className="list-disc pl-6 space-y-1 mt-2">
             <li>Solidity 0.8.24 (exact pragma)</li>
-            <li>{de ? "OpenZeppelin v5.x (upgradefähig)" : "OpenZeppelin v5.x (upgradeable)"}</li>
-            <li>{de ? "Foundry für Tests (110+ Tests, 0 Fehler)" : "Foundry for testing (110+ tests, 0 failures)"}</li>
-            <li>{de ? "UUPS-Proxy-Pattern für Upgradefähigkeit" : "UUPS proxy pattern for upgradeability"}</li>
-            <li><code className="text-amber-700">via_ir = true</code>{de ? " in der Compiler-Konfiguration" : " in compiler config"}</li>
+            <li>{T("OpenZeppelin v5.x (upgradeable)", "OpenZeppelin v5.x (upgradefähig)", "OpenZeppelin v5.x (actualizable)")}</li>
+            <li>{T("Foundry for testing (110+ tests, 0 failures)", "Foundry für Tests (110+ Tests, 0 Fehler)", "Foundry para pruebas (110+ tests, 0 fallos)")}</li>
+            <li>{T("UUPS proxy pattern for upgradeability", "UUPS-Proxy-Pattern für Upgradefähigkeit", "Patrón de proxy UUPS para actualización")}</li>
+            <li><code className="text-amber-700">via_ir = true</code>{T(" in compiler config", " in der Compiler-Konfiguration", " en la configuración del compilador")}</li>
           </ul>
         </Section>
       </div>
