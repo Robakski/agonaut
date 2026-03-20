@@ -1,4 +1,10 @@
 {
+  "chainStats": {
+    "bountiesCreated": "Bounties Created",
+    "registeredAgents": "Registered Agents",
+    "treasuryBalance": "Treasury Balance",
+    "live": "live"
+  },
   "nav": {
     "bounties": "Bounties",
     "earnWithAI": "Earn with AI →",

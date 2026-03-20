@@ -13,8 +13,14 @@ export function Navbar() {
   const router = useRouter();
   const pathname = usePathname();
 
-  const switchLocale = () => {
-    const next = locale === "en" ? "de" : "en";
+  const [langOpen, setLangOpen] = useState(false);
+  const LOCALES = [
+    { code: "en", label: "EN", flag: "🇬🇧" },
+    { code: "de", label: "DE", flag: "🇩🇪" },
+    { code: "es", label: "ES", flag: "🇪🇸" },
+  ] as const;
+  const switchLocale = (next: string) => {
+    setLangOpen(false);
     router.replace(pathname, { locale: next });
   };
 
@@ -46,12 +52,29 @@ export function Navbar() {
           {/* Right side */}
           <div className="flex items-center gap-3">
             {/* Language switcher */}
-            <button
-              onClick={switchLocale}
-              className="hidden sm:flex items-center justify-center px-2.5 py-1.5 rounded-lg text-xs font-semibold text-slate-500 hover:text-slate-700 hover:bg-slate-100 border border-slate-200 transition-all"
-            >
-              {tLang("current")}
-            </button>
+            <div className="relative hidden sm:block">
+              <button
+                onClick={() => setLangOpen(!langOpen)}
+                className="flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-slate-500 hover:text-slate-700 hover:bg-slate-100 border border-slate-200 transition-all"
+              >
+                {LOCALES.find(l => l.code === locale)?.flag} {locale.toUpperCase()}
+                <svg className={`w-3 h-3 transition-transform ${langOpen ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+              </button>
+              {langOpen && (
+                <>
+                  <div className="fixed inset-0 z-40" onClick={() => setLangOpen(false)} />
+                  <div className="absolute right-0 mt-1 z-50 bg-white border border-slate-200 rounded-lg shadow-lg py-1 min-w-[100px]">
+                    {LOCALES.map(l => (
+                      <button key={l.code} onClick={() => switchLocale(l.code)}
+                        className={`w-full text-left px-3 py-2 text-sm flex items-center gap-2 hover:bg-slate-50 transition-colors ${locale === l.code ? "font-semibold text-slate-900" : "text-slate-600"}`}>
+                        {l.flag} {l.label}
+                        {locale === l.code && <span className="ml-auto text-amber-600">✓</span>}
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
 
             <a
               href="https://github.com/Robakski/agonaut"
@@ -86,12 +109,14 @@ export function Navbar() {
             <MobileNavLink href="/agents" onClick={() => setMobileOpen(false)}>🤖 {t("earnWithAI")}</MobileNavLink>
             <MobileNavLink href="/leaderboard" onClick={() => setMobileOpen(false)}>{t("leaderboard")}</MobileNavLink>
             <MobileNavLink href="/docs" onClick={() => setMobileOpen(false)}>{t("docs")}</MobileNavLink>
-            <button
-              onClick={() => { switchLocale(); setMobileOpen(false); }}
-              className="block w-full text-left px-3 py-2.5 text-sm font-medium text-slate-600 hover:text-slate-900 rounded-lg hover:bg-slate-50 transition-all"
-            >
-              🌐 {tLang("switchTo")}
-            </button>
+            {LOCALES.filter(l => l.code !== locale).map(l => (
+              <button key={l.code}
+                onClick={() => { switchLocale(l.code); setMobileOpen(false); }}
+                className="block w-full text-left px-3 py-2.5 text-sm font-medium text-slate-600 hover:text-slate-900 rounded-lg hover:bg-slate-50 transition-all"
+              >
+                {l.flag} {l.label}
+              </button>
+            ))}
           </div>
         )}
       </div>

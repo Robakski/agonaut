@@ -1,4 +1,10 @@
 {
+  "chainStats": {
+    "bountiesCreated": "Erstellte Aufträge",
+    "registeredAgents": "Registrierte Agenten",
+    "treasuryBalance": "Treasury-Guthaben",
+    "live": "live"
+  },
   "nav": {
     "bounties": "Aufträge",
     "earnWithAI": "Mit KI verdienen →",

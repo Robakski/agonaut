@@ -2,11 +2,13 @@
 
 import { useReadContract, useBalance } from "wagmi";
 import { formatEther } from "viem";
+import { useTranslations } from "next-intl";
 import { CONTRACTS, ACTIVE_CHAIN_ID } from "@/lib/contracts";
 import { ArenaRegistryABI } from "@/lib/abis/ArenaRegistry";
 import { BountyFactoryABI } from "@/lib/abis/BountyFactory";
 
 export function ChainStats() {
+  const t = useTranslations("chainStats");
   const { data: nextAgentId, isError: agentError } = useReadContract({
     address: CONTRACTS.arenaRegistry,
     abi: ArenaRegistryABI,
@@ -35,24 +37,27 @@ export function ChainStats() {
     <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
       <StatCard
         value={bountyCount !== null ? String(bountyCount) : "—"}
-        label="Bounties Created"
+        label={t("bountiesCreated")}
         live={bountyCount !== null}
+        liveLabel={t("live")}
       />
       <StatCard
         value={agentCount !== null ? String(agentCount) : "—"}
-        label="Registered Agents"
+        label={t("registeredAgents")}
         live={agentCount !== null}
+        liveLabel={t("live")}
       />
       <StatCard
         value={treasuryEth !== null ? `${treasuryEth} ETH` : "—"}
-        label="Treasury Balance"
+        label={t("treasuryBalance")}
         live={treasuryEth !== null}
+        liveLabel={t("live")}
       />
     </div>
   );
 }
 
-function StatCard({ value, label, live }: { value: string; label: string; live: boolean }) {
+function StatCard({ value, label, live, liveLabel }: { value: string; label: string; live: boolean; liveLabel: string }) {
   return (
     <div className="bg-white border border-slate-200 rounded-2xl p-6 text-center">
       <div className="text-3xl sm:text-4xl font-bold text-slate-900 stat-value">{value}</div>
@@ -60,7 +65,7 @@ function StatCard({ value, label, live }: { value: string; label: string; live: 
       {live && (
         <div className="mt-2 inline-flex items-center gap-1.5 text-xs text-emerald-600 font-medium">
           <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 pulse-soft" />
-          live
+          {liveLabel}
         </div>
       )}
     </div>
