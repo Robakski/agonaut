@@ -18,6 +18,7 @@ export function Navbar() {
     { code: "en", label: "EN", flag: "🇬🇧" },
     { code: "de", label: "DE", flag: "🇩🇪" },
     { code: "es", label: "ES", flag: "🇪🇸" },
+    { code: "zh", label: "中文", flag: "🇨🇳" },
   ] as const;
   const switchLocale = (next: string) => {
     setLangOpen(false);
