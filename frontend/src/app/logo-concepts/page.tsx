@@ -2,210 +2,164 @@ export default function LogoConceptsPage() {
   return (
     <div className="mx-auto max-w-4xl px-4 py-12 space-y-16">
       <div className="text-center mb-8">
-        <h1 className="text-2xl font-bold text-slate-900">Logo Concepts — Round 2</h1>
-        <p className="text-slate-500 text-sm mt-1">Exploring the AG (silver) + AU (gold) angle</p>
+        <h1 className="text-2xl font-bold text-slate-900">Logo Concepts — Round 3</h1>
+        <p className="text-slate-500 text-sm mt-1">Refining F (gradient), G (underlines), H (dots) directions</p>
       </div>
 
-      {/* Concept A: Precious Metals — AG silver, AU gold */}
-      <Concept num="A" title="Precious Metals" desc="AG in silver, AU in gold — the chemistry of value is in our name">
+      {/* ── GRADIENT FAMILY (from F) ── */}
+      <div className="text-center"><p className="text-xs font-medium text-slate-400 uppercase tracking-widest">Gradient Family</p></div>
+
+      <Concept num="F1" title="Silver → Gold" desc="Full silver-to-gold gradient, no dark middle — pure precious metal spectrum">
         <div className="flex justify-center gap-8 flex-wrap">
           <Variant bg="white">
-            <span className="text-[54px] font-bold tracking-tight" style={{ fontFamily: "system-ui, -apple-system, sans-serif" }}>
-              <span style={{ color: '#94a3b8' }}>Ag</span>
-              <span className="text-slate-900">on</span>
-              <span style={{ color: '#d97706' }}>au</span>
-              <span className="text-slate-900">t</span>
-            </span>
+            <Grad style="linear-gradient(90deg, #a8a29e 0%, #d6d3d1 30%, #fbbf24 70%, #d97706 100%)">Agonaut</Grad>
           </Variant>
           <Variant bg="dark">
-            <span className="text-[54px] font-bold tracking-tight" style={{ fontFamily: "system-ui, -apple-system, sans-serif" }}>
-              <span style={{ color: '#cbd5e1' }}>Ag</span>
-              <span className="text-white">on</span>
-              <span style={{ color: '#f59e0b' }}>au</span>
-              <span className="text-white">t</span>
-            </span>
+            <Grad style="linear-gradient(90deg, #d4d4d8 0%, #e7e5e4 30%, #fde68a 70%, #f59e0b 100%)">Agonaut</Grad>
           </Variant>
         </div>
       </Concept>
 
-      {/* Concept B: Subtle Metals — metallic gradient on AG and AU only */}
-      <Concept num="B" title="Subtle Metals" desc="Same idea but more understated — AG and AU slightly shifted, rest neutral">
+      <Concept num="F2" title="Ends Only" desc="Silver fades in on the left, gold fades in on the right — center stays neutral">
         <div className="flex justify-center gap-8 flex-wrap">
           <Variant bg="white">
-            <span className="text-[54px] font-extrabold tracking-tight" style={{ fontFamily: "system-ui, -apple-system, sans-serif" }}>
-              <span style={{ color: '#a1a1aa' }}>Ag</span>
-              <span className="text-slate-900">on</span>
-              <span style={{ color: '#b45309' }}>au</span>
-              <span className="text-slate-900">t</span>
-            </span>
-          </Variant>
-          <Variant bg="white">
-            <span className="text-[54px] font-extrabold tracking-tight" style={{ fontFamily: "system-ui, -apple-system, sans-serif" }}>
-              <span style={{ color: '#9ca3af' }}>AG</span>
-              <span className="text-slate-900">ON</span>
-              <span style={{ color: '#b45309' }}>AU</span>
-              <span className="text-slate-900">T</span>
-            </span>
-          </Variant>
-        </div>
-      </Concept>
-
-      {/* Concept C: Element Notation */}
-      <Concept num="C" title="Element Notation" desc="Chemistry-inspired — Ag and Au styled as element symbols with subtle superscript">
-        <div className="flex justify-center gap-8 flex-wrap">
-          <Variant bg="white">
-            <span className="text-[50px] font-bold tracking-tight text-slate-900" style={{ fontFamily: "system-ui, -apple-system, sans-serif" }}>
-              <span className="relative">
-                <span style={{ color: '#71717a' }}>Ag</span>
-                <span className="absolute -top-2 -right-3 text-[14px] font-medium" style={{ color: '#a1a1aa' }}>47</span>
-              </span>
-              <span className="ml-3">on</span>
-              <span className="relative ml-0">
-                <span style={{ color: '#92400e' }}>au</span>
-                <span className="absolute -top-2 -right-3 text-[14px] font-medium" style={{ color: '#d97706' }}>79</span>
-              </span>
-              <span>t</span>
-            </span>
+            <Grad style="linear-gradient(90deg, #a1a1aa 0%, #0f172a 20%, #0f172a 80%, #d97706 100%)">Agonaut</Grad>
           </Variant>
           <Variant bg="dark">
-            <span className="text-[50px] font-bold tracking-tight text-white" style={{ fontFamily: "system-ui, -apple-system, sans-serif" }}>
-              <span className="relative">
-                <span style={{ color: '#d4d4d8' }}>Ag</span>
-                <span className="absolute -top-2 -right-3 text-[14px] font-medium" style={{ color: '#a1a1aa' }}>47</span>
-              </span>
-              <span className="ml-3">on</span>
-              <span className="relative ml-0">
-                <span style={{ color: '#fbbf24' }}>au</span>
-                <span className="absolute -top-2 -right-3 text-[14px] font-medium" style={{ color: '#f59e0b' }}>79</span>
-              </span>
-              <span>t</span>
-            </span>
+            <Grad style="linear-gradient(90deg, #d4d4d8 0%, #ffffff 20%, #ffffff 80%, #fbbf24 100%)">Agonaut</Grad>
           </Variant>
         </div>
       </Concept>
 
-      {/* Concept D: Clean Bimetal */}
-      <Concept num="D" title="Clean Bimetal" desc="All caps, AG and AU just slightly warmer/cooler than the base — you feel it before you see it">
+      <Concept num="F3" title="Warm Gradient" desc="Silver → warm gray → amber — feels like molten metal cooling">
         <div className="flex justify-center gap-8 flex-wrap">
           <Variant bg="white">
-            <span className="text-[52px] font-bold tracking-[0.12em] text-slate-800" style={{ fontFamily: "system-ui, -apple-system, sans-serif" }}>
-              <span style={{ color: '#78716c' }}>AG</span>
-              <span>ON</span>
-              <span style={{ color: '#a16207' }}>AU</span>
-              <span>T</span>
-            </span>
+            <Grad style="linear-gradient(90deg, #9ca3af 0%, #6b7280 30%, #92400e 65%, #b45309 100%)">Agonaut</Grad>
           </Variant>
           <Variant bg="dark">
-            <span className="text-[52px] font-bold tracking-[0.12em] text-slate-200" style={{ fontFamily: "system-ui, -apple-system, sans-serif" }}>
-              <span style={{ color: '#d4d4d8' }}>AG</span>
-              <span>ON</span>
-              <span style={{ color: '#fbbf24' }}>AU</span>
-              <span>T</span>
-            </span>
+            <Grad style="linear-gradient(90deg, #d1d5db 0%, #9ca3af 30%, #f59e0b 65%, #fbbf24 100%)">Agonaut</Grad>
           </Variant>
         </div>
       </Concept>
 
-      {/* Concept E: Monogram + Wordmark */}
-      <Concept num="E" title="Monogram Mark" desc="A standalone Ag|Au monogram for favicon/icon + full wordmark">
-        <div className="flex justify-center gap-8 flex-wrap items-center">
-          {/* Monogram */}
-          <Variant bg="white">
-            <div className="flex items-center gap-1">
-              <div className="w-14 h-14 rounded-xl flex items-center justify-center border-2" style={{ borderColor: '#d4d4d8', background: 'linear-gradient(135deg, #f4f4f5 0%, #e4e4e7 100%)' }}>
-                <span className="text-xl font-bold" style={{ color: '#71717a' }}>Ag</span>
-              </div>
-              <div className="w-14 h-14 rounded-xl flex items-center justify-center border-2" style={{ borderColor: '#d97706', background: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)' }}>
-                <span className="text-xl font-bold" style={{ color: '#92400e' }}>Au</span>
-              </div>
-            </div>
-          </Variant>
-          <Variant bg="white">
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-0.5">
-                <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #f4f4f5 0%, #d4d4d8 100%)' }}>
-                  <span className="text-sm font-bold" style={{ color: '#52525b' }}>Ag</span>
-                </div>
-                <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #fef3c7 0%, #fcd34d 100%)' }}>
-                  <span className="text-sm font-bold" style={{ color: '#78350f' }}>Au</span>
-                </div>
-              </div>
-              <span className="text-3xl font-bold text-slate-900 tracking-tight" style={{ fontFamily: "system-ui" }}>Agonaut</span>
-            </div>
-          </Variant>
-        </div>
-      </Concept>
-
-      {/* Concept F: The Gradient Bridge */}
-      <Concept num="F" title="The Gradient" desc="Silver-to-gold gradient flows through the entire word — precious metal spectrum">
+      <Concept num="F4" title="Lowercase Gradient" desc="Lowercase version — softer, more approachable">
         <div className="flex justify-center gap-8 flex-wrap">
           <Variant bg="white">
-            <span
-              className="text-[54px] font-extrabold tracking-tight"
-              style={{
-                fontFamily: "system-ui, -apple-system, sans-serif",
-                background: "linear-gradient(90deg, #a1a1aa 0%, #78716c 25%, #0f172a 40%, #0f172a 60%, #a16207 75%, #d97706 100%)",
-                WebkitBackgroundClip: "text",
-                WebkitTextFillColor: "transparent",
-                backgroundClip: "text",
-              }}
-            >
+            <Grad style="linear-gradient(90deg, #a1a1aa 0%, #0f172a 20%, #0f172a 80%, #d97706 100%)">agonaut</Grad>
+          </Variant>
+          <Variant bg="white">
+            <Grad style="linear-gradient(90deg, #a8a29e 0%, #d6d3d1 30%, #fbbf24 70%, #d97706 100%)">agonaut</Grad>
+          </Variant>
+        </div>
+      </Concept>
+
+      <Concept num="F5" title="Diagonal Gradient" desc="135° angle — silver top-left to gold bottom-right, like light hitting metal">
+        <div className="flex justify-center gap-8 flex-wrap">
+          <Variant bg="white">
+            <Grad style="linear-gradient(135deg, #a1a1aa 0%, #57534e 35%, #92400e 65%, #d97706 100%)">Agonaut</Grad>
+          </Variant>
+          <Variant bg="dark">
+            <Grad style="linear-gradient(135deg, #d4d4d8 0%, #a8a29e 35%, #fbbf24 65%, #f59e0b 100%)">Agonaut</Grad>
+          </Variant>
+        </div>
+      </Concept>
+
+      {/* ── UNDERLINE FAMILY (from G) ── */}
+      <div className="text-center pt-8"><p className="text-xs font-medium text-slate-400 uppercase tracking-widest">Underline Family</p></div>
+
+      <Concept num="G1" title="Full Underline" desc="One continuous line: silver → gold gradient beneath the entire word">
+        <div className="flex justify-center gap-8 flex-wrap">
+          <Variant bg="white">
+            <span className="relative inline-block text-[52px] font-bold tracking-tight text-slate-900" style={{ fontFamily: "system-ui" }}>
               Agonaut
+              <span className="absolute bottom-0 left-0 right-0 h-[3px] rounded-full" style={{ background: 'linear-gradient(90deg, #d4d4d8, #a1a1aa, #d97706, #f59e0b)' }} />
             </span>
           </Variant>
           <Variant bg="dark">
-            <span
-              className="text-[54px] font-extrabold tracking-tight"
-              style={{
-                fontFamily: "system-ui, -apple-system, sans-serif",
-                background: "linear-gradient(90deg, #d4d4d8 0%, #a1a1aa 20%, #ffffff 40%, #ffffff 60%, #fbbf24 80%, #f59e0b 100%)",
-                WebkitBackgroundClip: "text",
-                WebkitTextFillColor: "transparent",
-                backgroundClip: "text",
-              }}
-            >
+            <span className="relative inline-block text-[52px] font-bold tracking-tight text-white" style={{ fontFamily: "system-ui" }}>
               Agonaut
+              <span className="absolute bottom-0 left-0 right-0 h-[3px] rounded-full" style={{ background: 'linear-gradient(90deg, #e4e4e7, #a1a1aa, #fbbf24, #f59e0b)' }} />
             </span>
           </Variant>
         </div>
       </Concept>
 
-      {/* Concept G: Underline Metals */}
-      <Concept num="G" title="Underline Accents" desc="Clean wordmark with silver and gold underlines beneath Ag and Au">
+      <Concept num="G2" title="Split Underlines" desc="Original concept — silver under Ag, gold under au, with gap in the middle">
         <div className="flex justify-center gap-8 flex-wrap">
           <Variant bg="white">
-            <span className="text-[52px] font-bold tracking-tight text-slate-900" style={{ fontFamily: "system-ui, -apple-system, sans-serif" }}>
-              <span className="relative">
-                Ag
-                <span className="absolute bottom-0 left-0 right-0 h-[3px] rounded-full" style={{ background: 'linear-gradient(90deg, #d4d4d8, #a1a1aa)' }} />
-              </span>
+            <span className="text-[52px] font-bold tracking-tight text-slate-900" style={{ fontFamily: "system-ui" }}>
+              <U color="linear-gradient(90deg, #d4d4d8, #a1a1aa)">Ag</U>
               on
-              <span className="relative">
-                au
-                <span className="absolute bottom-0 left-0 right-0 h-[3px] rounded-full" style={{ background: 'linear-gradient(90deg, #fbbf24, #d97706)' }} />
-              </span>
+              <U color="linear-gradient(90deg, #fbbf24, #d97706)">au</U>
               t
             </span>
           </Variant>
           <Variant bg="dark">
-            <span className="text-[52px] font-bold tracking-tight text-white" style={{ fontFamily: "system-ui, -apple-system, sans-serif" }}>
-              <span className="relative">
-                Ag
-                <span className="absolute bottom-0 left-0 right-0 h-[3px] rounded-full" style={{ background: 'linear-gradient(90deg, #e4e4e7, #a1a1aa)' }} />
-              </span>
+            <span className="text-[52px] font-bold tracking-tight text-white" style={{ fontFamily: "system-ui" }}>
+              <U color="linear-gradient(90deg, #e4e4e7, #a1a1aa)">Ag</U>
               on
-              <span className="relative">
-                au
-                <span className="absolute bottom-0 left-0 right-0 h-[3px] rounded-full" style={{ background: 'linear-gradient(90deg, #fbbf24, #f59e0b)' }} />
-              </span>
+              <U color="linear-gradient(90deg, #fde68a, #f59e0b)">au</U>
               t
             </span>
           </Variant>
         </div>
       </Concept>
 
-      {/* Concept H: Minimal Dot Metals */}
-      <Concept num="H" title="Metal Dots" desc="Two small dots — silver and gold — sit beside the wordmark like a maker's hallmark">
+      <Concept num="G3" title="Thick Bar" desc="Bolder underline bar — more presence, works better at small sizes">
+        <div className="flex justify-center gap-8 flex-wrap">
+          <Variant bg="white">
+            <span className="relative inline-block text-[52px] font-bold tracking-tight text-slate-900" style={{ fontFamily: "system-ui" }}>
+              Agonaut
+              <span className="absolute -bottom-1 left-0 right-0 h-[5px] rounded-full" style={{ background: 'linear-gradient(90deg, #d4d4d8, #78716c, #b45309, #f59e0b)' }} />
+            </span>
+          </Variant>
+          <Variant bg="dark">
+            <span className="relative inline-block text-[52px] font-bold tracking-tight text-white" style={{ fontFamily: "system-ui" }}>
+              Agonaut
+              <span className="absolute -bottom-1 left-0 right-0 h-[5px] rounded-full" style={{ background: 'linear-gradient(90deg, #e4e4e7, #a1a1aa, #fbbf24, #f59e0b)' }} />
+            </span>
+          </Variant>
+        </div>
+      </Concept>
+
+      <Concept num="G4" title="Overline" desc="Same gradient but above the word instead — unexpected, distinctive">
+        <div className="flex justify-center gap-8 flex-wrap">
+          <Variant bg="white">
+            <span className="relative inline-block text-[52px] font-bold tracking-tight text-slate-900 pt-2" style={{ fontFamily: "system-ui" }}>
+              <span className="absolute top-0 left-0 right-0 h-[3px] rounded-full" style={{ background: 'linear-gradient(90deg, #d4d4d8, #a1a1aa, #d97706, #f59e0b)' }} />
+              Agonaut
+            </span>
+          </Variant>
+          <Variant bg="dark">
+            <span className="relative inline-block text-[52px] font-bold tracking-tight text-white pt-2" style={{ fontFamily: "system-ui" }}>
+              <span className="absolute top-0 left-0 right-0 h-[3px] rounded-full" style={{ background: 'linear-gradient(90deg, #e4e4e7, #a1a1aa, #fbbf24, #f59e0b)' }} />
+              Agonaut
+            </span>
+          </Variant>
+        </div>
+      </Concept>
+
+      <Concept num="G5" title="Lowercase + Underline" desc="Lowercase with the full gradient underline">
+        <div className="flex justify-center gap-8 flex-wrap">
+          <Variant bg="white">
+            <span className="relative inline-block text-[52px] font-semibold tracking-wide text-slate-900" style={{ fontFamily: "system-ui" }}>
+              agonaut
+              <span className="absolute bottom-0.5 left-0 right-0 h-[3px] rounded-full" style={{ background: 'linear-gradient(90deg, #d4d4d8, #a1a1aa, #d97706, #f59e0b)' }} />
+            </span>
+          </Variant>
+          <Variant bg="dark">
+            <span className="relative inline-block text-[52px] font-semibold tracking-wide text-white" style={{ fontFamily: "system-ui" }}>
+              agonaut
+              <span className="absolute bottom-0.5 left-0 right-0 h-[3px] rounded-full" style={{ background: 'linear-gradient(90deg, #e4e4e7, #a1a1aa, #fbbf24, #f59e0b)' }} />
+            </span>
+          </Variant>
+        </div>
+      </Concept>
+
+      {/* ── DOT FAMILY (from H) ── */}
+      <div className="text-center pt-8"><p className="text-xs font-medium text-slate-400 uppercase tracking-widest">Dot / Mark Family</p></div>
+
+      <Concept num="H1" title="Side Dots" desc="Original — silver + gold dots stacked beside the wordmark">
         <div className="flex justify-center gap-8 flex-wrap">
           <Variant bg="white">
             <div className="flex items-center gap-3">
@@ -228,30 +182,176 @@ export default function LogoConceptsPage() {
         </div>
       </Concept>
 
-      {/* Previous favorites for comparison */}
-      <div className="border-t border-slate-200 pt-12">
-        <p className="text-center text-xs text-slate-400 uppercase tracking-widest mb-8">Previous round favorites for comparison</p>
-        
-        <Concept num="R1-5" title="Soft Geometry (Round 1)" desc="Violet accent on the 'o'">
-          <div className="flex justify-center gap-8 flex-wrap">
-            <Variant bg="white">
-              <span className="text-[52px] font-bold tracking-tight text-slate-900" style={{ fontFamily: "system-ui" }}>
-                Ag<span className="text-violet-600">o</span>naut
-              </span>
-            </Variant>
-            <Variant bg="white">
-              <span className="text-5xl font-bold tracking-[0.2em] text-slate-900" style={{ fontFamily: "system-ui" }}>
-                AGON<span className="text-slate-300 font-light mx-0.5">|</span>AUT
-              </span>
-            </Variant>
-          </div>
-        </Concept>
-      </div>
+      <Concept num="H2" title="Leading Dots" desc="Dots before the word — like a maker's stamp">
+        <div className="flex justify-center gap-8 flex-wrap">
+          <Variant bg="white">
+            <div className="flex items-center gap-3">
+              <div className="flex flex-col gap-1.5">
+                <div className="w-3.5 h-3.5 rounded-full" style={{ background: 'linear-gradient(135deg, #e4e4e7, #9ca3af)' }} />
+                <div className="w-3.5 h-3.5 rounded-full" style={{ background: 'linear-gradient(135deg, #fde68a, #d97706)' }} />
+              </div>
+              <span className="text-[50px] font-bold tracking-tight text-slate-900" style={{ fontFamily: "system-ui" }}>Agonaut</span>
+            </div>
+          </Variant>
+          <Variant bg="dark">
+            <div className="flex items-center gap-3">
+              <div className="flex flex-col gap-1.5">
+                <div className="w-3.5 h-3.5 rounded-full" style={{ background: 'linear-gradient(135deg, #f4f4f5, #d4d4d8)' }} />
+                <div className="w-3.5 h-3.5 rounded-full" style={{ background: 'linear-gradient(135deg, #fde68a, #f59e0b)' }} />
+              </div>
+              <span className="text-[50px] font-bold tracking-tight text-white" style={{ fontFamily: "system-ui" }}>Agonaut</span>
+            </div>
+          </Variant>
+        </div>
+      </Concept>
 
-      <p className="text-center text-xs text-slate-400 pt-8 pb-4">
-        Internal review — will be removed before launch
-      </p>
+      <Concept num="H3" title="Inline Dots" desc="Dots replace the 'o' — silver dot and gold dot fused into the word">
+        <div className="flex justify-center gap-8 flex-wrap">
+          <Variant bg="white">
+            <div className="flex items-baseline gap-0">
+              <span className="text-[50px] font-bold tracking-tight text-slate-900" style={{ fontFamily: "system-ui" }}>Ag</span>
+              <div className="flex items-center mx-0.5">
+                <div className="w-4 h-4 rounded-full -mr-0.5" style={{ background: 'linear-gradient(135deg, #e4e4e7, #9ca3af)' }} />
+                <div className="w-4 h-4 rounded-full -ml-0.5" style={{ background: 'linear-gradient(135deg, #fde68a, #d97706)' }} />
+              </div>
+              <span className="text-[50px] font-bold tracking-tight text-slate-900" style={{ fontFamily: "system-ui" }}>naut</span>
+            </div>
+          </Variant>
+          <Variant bg="dark">
+            <div className="flex items-baseline gap-0">
+              <span className="text-[50px] font-bold tracking-tight text-white" style={{ fontFamily: "system-ui" }}>Ag</span>
+              <div className="flex items-center mx-0.5">
+                <div className="w-4 h-4 rounded-full -mr-0.5" style={{ background: 'linear-gradient(135deg, #f4f4f5, #d4d4d8)' }} />
+                <div className="w-4 h-4 rounded-full -ml-0.5" style={{ background: 'linear-gradient(135deg, #fde68a, #f59e0b)' }} />
+              </div>
+              <span className="text-[50px] font-bold tracking-tight text-white" style={{ fontFamily: "system-ui" }}>naut</span>
+            </div>
+          </Variant>
+        </div>
+      </Concept>
+
+      <Concept num="H4" title="Single Gradient Dot" desc="One dot that blends silver into gold — the simplest possible mark">
+        <div className="flex justify-center gap-8 flex-wrap">
+          <Variant bg="white">
+            <div className="flex items-center gap-2.5">
+              <div className="w-5 h-5 rounded-full" style={{ background: 'linear-gradient(135deg, #d4d4d8 0%, #fbbf24 100%)' }} />
+              <span className="text-[50px] font-bold tracking-tight text-slate-900" style={{ fontFamily: "system-ui" }}>Agonaut</span>
+            </div>
+          </Variant>
+          <Variant bg="dark">
+            <div className="flex items-center gap-2.5">
+              <div className="w-5 h-5 rounded-full" style={{ background: 'linear-gradient(135deg, #e4e4e7 0%, #fbbf24 100%)' }} />
+              <span className="text-[50px] font-bold tracking-tight text-white" style={{ fontFamily: "system-ui" }}>Agonaut</span>
+            </div>
+          </Variant>
+        </div>
+      </Concept>
+
+      <Concept num="H5" title="Dot as Period" desc="Silver-gold gradient dot after the word like a confident period. Statement.">
+        <div className="flex justify-center gap-8 flex-wrap">
+          <Variant bg="white">
+            <div className="flex items-baseline gap-1">
+              <span className="text-[50px] font-bold tracking-tight text-slate-900" style={{ fontFamily: "system-ui" }}>Agonaut</span>
+              <div className="w-4 h-4 rounded-full mb-1" style={{ background: 'linear-gradient(135deg, #d4d4d8 0%, #fbbf24 100%)' }} />
+            </div>
+          </Variant>
+          <Variant bg="dark">
+            <div className="flex items-baseline gap-1">
+              <span className="text-[50px] font-bold tracking-tight text-white" style={{ fontFamily: "system-ui" }}>Agonaut</span>
+              <div className="w-4 h-4 rounded-full mb-1" style={{ background: 'linear-gradient(135deg, #e4e4e7 0%, #fbbf24 100%)' }} />
+            </div>
+          </Variant>
+        </div>
+      </Concept>
+
+      {/* ── COMBINATIONS ── */}
+      <div className="text-center pt-8"><p className="text-xs font-medium text-slate-400 uppercase tracking-widest">Best of Both — Combinations</p></div>
+
+      <Concept num="X1" title="Gradient + Underline" desc="Gradient text with the gradient underline — maximum precious metal energy">
+        <div className="flex justify-center gap-8 flex-wrap">
+          <Variant bg="white">
+            <span className="relative inline-block">
+              <Grad style="linear-gradient(90deg, #a1a1aa 0%, #78716c 30%, #92400e 70%, #d97706 100%)">Agonaut</Grad>
+              <span className="absolute -bottom-1 left-0 right-0 h-[3px] rounded-full" style={{ background: 'linear-gradient(90deg, #d4d4d8, #a1a1aa, #d97706, #f59e0b)' }} />
+            </span>
+          </Variant>
+          <Variant bg="dark">
+            <span className="relative inline-block">
+              <Grad style="linear-gradient(90deg, #d4d4d8 0%, #a1a1aa 30%, #fbbf24 70%, #f59e0b 100%)">Agonaut</Grad>
+              <span className="absolute -bottom-1 left-0 right-0 h-[3px] rounded-full" style={{ background: 'linear-gradient(90deg, #e4e4e7, #d4d4d8, #fbbf24, #f59e0b)' }} />
+            </span>
+          </Variant>
+        </div>
+      </Concept>
+
+      <Concept num="X2" title="Gradient + Leading Dot" desc="Gradient text with the blended silver-gold dot">
+        <div className="flex justify-center gap-8 flex-wrap">
+          <Variant bg="white">
+            <div className="flex items-center gap-3">
+              <div className="w-5 h-5 rounded-full" style={{ background: 'linear-gradient(135deg, #d4d4d8 0%, #fbbf24 100%)' }} />
+              <Grad style="linear-gradient(90deg, #a1a1aa 0%, #0f172a 20%, #0f172a 80%, #d97706 100%)">Agonaut</Grad>
+            </div>
+          </Variant>
+          <Variant bg="dark">
+            <div className="flex items-center gap-3">
+              <div className="w-5 h-5 rounded-full" style={{ background: 'linear-gradient(135deg, #e4e4e7 0%, #fbbf24 100%)' }} />
+              <Grad style="linear-gradient(90deg, #d4d4d8 0%, #ffffff 20%, #ffffff 80%, #fbbf24 100%)">Agonaut</Grad>
+            </div>
+          </Variant>
+        </div>
+      </Concept>
+
+      <Concept num="X3" title="Underline + Trailing Dot" desc="Clean dark text, gradient underline, and the period dot">
+        <div className="flex justify-center gap-8 flex-wrap">
+          <Variant bg="white">
+            <div className="flex items-baseline gap-1">
+              <span className="relative inline-block text-[50px] font-bold tracking-tight text-slate-900" style={{ fontFamily: "system-ui" }}>
+                Agonaut
+                <span className="absolute bottom-0 left-0 right-0 h-[3px] rounded-full" style={{ background: 'linear-gradient(90deg, #d4d4d8, #a1a1aa, #d97706, #f59e0b)' }} />
+              </span>
+              <div className="w-3.5 h-3.5 rounded-full mb-1.5" style={{ background: 'linear-gradient(135deg, #d4d4d8 0%, #fbbf24 100%)' }} />
+            </div>
+          </Variant>
+          <Variant bg="dark">
+            <div className="flex items-baseline gap-1">
+              <span className="relative inline-block text-[50px] font-bold tracking-tight text-white" style={{ fontFamily: "system-ui" }}>
+                Agonaut
+                <span className="absolute bottom-0 left-0 right-0 h-[3px] rounded-full" style={{ background: 'linear-gradient(90deg, #e4e4e7, #d4d4d8, #fbbf24, #f59e0b)' }} />
+              </span>
+              <div className="w-3.5 h-3.5 rounded-full mb-1.5" style={{ background: 'linear-gradient(135deg, #e4e4e7 0%, #fbbf24 100%)' }} />
+            </div>
+          </Variant>
+        </div>
+      </Concept>
+
+      <p className="text-center text-xs text-slate-400 pt-8 pb-4">Internal review — will be removed before launch</p>
     </div>
+  );
+}
+
+function Grad({ style, children }: { style: string; children: React.ReactNode }) {
+  return (
+    <span
+      className="text-[52px] font-bold tracking-tight"
+      style={{
+        fontFamily: "system-ui, -apple-system, sans-serif",
+        background: style,
+        WebkitBackgroundClip: "text",
+        WebkitTextFillColor: "transparent",
+        backgroundClip: "text",
+      }}
+    >
+      {children}
+    </span>
+  );
+}
+
+function U({ color, children }: { color: string; children: React.ReactNode }) {
+  return (
+    <span className="relative">
+      {children}
+      <span className="absolute bottom-0 left-0 right-0 h-[3px] rounded-full" style={{ background: color }} />
+    </span>
   );
 }
 
