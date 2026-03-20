@@ -587,6 +587,312 @@ export default function LogoConceptsPage() {
         </div>
       </Concept>
 
+      {/* ── FV5 VARIATIONS ── */}
+      <div className="text-center pt-8"><p className="text-xs font-medium text-slate-400 uppercase tracking-widest">FV5 Variations — Split Circle Deep Dive</p></div>
+
+      <Concept num="FV5a" title="Diagonal Split" desc="Silver top-left, gold bottom-right — like light hitting a coin at an angle.">
+        <div className="flex justify-center gap-8 flex-wrap items-end">
+          <Variant bg="white">
+            <div className="flex items-end gap-6">
+              <svg width="64" height="64" viewBox="0 0 64 64">
+                <defs><clipPath id="da1"><circle cx="32" cy="32" r="30" /></clipPath></defs>
+                <circle cx="32" cy="32" r="30" fill="#b0b0b8" />
+                <polygon points="0,0 64,0 64,64" fill="#d97706" clipPath="url(#da1)" />
+                <line x1="4" y1="4" x2="60" y2="60" stroke="white" strokeWidth="1.5" opacity="0.6" />
+              </svg>
+              <svg width="32" height="32" viewBox="0 0 64 64">
+                <defs><clipPath id="da2"><circle cx="32" cy="32" r="30" /></clipPath></defs>
+                <circle cx="32" cy="32" r="30" fill="#b0b0b8" />
+                <polygon points="0,0 64,0 64,64" fill="#d97706" clipPath="url(#da2)" />
+              </svg>
+              <svg width="16" height="16" viewBox="0 0 64 64">
+                <defs><clipPath id="da3"><circle cx="32" cy="32" r="30" /></clipPath></defs>
+                <circle cx="32" cy="32" r="30" fill="#b0b0b8" />
+                <polygon points="0,0 64,0 64,64" fill="#d97706" clipPath="url(#da3)" />
+              </svg>
+            </div>
+          </Variant>
+          <Variant bg="dark">
+            <div className="flex items-end gap-6">
+              <svg width="64" height="64" viewBox="0 0 64 64">
+                <defs><clipPath id="da1d"><circle cx="32" cy="32" r="30" /></clipPath></defs>
+                <circle cx="32" cy="32" r="30" fill="#d4d4d8" />
+                <polygon points="0,0 64,0 64,64" fill="#fbbf24" clipPath="url(#da1d)" />
+                <line x1="4" y1="4" x2="60" y2="60" stroke="#0f172a" strokeWidth="1.5" opacity="0.3" />
+              </svg>
+              <svg width="32" height="32" viewBox="0 0 64 64">
+                <defs><clipPath id="da2d"><circle cx="32" cy="32" r="30" /></clipPath></defs>
+                <circle cx="32" cy="32" r="30" fill="#d4d4d8" />
+                <polygon points="0,0 64,0 64,64" fill="#fbbf24" clipPath="url(#da2d)" />
+              </svg>
+              <svg width="16" height="16" viewBox="0 0 64 64">
+                <defs><clipPath id="da3d"><circle cx="32" cy="32" r="30" /></clipPath></defs>
+                <circle cx="32" cy="32" r="30" fill="#d4d4d8" />
+                <polygon points="0,0 64,0 64,64" fill="#fbbf24" clipPath="url(#da3d)" />
+              </svg>
+            </div>
+          </Variant>
+        </div>
+      </Concept>
+
+      <Concept num="FV5b" title="Gradient Blend (no hard line)" desc="Silver and gold flow into each other — smooth transition, no divider. More organic.">
+        <div className="flex justify-center gap-8 flex-wrap items-end">
+          <Variant bg="white">
+            <div className="flex items-end gap-6">
+              <div className="w-16 h-16 rounded-full" style={{ background: 'linear-gradient(135deg, #c0c0c8 0%, #b0b0b8 35%, #d4a030 65%, #d97706 100%)' }} />
+              <div className="w-8 h-8 rounded-full" style={{ background: 'linear-gradient(135deg, #c0c0c8 0%, #b0b0b8 35%, #d4a030 65%, #d97706 100%)' }} />
+              <div className="w-4 h-4 rounded-full" style={{ background: 'linear-gradient(135deg, #b0b0b8 0%, #d97706 100%)' }} />
+            </div>
+          </Variant>
+          <Variant bg="dark">
+            <div className="flex items-end gap-6">
+              <div className="w-16 h-16 rounded-full" style={{ background: 'linear-gradient(135deg, #d4d4d8 0%, #c0c0c8 35%, #f0c040 65%, #fbbf24 100%)' }} />
+              <div className="w-8 h-8 rounded-full" style={{ background: 'linear-gradient(135deg, #d4d4d8 0%, #c0c0c8 35%, #f0c040 65%, #fbbf24 100%)' }} />
+              <div className="w-4 h-4 rounded-full" style={{ background: 'linear-gradient(135deg, #d4d4d8 0%, #fbbf24 100%)' }} />
+            </div>
+          </Variant>
+        </div>
+      </Concept>
+
+      <Concept num="FV5c" title="Yin-Yang Swirl" desc="The two metals curve into each other — dynamic, feels like motion/competition.">
+        <div className="flex justify-center gap-8 flex-wrap items-end">
+          <Variant bg="white">
+            <div className="flex items-end gap-6">
+              <svg width="64" height="64" viewBox="0 0 64 64">
+                <circle cx="32" cy="32" r="30" fill="#b0b0b8" />
+                <path d="M32,2 A30,30 0 0,1 32,62 A15,15 0 0,0 32,32 A15,15 0 0,1 32,2" fill="#d97706" />
+                <circle cx="32" cy="17" r="5" fill="#b0b0b8" />
+                <circle cx="32" cy="47" r="5" fill="#d97706" />
+              </svg>
+              <svg width="32" height="32" viewBox="0 0 64 64">
+                <circle cx="32" cy="32" r="30" fill="#b0b0b8" />
+                <path d="M32,2 A30,30 0 0,1 32,62 A15,15 0 0,0 32,32 A15,15 0 0,1 32,2" fill="#d97706" />
+                <circle cx="32" cy="17" r="5" fill="#b0b0b8" />
+                <circle cx="32" cy="47" r="5" fill="#d97706" />
+              </svg>
+              <svg width="16" height="16" viewBox="0 0 64 64">
+                <circle cx="32" cy="32" r="30" fill="#b0b0b8" />
+                <path d="M32,2 A30,30 0 0,1 32,62 A15,15 0 0,0 32,32 A15,15 0 0,1 32,2" fill="#d97706" />
+              </svg>
+            </div>
+          </Variant>
+          <Variant bg="dark">
+            <div className="flex items-end gap-6">
+              <svg width="64" height="64" viewBox="0 0 64 64">
+                <circle cx="32" cy="32" r="30" fill="#d4d4d8" />
+                <path d="M32,2 A30,30 0 0,1 32,62 A15,15 0 0,0 32,32 A15,15 0 0,1 32,2" fill="#fbbf24" />
+                <circle cx="32" cy="17" r="5" fill="#d4d4d8" />
+                <circle cx="32" cy="47" r="5" fill="#fbbf24" />
+              </svg>
+              <svg width="32" height="32" viewBox="0 0 64 64">
+                <circle cx="32" cy="32" r="30" fill="#d4d4d8" />
+                <path d="M32,2 A30,30 0 0,1 32,62 A15,15 0 0,0 32,32 A15,15 0 0,1 32,2" fill="#fbbf24" />
+                <circle cx="32" cy="17" r="5" fill="#d4d4d8" />
+                <circle cx="32" cy="47" r="5" fill="#fbbf24" />
+              </svg>
+              <svg width="16" height="16" viewBox="0 0 64 64">
+                <circle cx="32" cy="32" r="30" fill="#d4d4d8" />
+                <path d="M32,2 A30,30 0 0,1 32,62 A15,15 0 0,0 32,32 A15,15 0 0,1 32,2" fill="#fbbf24" />
+              </svg>
+            </div>
+          </Variant>
+        </div>
+      </Concept>
+
+      <Concept num="FV5d" title="Ring with Inner Dot" desc="Silver-gold ring with a gradient dot in the center — like a target or bullseye.">
+        <div className="flex justify-center gap-8 flex-wrap items-end">
+          <Variant bg="white">
+            <div className="flex items-end gap-6">
+              <svg width="64" height="64" viewBox="0 0 64 64">
+                <defs>
+                  <linearGradient id="ring1" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stopColor="#b0b0b8" /><stop offset="100%" stopColor="#d97706" /></linearGradient>
+                </defs>
+                <circle cx="32" cy="32" r="30" fill="none" stroke="url(#ring1)" strokeWidth="6" />
+                <circle cx="32" cy="32" r="10" fill="url(#ring1)" />
+              </svg>
+              <svg width="32" height="32" viewBox="0 0 64 64">
+                <defs><linearGradient id="ring2" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stopColor="#b0b0b8" /><stop offset="100%" stopColor="#d97706" /></linearGradient></defs>
+                <circle cx="32" cy="32" r="28" fill="none" stroke="url(#ring2)" strokeWidth="8" />
+                <circle cx="32" cy="32" r="10" fill="url(#ring2)" />
+              </svg>
+              <svg width="16" height="16" viewBox="0 0 64 64">
+                <defs><linearGradient id="ring3" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stopColor="#b0b0b8" /><stop offset="100%" stopColor="#d97706" /></linearGradient></defs>
+                <circle cx="32" cy="32" r="26" fill="none" stroke="url(#ring3)" strokeWidth="10" />
+                <circle cx="32" cy="32" r="10" fill="url(#ring3)" />
+              </svg>
+            </div>
+          </Variant>
+          <Variant bg="dark">
+            <div className="flex items-end gap-6">
+              <svg width="64" height="64" viewBox="0 0 64 64">
+                <defs><linearGradient id="ring1d" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stopColor="#d4d4d8" /><stop offset="100%" stopColor="#fbbf24" /></linearGradient></defs>
+                <circle cx="32" cy="32" r="30" fill="none" stroke="url(#ring1d)" strokeWidth="6" />
+                <circle cx="32" cy="32" r="10" fill="url(#ring1d)" />
+              </svg>
+              <svg width="32" height="32" viewBox="0 0 64 64">
+                <defs><linearGradient id="ring2d" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stopColor="#d4d4d8" /><stop offset="100%" stopColor="#fbbf24" /></linearGradient></defs>
+                <circle cx="32" cy="32" r="28" fill="none" stroke="url(#ring2d)" strokeWidth="8" />
+                <circle cx="32" cy="32" r="10" fill="url(#ring2d)" />
+              </svg>
+              <svg width="16" height="16" viewBox="0 0 64 64">
+                <defs><linearGradient id="ring3d" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stopColor="#d4d4d8" /><stop offset="100%" stopColor="#fbbf24" /></linearGradient></defs>
+                <circle cx="32" cy="32" r="26" fill="none" stroke="url(#ring3d)" strokeWidth="10" />
+                <circle cx="32" cy="32" r="10" fill="url(#ring3d)" />
+              </svg>
+            </div>
+          </Variant>
+        </div>
+      </Concept>
+
+      <Concept num="FV5e" title="Overlapping Circles" desc="Silver circle + gold circle overlapping like a Venn diagram — competition meets collaboration.">
+        <div className="flex justify-center gap-8 flex-wrap items-end">
+          <Variant bg="white">
+            <div className="flex items-end gap-6">
+              <svg width="64" height="64" viewBox="0 0 72 64">
+                <circle cx="26" cy="32" r="22" fill="#b0b0b8" opacity="0.85" />
+                <circle cx="46" cy="32" r="22" fill="#d97706" opacity="0.85" />
+              </svg>
+              <svg width="32" height="32" viewBox="0 0 72 64">
+                <circle cx="26" cy="32" r="22" fill="#b0b0b8" opacity="0.85" />
+                <circle cx="46" cy="32" r="22" fill="#d97706" opacity="0.85" />
+              </svg>
+              <svg width="16" height="16" viewBox="0 0 72 64">
+                <circle cx="26" cy="32" r="22" fill="#b0b0b8" opacity="0.85" />
+                <circle cx="46" cy="32" r="22" fill="#d97706" opacity="0.85" />
+              </svg>
+            </div>
+          </Variant>
+          <Variant bg="dark">
+            <div className="flex items-end gap-6">
+              <svg width="64" height="64" viewBox="0 0 72 64">
+                <circle cx="26" cy="32" r="22" fill="#d4d4d8" opacity="0.85" />
+                <circle cx="46" cy="32" r="22" fill="#fbbf24" opacity="0.85" />
+              </svg>
+              <svg width="32" height="32" viewBox="0 0 72 64">
+                <circle cx="26" cy="32" r="22" fill="#d4d4d8" opacity="0.85" />
+                <circle cx="46" cy="32" r="22" fill="#fbbf24" opacity="0.85" />
+              </svg>
+              <svg width="16" height="16" viewBox="0 0 72 64">
+                <circle cx="26" cy="32" r="22" fill="#d4d4d8" opacity="0.85" />
+                <circle cx="46" cy="32" r="22" fill="#fbbf24" opacity="0.85" />
+              </svg>
+            </div>
+          </Variant>
+        </div>
+      </Concept>
+
+      <Concept num="FV5f" title="Split with A Cutout" desc="Original split circle but with a white 'A' knocked out of the center — combines both ideas.">
+        <div className="flex justify-center gap-8 flex-wrap items-end">
+          <Variant bg="white">
+            <div className="flex items-end gap-6">
+              <svg width="64" height="64" viewBox="0 0 64 64">
+                <defs>
+                  <clipPath id="circ5f"><circle cx="32" cy="32" r="30" /></clipPath>
+                  <mask id="amask">
+                    <rect width="64" height="64" fill="white" />
+                    <text x="32" y="44" textAnchor="middle" fontSize="36" fontWeight="900" fontFamily="system-ui" fill="black">A</text>
+                  </mask>
+                </defs>
+                <g mask="url(#amask)">
+                  <rect x="0" y="0" width="32" height="64" fill="#b0b0b8" clipPath="url(#circ5f)" />
+                  <rect x="32" y="0" width="32" height="64" fill="#d97706" clipPath="url(#circ5f)" />
+                </g>
+              </svg>
+              <svg width="32" height="32" viewBox="0 0 64 64">
+                <defs>
+                  <clipPath id="circ5f2"><circle cx="32" cy="32" r="30" /></clipPath>
+                  <mask id="amask2">
+                    <rect width="64" height="64" fill="white" />
+                    <text x="32" y="44" textAnchor="middle" fontSize="36" fontWeight="900" fontFamily="system-ui" fill="black">A</text>
+                  </mask>
+                </defs>
+                <g mask="url(#amask2)">
+                  <rect x="0" y="0" width="32" height="64" fill="#b0b0b8" clipPath="url(#circ5f2)" />
+                  <rect x="32" y="0" width="32" height="64" fill="#d97706" clipPath="url(#circ5f2)" />
+                </g>
+              </svg>
+              <svg width="16" height="16" viewBox="0 0 64 64">
+                <defs><clipPath id="circ5f3"><circle cx="32" cy="32" r="30" /></clipPath></defs>
+                <rect x="0" y="0" width="32" height="64" fill="#b0b0b8" clipPath="url(#circ5f3)" />
+                <rect x="32" y="0" width="32" height="64" fill="#d97706" clipPath="url(#circ5f3)" />
+              </svg>
+            </div>
+          </Variant>
+          <Variant bg="dark">
+            <div className="flex items-end gap-6">
+              <svg width="64" height="64" viewBox="0 0 64 64">
+                <defs>
+                  <clipPath id="circ5fd"><circle cx="32" cy="32" r="30" /></clipPath>
+                  <mask id="amaskd">
+                    <rect width="64" height="64" fill="white" />
+                    <text x="32" y="44" textAnchor="middle" fontSize="36" fontWeight="900" fontFamily="system-ui" fill="black">A</text>
+                  </mask>
+                </defs>
+                <g mask="url(#amaskd)">
+                  <rect x="0" y="0" width="32" height="64" fill="#d4d4d8" clipPath="url(#circ5fd)" />
+                  <rect x="32" y="0" width="32" height="64" fill="#fbbf24" clipPath="url(#circ5fd)" />
+                </g>
+              </svg>
+              <svg width="32" height="32" viewBox="0 0 64 64">
+                <defs>
+                  <clipPath id="circ5fd2"><circle cx="32" cy="32" r="30" /></clipPath>
+                  <mask id="amaskd2">
+                    <rect width="64" height="64" fill="white" />
+                    <text x="32" y="44" textAnchor="middle" fontSize="36" fontWeight="900" fontFamily="system-ui" fill="black">A</text>
+                  </mask>
+                </defs>
+                <g mask="url(#amaskd2)">
+                  <rect x="0" y="0" width="32" height="64" fill="#d4d4d8" clipPath="url(#circ5fd2)" />
+                  <rect x="32" y="0" width="32" height="64" fill="#fbbf24" clipPath="url(#circ5fd2)" />
+                </g>
+              </svg>
+              <svg width="16" height="16" viewBox="0 0 64 64">
+                <defs><clipPath id="circ5fd3"><circle cx="32" cy="32" r="30" /></clipPath></defs>
+                <rect x="0" y="0" width="32" height="64" fill="#d4d4d8" clipPath="url(#circ5fd3)" />
+                <rect x="32" y="0" width="32" height="64" fill="#fbbf24" clipPath="url(#circ5fd3)" />
+              </svg>
+            </div>
+          </Variant>
+        </div>
+      </Concept>
+
+      <Concept num="FV5g" title="Coin Face — Embossed Ring" desc="Thick silver-gold gradient ring with empty center — like looking at the edge of a coin.">
+        <div className="flex justify-center gap-8 flex-wrap items-end">
+          <Variant bg="white">
+            <div className="flex items-end gap-6">
+              <svg width="64" height="64" viewBox="0 0 64 64">
+                <defs><linearGradient id="coin1" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stopColor="#b0b0b8" /><stop offset="50%" stopColor="#c8c0b0" /><stop offset="100%" stopColor="#d97706" /></linearGradient></defs>
+                <circle cx="32" cy="32" r="28" fill="none" stroke="url(#coin1)" strokeWidth="8" />
+              </svg>
+              <svg width="32" height="32" viewBox="0 0 64 64">
+                <defs><linearGradient id="coin2" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stopColor="#b0b0b8" /><stop offset="100%" stopColor="#d97706" /></linearGradient></defs>
+                <circle cx="32" cy="32" r="26" fill="none" stroke="url(#coin2)" strokeWidth="10" />
+              </svg>
+              <svg width="16" height="16" viewBox="0 0 64 64">
+                <defs><linearGradient id="coin3" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stopColor="#b0b0b8" /><stop offset="100%" stopColor="#d97706" /></linearGradient></defs>
+                <circle cx="32" cy="32" r="22" fill="none" stroke="url(#coin3)" strokeWidth="14" />
+              </svg>
+            </div>
+          </Variant>
+          <Variant bg="dark">
+            <div className="flex items-end gap-6">
+              <svg width="64" height="64" viewBox="0 0 64 64">
+                <defs><linearGradient id="coin1d" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stopColor="#d4d4d8" /><stop offset="50%" stopColor="#ddd0c0" /><stop offset="100%" stopColor="#fbbf24" /></linearGradient></defs>
+                <circle cx="32" cy="32" r="28" fill="none" stroke="url(#coin1d)" strokeWidth="8" />
+              </svg>
+              <svg width="32" height="32" viewBox="0 0 64 64">
+                <defs><linearGradient id="coin2d" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stopColor="#d4d4d8" /><stop offset="100%" stopColor="#fbbf24" /></linearGradient></defs>
+                <circle cx="32" cy="32" r="26" fill="none" stroke="url(#coin2d)" strokeWidth="10" />
+              </svg>
+              <svg width="16" height="16" viewBox="0 0 64 64">
+                <defs><linearGradient id="coin3d" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stopColor="#d4d4d8" /><stop offset="100%" stopColor="#fbbf24" /></linearGradient></defs>
+                <circle cx="32" cy="32" r="22" fill="none" stroke="url(#coin3d)" strokeWidth="14" />
+              </svg>
+            </div>
+          </Variant>
+        </div>
+      </Concept>
+
       <p className="text-center text-xs text-slate-400 pt-8 pb-4">Internal review — will be removed before launch</p>
     </div>
   );
