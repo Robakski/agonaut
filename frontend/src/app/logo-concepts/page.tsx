@@ -361,6 +361,232 @@ export default function LogoConceptsPage() {
         </div>
       </Concept>
 
+      {/* ── NAVBAR LOGOMARK OPTIONS ── */}
+      <div className="text-center pt-8"><p className="text-xs font-medium text-slate-400 uppercase tracking-widest">Navbar Logomark — Fixing the Double-A</p></div>
+
+      <Concept num="N1" title="Logomark + gonaut" desc="The stylized A IS the first letter — no redundancy. Clean and clever.">
+        <div className="flex justify-center gap-8 flex-wrap">
+          <Variant bg="white">
+            <div className="flex items-center gap-1">
+              <svg width="32" height="32" viewBox="0 0 40 40"><polygon points="20,4 4,36 20,28 36,36" fill="url(#agNav)" /><defs><linearGradient id="agNav" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stopColor="#d4d4d8" /><stop offset="100%" stopColor="#d97706" /></linearGradient></defs></svg>
+              <span className="text-[22px] font-bold tracking-tight text-slate-900" style={{ fontFamily: "system-ui" }}>gonaut</span>
+            </div>
+          </Variant>
+          <Variant bg="dark">
+            <div className="flex items-center gap-1">
+              <svg width="32" height="32" viewBox="0 0 40 40"><polygon points="20,4 4,36 20,28 36,36" fill="url(#agNavD)" /><defs><linearGradient id="agNavD" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stopColor="#e4e4e7" /><stop offset="100%" stopColor="#fbbf24" /></linearGradient></defs></svg>
+              <span className="text-[22px] font-bold tracking-tight text-white" style={{ fontFamily: "system-ui" }}>gonaut</span>
+            </div>
+          </Variant>
+        </div>
+      </Concept>
+
+      <Concept num="N2" title="Logomark Only (no text)" desc="Just the mark in the navbar — what Stripe, Linear, Apple do. Minimalist.">
+        <div className="flex justify-center gap-8 flex-wrap">
+          <Variant bg="white">
+            <svg width="36" height="36" viewBox="0 0 40 40"><polygon points="20,4 4,36 20,28 36,36" fill="url(#agN2)" /><defs><linearGradient id="agN2" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stopColor="#d4d4d8" /><stop offset="100%" stopColor="#d97706" /></linearGradient></defs></svg>
+          </Variant>
+          <Variant bg="dark">
+            <svg width="36" height="36" viewBox="0 0 40 40"><polygon points="20,4 4,36 20,28 36,36" fill="url(#agN2D)" /><defs><linearGradient id="agN2D" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stopColor="#e4e4e7" /><stop offset="100%" stopColor="#fbbf24" /></linearGradient></defs></svg>
+          </Variant>
+        </div>
+      </Concept>
+
+      <Concept num="N3" title="AG Monogram + gonaut" desc="AG monogram as mark, rest of word follows. Precious metals reference built in.">
+        <div className="flex justify-center gap-8 flex-wrap">
+          <Variant bg="white">
+            <div className="flex items-center gap-1.5">
+              <div className="flex items-center justify-center w-9 h-9 rounded-lg" style={{ background: 'linear-gradient(135deg, #d4d4d8 0%, #d97706 100%)' }}>
+                <span className="text-[13px] font-black text-white tracking-tight" style={{ fontFamily: "system-ui" }}>AG</span>
+              </div>
+              <span className="text-[22px] font-bold tracking-tight text-slate-900" style={{ fontFamily: "system-ui" }}>onaut</span>
+            </div>
+          </Variant>
+          <Variant bg="dark">
+            <div className="flex items-center gap-1.5">
+              <div className="flex items-center justify-center w-9 h-9 rounded-lg" style={{ background: 'linear-gradient(135deg, #e4e4e7 0%, #fbbf24 100%)' }}>
+                <span className="text-[13px] font-black text-slate-900 tracking-tight" style={{ fontFamily: "system-ui" }}>AG</span>
+              </div>
+              <span className="text-[22px] font-bold tracking-tight text-white" style={{ fontFamily: "system-ui" }}>onaut</span>
+            </div>
+          </Variant>
+        </div>
+      </Concept>
+
+      <Concept num="N4" title="Full Wordmark (no separate mark)" desc="Just &quot;AGONAUT&quot; with the gradient underline. No logomark needed.">
+        <div className="flex justify-center gap-8 flex-wrap">
+          <Variant bg="white">
+            <span className="relative inline-block text-[22px] font-bold tracking-tight text-slate-900" style={{ fontFamily: "system-ui" }}>
+              AGONAUT
+              <span className="absolute bottom-0 left-0 right-0 h-[2px] rounded-full" style={{ background: 'linear-gradient(90deg, #d4d4d8, #a1a1aa, #d97706, #f59e0b)' }} />
+            </span>
+          </Variant>
+          <Variant bg="dark">
+            <span className="relative inline-block text-[22px] font-bold tracking-tight text-white" style={{ fontFamily: "system-ui" }}>
+              AGONAUT
+              <span className="absolute bottom-0 left-0 right-0 h-[2px] rounded-full" style={{ background: 'linear-gradient(90deg, #e4e4e7, #a1a1aa, #fbbf24, #f59e0b)' }} />
+            </span>
+          </Variant>
+        </div>
+      </Concept>
+
+      {/* ── FAVICON OPTIONS ── */}
+      <div className="text-center pt-8"><p className="text-xs font-medium text-slate-400 uppercase tracking-widest">Favicon Options (shown at ~32px)</p></div>
+
+      <Concept num="FV1" title="AG Monogram" desc="Silver+gold gradient square with AG — precious metals reference, reads as brand abbreviation. Best at tiny sizes.">
+        <div className="flex justify-center gap-8 flex-wrap items-end">
+          <Variant bg="white">
+            <div className="flex items-end gap-6">
+              {/* 64px preview */}
+              <div className="flex items-center justify-center w-16 h-16 rounded-xl" style={{ background: 'linear-gradient(135deg, #d4d4d8 0%, #a1a1aa 40%, #d97706 100%)' }}>
+                <span className="text-[22px] font-black text-white tracking-tight" style={{ fontFamily: "system-ui" }}>AG</span>
+              </div>
+              {/* 32px actual */}
+              <div className="flex items-center justify-center w-8 h-8 rounded-md" style={{ background: 'linear-gradient(135deg, #d4d4d8 0%, #a1a1aa 40%, #d97706 100%)' }}>
+                <span className="text-[10px] font-black text-white tracking-tight" style={{ fontFamily: "system-ui" }}>AG</span>
+              </div>
+              {/* 16px */}
+              <div className="flex items-center justify-center w-4 h-4 rounded-sm" style={{ background: 'linear-gradient(135deg, #d4d4d8 0%, #d97706 100%)' }}>
+                <span className="text-[6px] font-black text-white" style={{ fontFamily: "system-ui" }}>A</span>
+              </div>
+            </div>
+          </Variant>
+          <Variant bg="dark">
+            <div className="flex items-end gap-6">
+              <div className="flex items-center justify-center w-16 h-16 rounded-xl" style={{ background: 'linear-gradient(135deg, #e4e4e7 0%, #d4d4d8 40%, #fbbf24 100%)' }}>
+                <span className="text-[22px] font-black text-slate-900 tracking-tight" style={{ fontFamily: "system-ui" }}>AG</span>
+              </div>
+              <div className="flex items-center justify-center w-8 h-8 rounded-md" style={{ background: 'linear-gradient(135deg, #e4e4e7 0%, #d4d4d8 40%, #fbbf24 100%)' }}>
+                <span className="text-[10px] font-black text-slate-900 tracking-tight" style={{ fontFamily: "system-ui" }}>AG</span>
+              </div>
+              <div className="flex items-center justify-center w-4 h-4 rounded-sm" style={{ background: 'linear-gradient(135deg, #e4e4e7 0%, #fbbf24 100%)' }}>
+                <span className="text-[6px] font-black text-slate-900" style={{ fontFamily: "system-ui" }}>A</span>
+              </div>
+            </div>
+          </Variant>
+        </div>
+      </Concept>
+
+      <Concept num="FV2" title="Prism Triangle" desc="The geometric A from the original Prism concept — just the shape, no letter. Distinctive at all sizes.">
+        <div className="flex justify-center gap-8 flex-wrap items-end">
+          <Variant bg="white">
+            <div className="flex items-end gap-6">
+              <svg width="64" height="64" viewBox="0 0 40 40"><polygon points="20,4 4,36 20,28 36,36" fill="url(#fv2a)" /><defs><linearGradient id="fv2a" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stopColor="#d4d4d8" /><stop offset="50%" stopColor="#a1a1aa" /><stop offset="100%" stopColor="#d97706" /></linearGradient></defs></svg>
+              <svg width="32" height="32" viewBox="0 0 40 40"><polygon points="20,4 4,36 20,28 36,36" fill="url(#fv2b)" /><defs><linearGradient id="fv2b" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stopColor="#d4d4d8" /><stop offset="100%" stopColor="#d97706" /></linearGradient></defs></svg>
+              <svg width="16" height="16" viewBox="0 0 40 40"><polygon points="20,4 4,36 20,28 36,36" fill="url(#fv2c)" /><defs><linearGradient id="fv2c" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stopColor="#d4d4d8" /><stop offset="100%" stopColor="#d97706" /></linearGradient></defs></svg>
+            </div>
+          </Variant>
+          <Variant bg="dark">
+            <div className="flex items-end gap-6">
+              <svg width="64" height="64" viewBox="0 0 40 40"><polygon points="20,4 4,36 20,28 36,36" fill="url(#fv2d)" /><defs><linearGradient id="fv2d" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stopColor="#e4e4e7" /><stop offset="50%" stopColor="#d4d4d8" /><stop offset="100%" stopColor="#fbbf24" /></linearGradient></defs></svg>
+              <svg width="32" height="32" viewBox="0 0 40 40"><polygon points="20,4 4,36 20,28 36,36" fill="url(#fv2e)" /><defs><linearGradient id="fv2e" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stopColor="#e4e4e7" /><stop offset="100%" stopColor="#fbbf24" /></linearGradient></defs></svg>
+              <svg width="16" height="16" viewBox="0 0 40 40"><polygon points="20,4 4,36 20,28 36,36" fill="url(#fv2f)" /><defs><linearGradient id="fv2f" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stopColor="#e4e4e7" /><stop offset="100%" stopColor="#fbbf24" /></linearGradient></defs></svg>
+            </div>
+          </Variant>
+        </div>
+      </Concept>
+
+      <Concept num="FV3" title="Gradient Dot" desc="The simplest mark — a single silver→gold gradient circle. Like a molten metal droplet.">
+        <div className="flex justify-center gap-8 flex-wrap items-end">
+          <Variant bg="white">
+            <div className="flex items-end gap-6">
+              <div className="w-16 h-16 rounded-full" style={{ background: 'radial-gradient(circle at 30% 30%, #e4e4e7 0%, #d4d4d8 30%, #b45309 80%, #d97706 100%)' }} />
+              <div className="w-8 h-8 rounded-full" style={{ background: 'radial-gradient(circle at 30% 30%, #e4e4e7 0%, #d4d4d8 30%, #b45309 80%, #d97706 100%)' }} />
+              <div className="w-4 h-4 rounded-full" style={{ background: 'radial-gradient(circle at 30% 30%, #e4e4e7 0%, #d97706 100%)' }} />
+            </div>
+          </Variant>
+          <Variant bg="dark">
+            <div className="flex items-end gap-6">
+              <div className="w-16 h-16 rounded-full" style={{ background: 'radial-gradient(circle at 30% 30%, #f4f4f5 0%, #d4d4d8 30%, #f59e0b 80%, #fbbf24 100%)' }} />
+              <div className="w-8 h-8 rounded-full" style={{ background: 'radial-gradient(circle at 30% 30%, #f4f4f5 0%, #d4d4d8 30%, #f59e0b 80%, #fbbf24 100%)' }} />
+              <div className="w-4 h-4 rounded-full" style={{ background: 'radial-gradient(circle at 30% 30%, #f4f4f5 0%, #fbbf24 100%)' }} />
+            </div>
+          </Variant>
+        </div>
+      </Concept>
+
+      <Concept num="FV4" title="AU Monogram" desc="Gold-forward: AU in a warm gradient square. The 'gold standard' of AI arenas.">
+        <div className="flex justify-center gap-8 flex-wrap items-end">
+          <Variant bg="white">
+            <div className="flex items-end gap-6">
+              <div className="flex items-center justify-center w-16 h-16 rounded-xl" style={{ background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 50%, #a1a1aa 100%)' }}>
+                <span className="text-[22px] font-black text-white tracking-tight" style={{ fontFamily: "system-ui" }}>AU</span>
+              </div>
+              <div className="flex items-center justify-center w-8 h-8 rounded-md" style={{ background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 50%, #a1a1aa 100%)' }}>
+                <span className="text-[10px] font-black text-white tracking-tight" style={{ fontFamily: "system-ui" }}>AU</span>
+              </div>
+              <div className="flex items-center justify-center w-4 h-4 rounded-sm" style={{ background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)' }}>
+              </div>
+            </div>
+          </Variant>
+          <Variant bg="dark">
+            <div className="flex items-end gap-6">
+              <div className="flex items-center justify-center w-16 h-16 rounded-xl" style={{ background: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 50%, #d4d4d8 100%)' }}>
+                <span className="text-[22px] font-black text-slate-900 tracking-tight" style={{ fontFamily: "system-ui" }}>AU</span>
+              </div>
+              <div className="flex items-center justify-center w-8 h-8 rounded-md" style={{ background: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 50%, #d4d4d8 100%)' }}>
+                <span className="text-[10px] font-black text-slate-900 tracking-tight" style={{ fontFamily: "system-ui" }}>AU</span>
+              </div>
+              <div className="flex items-center justify-center w-4 h-4 rounded-sm" style={{ background: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)' }}>
+              </div>
+            </div>
+          </Variant>
+        </div>
+      </Concept>
+
+      <Concept num="FV5" title="Split Circle — AG|AU" desc="Circle split vertically: silver left, gold right. Duality of the two metals.">
+        <div className="flex justify-center gap-8 flex-wrap items-end">
+          <Variant bg="white">
+            <div className="flex items-end gap-6">
+              <svg width="64" height="64" viewBox="0 0 64 64">
+                <clipPath id="leftHalf"><rect x="0" y="0" width="32" height="64" /></clipPath>
+                <clipPath id="rightHalf"><rect x="32" y="0" width="32" height="64" /></clipPath>
+                <circle cx="32" cy="32" r="30" fill="#b0b0b8" clipPath="url(#leftHalf)" />
+                <circle cx="32" cy="32" r="30" fill="#d97706" clipPath="url(#rightHalf)" />
+                <line x1="32" y1="4" x2="32" y2="60" stroke="white" strokeWidth="1.5" />
+              </svg>
+              <svg width="32" height="32" viewBox="0 0 64 64">
+                <clipPath id="lh2"><rect x="0" y="0" width="32" height="64" /></clipPath>
+                <clipPath id="rh2"><rect x="32" y="0" width="32" height="64" /></clipPath>
+                <circle cx="32" cy="32" r="30" fill="#b0b0b8" clipPath="url(#lh2)" />
+                <circle cx="32" cy="32" r="30" fill="#d97706" clipPath="url(#rh2)" />
+                <line x1="32" y1="4" x2="32" y2="60" stroke="white" strokeWidth="2" />
+              </svg>
+              <svg width="16" height="16" viewBox="0 0 64 64">
+                <clipPath id="lh3"><rect x="0" y="0" width="32" height="64" /></clipPath>
+                <clipPath id="rh3"><rect x="32" y="0" width="32" height="64" /></clipPath>
+                <circle cx="32" cy="32" r="30" fill="#b0b0b8" clipPath="url(#lh3)" />
+                <circle cx="32" cy="32" r="30" fill="#d97706" clipPath="url(#rh3)" />
+              </svg>
+            </div>
+          </Variant>
+          <Variant bg="dark">
+            <div className="flex items-end gap-6">
+              <svg width="64" height="64" viewBox="0 0 64 64">
+                <clipPath id="lhD"><rect x="0" y="0" width="32" height="64" /></clipPath>
+                <clipPath id="rhD"><rect x="32" y="0" width="32" height="64" /></clipPath>
+                <circle cx="32" cy="32" r="30" fill="#d4d4d8" clipPath="url(#lhD)" />
+                <circle cx="32" cy="32" r="30" fill="#fbbf24" clipPath="url(#rhD)" />
+                <line x1="32" y1="4" x2="32" y2="60" stroke="#0f172a" strokeWidth="1.5" />
+              </svg>
+              <svg width="32" height="32" viewBox="0 0 64 64">
+                <clipPath id="lhD2"><rect x="0" y="0" width="32" height="64" /></clipPath>
+                <clipPath id="rhD2"><rect x="32" y="0" width="32" height="64" /></clipPath>
+                <circle cx="32" cy="32" r="30" fill="#d4d4d8" clipPath="url(#lhD2)" />
+                <circle cx="32" cy="32" r="30" fill="#fbbf24" clipPath="url(#rhD2)" />
+                <line x1="32" y1="4" x2="32" y2="60" stroke="#0f172a" strokeWidth="2" />
+              </svg>
+              <svg width="16" height="16" viewBox="0 0 64 64">
+                <clipPath id="lhD3"><rect x="0" y="0" width="32" height="64" /></clipPath>
+                <clipPath id="rhD3"><rect x="32" y="0" width="32" height="64" /></clipPath>
+                <circle cx="32" cy="32" r="30" fill="#d4d4d8" clipPath="url(#lhD3)" />
+                <circle cx="32" cy="32" r="30" fill="#fbbf24" clipPath="url(#rhD3)" />
+              </svg>
+            </div>
+          </Variant>
+        </div>
+      </Concept>
+
       <p className="text-center text-xs text-slate-400 pt-8 pb-4">Internal review — will be removed before launch</p>
     </div>
   );
