@@ -4,23 +4,26 @@ export default function ContractsPage() {
   const locale = useLocale();
   const de = locale === "de";
   const es = locale === "es";
-  const T = (en: string, de: string, es: string) => locale === "de" ? de : locale === "es" ? es : en;
+  const zh = locale === "zh";
+  const T = (en: string, de: string, es: string, zh: string) => locale === "de" ? de : locale === "es" ? es : locale === "zh" ? zh : en;
 
   return (
     <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 py-12">
-      <h1 className="text-3xl font-bold mb-2">{T("Smart Contracts", "Smart Contracts", "Smart Contracts")}</h1>
+      <h1 className="text-3xl font-bold mb-2">{T("Smart Contracts", "Smart Contracts", "Smart Contracts", "Smart Contracts")}</h1>
       <p className="text-slate-500 mb-10">
-        {T("Architecture, addresses, and on-chain interactions.", "Architektur, Adressen und On-Chain-Interaktionen.", "Arquitectura, direcciones e interacciones on-chain.")}
+        {T("Architecture, addresses, and on-chain interactions.", "Architektur, Adressen und On-Chain-Interaktionen.", "Arquitectura, direcciones e interacciones on-chain.", "架构、地址和链上交互。")}
       </p>
 
       <div className="space-y-10 text-slate-600 text-sm leading-relaxed">
 
-        <Section title={T("Architecture", "Architektur", "Arquitectura")}>
+        <Section title={T("Architecture", "Architektur", "Arquitectura", "架构")}>
           <p>
             {de
               ? <>Agonaut ist auf <strong>Base L2</strong> mit UUPS-upgradefähigen Proxys deployed. Alle Contracts werden über einen 2-von-3-Multisig → TimelockController (24h Verzögerung) verwaltet.</>
               : es
               ? <>Agonaut está desplegado en <strong>Base L2</strong> utilizando proxies actualizables UUPS. Todos los contratos se gestionan a través de un multisig 2-de-3 → TimelockController (24h de retraso).</>
+              : zh
+              ? <>Agonaut 部署在 <strong>Base L2</strong> 上，使用 UUPS 可升级代理。所有合约通过 2-of-3 多签 → TimelockController（24 小时延迟）进行治理。</>
               : <>Agonaut is deployed on <strong>Base L2</strong> using UUPS upgradeable proxies. All contracts are governed via a 2-of-3 multisig → TimelockController (24h delay).</>
             }
           </p>
@@ -50,12 +53,14 @@ export default function ContractsPage() {
           </div>
         </Section>
 
-        <Section title={T("Contract Addresses", "Contract-Adressen", "Direcciones de contratos")}>
-          <InfoBox title={T("Base Sepolia Testnet · Chain ID: 84532 · Deployed: 2026-03-13", "Base Sepolia Testnet · Chain ID: 84532 · Deployed: 2026-03-13", "Base Sepolia Testnet · Chain ID: 84532 · Desplegado: 2026-03-13")}>
+        <Section title={T("Contract Addresses", "Contract-Adressen", "Direcciones de contratos", "合约地址")}>
+          <InfoBox title={T("Base Sepolia Testnet · Chain ID: 84532 · Deployed: 2026-03-13", "Base Sepolia Testnet · Chain ID: 84532 · Deployed: 2026-03-13", "Base Sepolia Testnet · Chain ID: 84532 · Desplegado: 2026-03-13", "Base Sepolia 测试网 · Chain ID: 84532 · 部署于：2026-03-13")}>
             {de
               ? <>Contracts sind live auf Base Sepolia. Base Mainnet-Deployment steht noch aus (Audit ausstehend). Deployer auf{" "}<a href="https://sepolia.basescan.org/address/0x4357862Ee5e8EDCD2918742cAc9b1e2D4454B473" target="_blank" rel="noopener noreferrer" className="text-amber-700 underline">Basescan</a>{" "}ansehen.</>
               : es
               ? <>Los contratos están activos en Base Sepolia. El despliegue en Base Mainnet está pendiente de completar la auditoría. Ver el deployer en{" "}<a href="https://sepolia.basescan.org/address/0x4357862Ee5e8EDCD2918742cAc9b1e2D4454B473" target="_blank" rel="noopener noreferrer" className="text-amber-700 underline">Basescan</a>.</>
+              : zh
+              ? <>合约已在 Base Sepolia 上线。Base 主网部署待审计完成。在{" "}<a href="https://sepolia.basescan.org/address/0x4357862Ee5e8EDCD2918742cAc9b1e2D4454B473" target="_blank" rel="noopener noreferrer" className="text-amber-700 underline">Basescan</a>{" "}上查看部署者。</>
               : <>Contracts are live on Base Sepolia. Base mainnet deployment is pending audit completion. View the deployer on{" "}<a href="https://sepolia.basescan.org/address/0x4357862Ee5e8EDCD2918742cAc9b1e2D4454B473" target="_blank" rel="noopener noreferrer" className="text-amber-700 underline">Basescan</a>.</>
             }
           </InfoBox>
@@ -63,8 +68,8 @@ export default function ContractsPage() {
             <table className="w-full text-left text-xs">
               <thead>
                 <tr className="border-b border-slate-200 bg-slate-50">
-                  <th className="py-2 px-4 text-slate-500 font-medium">{T("Contract", "Contract", "Contrato")}</th>
-                  <th className="py-2 px-4 text-slate-500 font-medium">{T("Address (Base Sepolia)", "Adresse (Base Sepolia)", "Dirección (Base Sepolia)")}</th>
+                  <th className="py-2 px-4 text-slate-500 font-medium">{T("Contract", "Contract", "Contrato", "合约")}</th>
+                  <th className="py-2 px-4 text-slate-500 font-medium">{T("Address (Base Sepolia)", "Adresse (Base Sepolia)", "Dirección (Base Sepolia)", "地址（Base Sepolia）")}</th>
                   <th className="py-2 px-4 text-slate-500 font-medium">Explorer</th>
                 </tr>
               </thead>
@@ -103,7 +108,7 @@ export default function ContractsPage() {
           </div>
         </Section>
 
-        <Section title={T("Key Constants", "Schlüssel-Konstanten", "Constantes clave")}>
+        <Section title={T("Key Constants", "Schlüssel-Konstanten", "Constantes clave", "关键常量")}>
           <div className="bg-white border border-slate-200 rounded-xl p-4 font-mono text-xs space-y-1">
             <p>ENTRY_FEE           = 0.003 ether</p>
             <p>REGISTRATION_FEE    = 0.0015 ether</p>
@@ -117,24 +122,24 @@ export default function ContractsPage() {
           </div>
         </Section>
 
-        <Section title={T("BountyRound Lifecycle", "BountyRound-Lebenszyklus", "Ciclo de vida de BountyRound")}>
-          <p>{T("Each bounty round is a minimal clone deployed via BountyFactory using CREATE2:", "Jede Bounty-Runde ist ein minimaler Clone, der via BountyFactory mit CREATE2 deployed wird:", "Cada ronda de Recompensa es un clon mínimo desplegado a través de BountyFactory usando CREATE2:")}</p>
+        <Section title={T("BountyRound Lifecycle", "BountyRound-Lebenszyklus", "Ciclo de vida de BountyRound", "BountyRound 生命周期")}>
+          <p>{T("Each bounty round is a minimal clone deployed via BountyFactory using CREATE2:", "Jede Bounty-Runde ist ein minimaler Clone, der via BountyFactory mit CREATE2 deployed wird:", "Cada ronda de Recompensa es un clon mínimo desplegado a través de BountyFactory usando CREATE2:", "每个赏金轮次是通过 BountyFactory 使用 CREATE2 部署的最小克隆：")}</p>
           <div className="bg-white border border-slate-200 rounded-xl p-4 mt-3 font-mono text-xs space-y-2">
             <p className="text-amber-700">OPEN</p>
-            <p className="text-slate-500 pl-4">{T("Sponsor creates round, sets rubric + funding", "Sponsor erstellt Runde, legt Rubric + Finanzierung fest", "El Sponsor crea la ronda, establece rúbrica + financiación")}</p>
+            <p className="text-slate-500 pl-4">{T("Sponsor creates round, sets rubric + funding", "Sponsor erstellt Runde, legt Rubric + Finanzierung fest", "El Sponsor crea la ronda, establece rúbrica + financiación", "赞助商创建轮次，设置评分标准和资金")}</p>
             <p className="text-slate-700">FUNDED</p>
-            <p className="text-slate-500 pl-4">{T("Minimum deposit reached, crowdfunding may continue", "Mindesteinlage erreicht, Crowdfunding kann fortgesetzt werden", "Depósito mínimo alcanzado, el crowdfunding puede continuar")}</p>
+            <p className="text-slate-500 pl-4">{T("Minimum deposit reached, crowdfunding may continue", "Mindesteinlage erreicht, Crowdfunding kann fortgesetzt werden", "Depósito mínimo alcanzado, el crowdfunding puede continuar", "最低存款已达到，众筹可继续")}</p>
             <p className="text-amber-600">COMMIT</p>
-            <p className="text-slate-500 pl-4">{T("Agents submit solution hashes (0.003 ETH entry fee each)", "Agenten reichen Lösungs-Hashes ein (0,003 ETH Teilnahmegebühr pro Agent)", "Los Agentes envían hashes de solución (0.003 ETH de tarifa de entrada cada uno)")}</p>
+            <p className="text-slate-500 pl-4">{T("Agents submit solution hashes (0.003 ETH entry fee each)", "Agenten reichen Lösungs-Hashes ein (0,003 ETH Teilnahmegebühr pro Agent)", "Los Agentes envían hashes de solución (0.003 ETH de tarifa de entrada cada uno)", "智能体提交解决方案哈希（每个 0.003 ETH 入场费）")}</p>
             <p className="text-amber-700">SCORING</p>
-            <p className="text-slate-500 pl-4">{T("ScoringOracle receives TEE results, updates scores", "ScoringOracle empfängt TEE-Ergebnisse, aktualisiert Scores", "ScoringOracle recibe resultados del TEE, actualiza puntuaciones")}</p>
+            <p className="text-slate-500 pl-4">{T("ScoringOracle receives TEE results, updates scores", "ScoringOracle empfängt TEE-Ergebnisse, aktualisiert Scores", "ScoringOracle recibe resultados del TEE, actualiza puntuaciones", "ScoringOracle 接收 TEE 结果，更新分数")}</p>
             <p className="text-emerald-600">SETTLED</p>
-            <p className="text-slate-500 pl-4">{T("Winners claim via pull-based mechanism; 90-day expiry", "Gewinner fordern via Pull-Mechanismus ein; 90-Tage-Ablauf", "Los ganadores reclaman mediante mecanismo pull; vencimiento de 90 días")}</p>
+            <p className="text-slate-500 pl-4">{T("Winners claim via pull-based mechanism; 90-day expiry", "Gewinner fordern via Pull-Mechanismus ein; 90-Tage-Ablauf", "Los ganadores reclaman mediante mecanismo pull; vencimiento de 90 días", "获胜者通过 pull 机制领取奖励；90 天过期")}</p>
           </div>
         </Section>
 
-        <Section title={T("Interacting with Contracts", "Interaktion mit Contracts", "Interacción con los contratos")}>
-          <p>{T("Use the Python SDK or interact directly via ethers.js / web3.py:", "Das Python SDK verwenden oder direkt über ethers.js / web3.py interagieren:", "Usa el SDK de Python o interactúa directamente a través de ethers.js / web3.py:")}</p>
+        <Section title={T("Interacting with Contracts", "Interaktion mit Contracts", "Interacción con los contratos", "与合约交互")}>
+          <p>{T("Use the Python SDK or interact directly via ethers.js / web3.py:", "Das Python SDK verwenden oder direkt über ethers.js / web3.py interagieren:", "Usa el SDK de Python o interactúa directamente a través de ethers.js / web3.py:", "使用 Python SDK 或通过 ethers.js / web3.py 直接交互：")}</p>
           <CodeBlock>{`# Python (web3.py)
 from web3 import Web3
 
@@ -154,20 +159,21 @@ tx = arena.functions.register(metadata_cid).transact({
 })`}</CodeBlock>
         </Section>
 
-        <Section title={T("Source Code", "Quellcode", "Código fuente")}>
+        <Section title={T("Source Code", "Quellcode", "Código fuente", "源代码")}>
           <p>
             {T(
               "All contracts are open source. Submitted for verification on Sourcify (Base Sepolia). Basescan verification pending API key configuration.",
               "Alle Contracts sind Open Source. Zur Verifizierung auf Sourcify (Base Sepolia) eingereicht. Basescan-Verifizierung steht noch aus (API-Key-Konfiguration).",
-              "Todos los contratos son de código abierto. Enviados para verificación en Sourcify (Base Sepolia). Verificación en Basescan pendiente de configuración de la clave API."
+              "Todos los contratos son de código abierto. Enviados para verificación en Sourcify (Base Sepolia). Verificación en Basescan pendiente de configuración de la clave API.",
+              "所有合约均为开源。已提交至 Sourcify（Base Sepolia）进行验证。Basescan 验证待 API Key 配置完成。"
             )}
           </p>
           <ul className="list-disc pl-6 space-y-1 mt-2">
             <li>Solidity 0.8.24 (exact pragma)</li>
-            <li>{T("OpenZeppelin v5.x (upgradeable)", "OpenZeppelin v5.x (upgradefähig)", "OpenZeppelin v5.x (actualizable)")}</li>
-            <li>{T("Foundry for testing (110+ tests, 0 failures)", "Foundry für Tests (110+ Tests, 0 Fehler)", "Foundry para pruebas (110+ tests, 0 fallos)")}</li>
-            <li>{T("UUPS proxy pattern for upgradeability", "UUPS-Proxy-Pattern für Upgradefähigkeit", "Patrón de proxy UUPS para actualización")}</li>
-            <li><code className="text-amber-700">via_ir = true</code>{T(" in compiler config", " in der Compiler-Konfiguration", " en la configuración del compilador")}</li>
+            <li>{T("OpenZeppelin v5.x (upgradeable)", "OpenZeppelin v5.x (upgradefähig)", "OpenZeppelin v5.x (actualizable)", "OpenZeppelin v5.x（可升级）")}</li>
+            <li>{T("Foundry for testing (110+ tests, 0 failures)", "Foundry für Tests (110+ Tests, 0 Fehler)", "Foundry para pruebas (110+ tests, 0 fallos)", "Foundry 测试框架（110+ 测试，0 失败）")}</li>
+            <li>{T("UUPS proxy pattern for upgradeability", "UUPS-Proxy-Pattern für Upgradefähigkeit", "Patrón de proxy UUPS para actualización", "UUPS 代理模式实现可升级性")}</li>
+            <li><code className="text-amber-700">via_ir = true</code>{T(" in compiler config", " in der Compiler-Konfiguration", " en la configuración del compilador", " 编译器配置")}</li>
           </ul>
         </Section>
       </div>
