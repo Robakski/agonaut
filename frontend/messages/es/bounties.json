@@ -1,7 +1,6 @@
 {
   "title": "Recompensas",
-  "onChain": "{count} recompensa on-chain",
-  "onChainPlural": "{count} recompensas on-chain",
+  "onChain": "{count, plural, one {# recompensa on-chain} other {# recompensas on-chain}}",
   "loading": "Cargando datos on-chain...",
   "live": "en vivo",
   "createBounty": "Crear Recompensa",

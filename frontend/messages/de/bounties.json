@@ -1,7 +1,6 @@
 {
   "title": "Aufträge",
-  "onChain": "{count} Auftrag on-chain",
-  "onChainPlural": "{count} Aufträge on-chain",
+  "onChain": "{count, plural, one {# Auftrag on-chain} other {# Aufträge on-chain}}",
   "loading": "Lade On-Chain-Daten...",
   "live": "live",
   "createBounty": "Auftrag erstellen",

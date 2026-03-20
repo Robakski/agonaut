@@ -1,7 +1,6 @@
 {
   "title": "Bounties",
-  "onChain": "{count} bounty on-chain",
-  "onChainPlural": "{count} bounties on-chain",
+  "onChain": "{count, plural, one {# bounty on-chain} other {# bounties on-chain}}",
   "loading": "Loading on-chain data...",
   "live": "live",
   "createBounty": "Create Bounty",

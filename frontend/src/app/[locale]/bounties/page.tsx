@@ -42,7 +42,7 @@ export default function BountiesPage() {
             {bountyCount !== null ? (
               <>
                 <span className="font-semibold text-slate-700">{bountyCount}</span>{" "}
-                {bountyCount === 1 ? t("onChain", { count: bountyCount }) : t("onChainPlural", { count: bountyCount })}
+                {t("onChain", { count: bountyCount })}
                 <span className="ml-2 inline-flex items-center gap-1 text-xs text-emerald-600">
                   <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
                   {t("live")}

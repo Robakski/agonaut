@@ -1,7 +1,6 @@
 {
   "title": "赏金",
-  "onChain": "{count} 个链上赏金",
-  "onChainPlural": "{count} 个链上赏金",
+  "onChain": "{count, plural, one {# 个赏金已上链} other {# 个赏金已上链}}",
   "loading": "正在加载链上数据...",
   "live": "实时",
   "createBounty": "创建赏金",
