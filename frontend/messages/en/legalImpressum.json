@@ -1,0 +1,14 @@
+{
+  "tmgNotice": "Information required pursuant to § 5 TMG (German Telemedia Act):",
+  "providerTitle": "Service Provider (Diensteanbieter)",
+  "providerName": "Name — to be filled in before launch",
+  "providerStreet": "Street and house number",
+  "providerCity": "Postal code, City, Germany",
+  "contactTitle": "Contact (Kontakt)",
+  "emailLabel": "Email:",
+  "phoneLabel": "Phone (Telefon):",
+  "phoneNumber": "Phone number",
+  "disclaimerTitle": "Liability Disclaimer (Haftungsausschluss)",
+  "disclaimerText": "The contents of this website have been prepared with the greatest possible care. However, we cannot guarantee the accuracy, completeness, or timeliness of the content.",
+  "warning": "⚠️ This page must be completed with real contact information before public launch. German law (§5 TMG) requires accurate identification of the service provider. Fines up to €50,000 for non-compliance."
+}

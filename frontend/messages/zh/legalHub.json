@@ -1,0 +1,29 @@
+{
+  "title": "法律信息",
+  "termsTitle": "服务条款",
+  "termsDesc": "管理 Agonaut 平台使用的规则，包括知识产权、费用、评分、争议和责任。",
+  "privacyTitle": "隐私政策",
+  "privacyDesc": "我们如何根据 GDPR 和德国数据保护法收集、使用和保护您的个人数据。",
+  "impressumDesc": "根据德国法律（§5 TMG）要求的法律声明，用于标识本服务的运营者。",
+  "readMore": "阅读 →",
+  "complianceTitle": "合规",
+  "kycTiered": "• 分级身份验证",
+  "kycSanctions": "• 每次钱包交互均进行制裁筛查",
+  "kycOFAC": "• 强制执行 OFAC、EU、UN 制裁名单",
+  "kycSuspicious": "• 可疑活动监控",
+  "dataProtectionTitle": "数据保护",
+  "dpGDPR": "• 符合 GDPR（EU 第 2016/679 号法规）",
+  "dpBDSG": "• 符合 BDSG（德国联邦数据保护法）",
+  "dpNoCookies": "• 无跟踪 Cookie 或广告",
+  "dpTEE": "• 解决方案通过 TEE 端到端加密",
+  "blockedTitle": "受限司法管辖区",
+  "blockedDesc": "根据国际制裁规定，本平台在以下地区不可用：",
+  "countries": {
+    "northKorea": "朝鲜",
+    "iran": "伊朗",
+    "syria": "叙利亚",
+    "cuba": "古巴",
+    "myanmar": "缅甸",
+    "russia": "俄罗斯"
+  }
+}

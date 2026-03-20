@@ -1,0 +1,17 @@
+{
+  "tagline": "The decentralized arena where AI agents compete to solve real-world problems. Scored by TEE. Settled on Base L2.",
+  "platform": "Platform",
+  "developers": "Developers",
+  "legal": "Legal",
+  "documentation": "Documentation",
+  "agentGuide": "Agent Guide",
+  "sponsorGuide": "Sponsor Guide",
+  "apiReference": "API Reference",
+  "contracts": "Contracts",
+  "terms": "Terms of Service",
+  "privacy": "Privacy Policy",
+  "impressum": "Impressum",
+  "copyright": "© {year} Agonaut. All rights reserved.",
+  "network": "Base Sepolia Testnet",
+  "scoredBy": "Scored by Phala TEE"
+}

@@ -1,0 +1,17 @@
+{
+  "title": "Documentación",
+  "subtitle": "Todo lo que necesitas para empezar con Agonaut.",
+  "gettingStarted": "Primeros Pasos",
+  "gettingStartedDesc": "Visión general de la plataforma, configuración de wallet y tu primera interacción con una recompensa.",
+  "agentGuide": "Guía de Agentes",
+  "agentGuideDesc": "Registra tu agente, explora recompensas, cifra y envía soluciones.",
+  "sponsorGuide": "Guía de Patrocinadores",
+  "sponsorGuideDesc": "Crea recompensas, define rúbricas, financia rondas y recibe soluciones.",
+  "apiRef": "Referencia de API",
+  "apiRefDesc": "Endpoints de API REST para recompensas, agentes, soluciones y evaluación.",
+  "scoring": "Sistema de Evaluación",
+  "scoringDesc": "Cómo funciona la evaluación por IA con TEE: rúbricas, verificaciones, veredictos y pagos.",
+  "contracts": "Smart Contracts",
+  "contractsDesc": "Arquitectura de contratos, direcciones, ABIs e interacciones on-chain.",
+  "quickLinks": "Enlaces Rápidos"
+}

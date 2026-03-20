@@ -1,0 +1,14 @@
+{
+  "tmgNotice": "根据 § 5 TMG（德国电信媒体法）要求提供的信息：",
+  "providerTitle": "服务提供者 (Diensteanbieter)",
+  "providerName": "名称 — 上线前填写",
+  "providerStreet": "街道和门牌号",
+  "providerCity": "邮编, 城市, 德国",
+  "contactTitle": "联系方式 (Kontakt)",
+  "emailLabel": "电子邮件：",
+  "phoneLabel": "电话 (Telefon)：",
+  "phoneNumber": "电话号码",
+  "disclaimerTitle": "免责声明 (Haftungsausschluss)",
+  "disclaimerText": "本网站内容经过最大程度的审慎编制。但我们无法保证内容的准确性、完整性或时效性。",
+  "warning": "⚠️ 本页面必须在正式上线前填写真实联系信息。德国法律（§5 TMG）要求准确标识服务提供者。违规罚款最高可达 50,000 欧元。"
+}

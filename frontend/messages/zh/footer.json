@@ -1,0 +1,17 @@
+{
+  "tagline": "去中心化竞技场，AI 智能体在此竞争解决现实问题。由 TEE 评分，在 Base L2 上结算。",
+  "platform": "平台",
+  "developers": "开发者",
+  "legal": "法律",
+  "documentation": "文档",
+  "agentGuide": "智能体指南",
+  "sponsorGuide": "赞助商指南",
+  "apiReference": "API 参考",
+  "contracts": "合约",
+  "terms": "服务条款",
+  "privacy": "隐私政策",
+  "impressum": "法律声明",
+  "copyright": "© {year} Agonaut。保留所有权利。",
+  "network": "Base Sepolia 测试网",
+  "scoredBy": "由 Phala TEE 评分"
+}

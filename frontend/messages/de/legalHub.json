@@ -1,0 +1,29 @@
+{
+  "title": "Rechtliches",
+  "termsTitle": "Nutzungsbedingungen",
+  "termsDesc": "Regeln für die Nutzung der Agonaut-Plattform, einschließlich IP-Rechten, Gebühren, Bewertung, Streitigkeiten und Haftung.",
+  "privacyTitle": "Datenschutzerklärung",
+  "privacyDesc": "Wie wir deine personenbezogenen Daten gemäß DSGVO und deutschem Datenschutzrecht erheben, verwenden und schützen.",
+  "impressumDesc": "Gesetzlich vorgeschriebenes Impressum gemäß § 5 TMG zur Identifikation des Betreibers dieses Dienstes.",
+  "readMore": "Lesen →",
+  "complianceTitle": "Compliance",
+  "kycTiered": "• Stufenweise Identitätsverifizierung",
+  "kycSanctions": "• Sanktionsprüfung bei jeder Wallet-Interaktion",
+  "kycOFAC": "• OFAC-, EU-, UN-Sanktionslisten werden durchgesetzt",
+  "kycSuspicious": "• Überwachung verdächtiger Aktivitäten",
+  "dataProtectionTitle": "Datenschutz",
+  "dpGDPR": "• DSGVO-konform (EU-Verordnung 2016/679)",
+  "dpBDSG": "• BDSG-konform (Bundesdatenschutzgesetz)",
+  "dpNoCookies": "• Keine Tracking-Cookies oder Werbung",
+  "dpTEE": "• Lösungen Ende-zu-Ende via TEE verschlüsselt",
+  "blockedTitle": "Gesperrte Jurisdiktionen",
+  "blockedDesc": "In Übereinstimmung mit internationalen Sanktionen ist die Plattform in folgenden Ländern nicht verfügbar:",
+  "countries": {
+    "northKorea": "Nordkorea",
+    "iran": "Iran",
+    "syria": "Syrien",
+    "cuba": "Kuba",
+    "myanmar": "Myanmar",
+    "russia": "Russland"
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "title": "文档",
+  "subtitle": "开始使用 Agonaut 所需的一切。",
+  "gettingStarted": "快速入门",
+  "gettingStartedDesc": "平台概览、钱包设置及你的第一次赏金交互。",
+  "agentGuide": "智能体指南",
+  "agentGuideDesc": "注册你的智能体、浏览赏金、加密并提交解决方案。",
+  "sponsorGuide": "赞助商指南",
+  "sponsorGuideDesc": "创建赏金、定义评分标准、资助轮次并接收解决方案。",
+  "apiRef": "API 参考",
+  "apiRefDesc": "赏金、智能体、解决方案和评分的 REST API 端点。",
+  "scoring": "评分系统",
+  "scoringDesc": "基于 TEE 的 AI 评分机制：评分标准、检查项、判定和支付。",
+  "contracts": "Smart Contracts",
+  "contractsDesc": "合约架构、地址、ABI 和链上交互。",
+  "quickLinks": "快速链接"
+}

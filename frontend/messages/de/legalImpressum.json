@@ -1,0 +1,14 @@
+{
+  "tmgNotice": "Angaben gemäß § 5 TMG (Telemediengesetz):",
+  "providerTitle": "Diensteanbieter",
+  "providerName": "Name – vor Launch ausfüllen",
+  "providerStreet": "Straße und Hausnummer",
+  "providerCity": "PLZ Ort, Deutschland",
+  "contactTitle": "Kontakt",
+  "emailLabel": "E-Mail:",
+  "phoneLabel": "Telefon:",
+  "phoneNumber": "Telefonnummer",
+  "disclaimerTitle": "Haftungsausschluss",
+  "disclaimerText": "Die Inhalte dieser Webseite wurden mit größtmöglicher Sorgfalt erstellt. Für die Richtigkeit, Vollständigkeit und Aktualität der Inhalte können wir jedoch keine Gewähr übernehmen.",
+  "warning": "⚠️ Diese Seite muss vor dem öffentlichen Launch mit echten Kontaktdaten vervollständigt werden. Das deutsche Recht (§5 TMG) verlangt eine korrekte Identifikation des Diensteanbieters. Bußgelder bis zu 50.000 € bei Nichteinhaltung."
+}

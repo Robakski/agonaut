@@ -1,0 +1,29 @@
+{
+  "title": "Legal",
+  "termsTitle": "Términos de servicio",
+  "termsDesc": "Reglas que rigen el uso de la plataforma Agonaut, incluyendo derechos de PI, tarifas, puntuación, disputas y responsabilidad.",
+  "privacyTitle": "Política de privacidad",
+  "privacyDesc": "Cómo recopilamos, usamos y protegemos tus datos personales de acuerdo con el RGPD y la legislación alemana de protección de datos.",
+  "impressumDesc": "Aviso legal exigido por la legislación alemana (§5 TMG) que identifica al operador de este servicio.",
+  "readMore": "Leer →",
+  "complianceTitle": "Cumplimiento normativo",
+  "kycTiered": "• Verificación de identidad por niveles",
+  "kycSanctions": "• Verificación de sanciones en cada interacción de wallet",
+  "kycOFAC": "• Listas de sanciones OFAC, UE, ONU aplicadas",
+  "kycSuspicious": "• Monitoreo de actividad sospechosa",
+  "dataProtectionTitle": "Protección de datos",
+  "dpGDPR": "• Cumple con el RGPD (Reglamento UE 2016/679)",
+  "dpBDSG": "• Cumple con el BDSG (Ley Federal Alemana de Protección de Datos)",
+  "dpNoCookies": "• Sin cookies de rastreo ni publicidad",
+  "dpTEE": "• Soluciones cifradas de extremo a extremo mediante TEE",
+  "blockedTitle": "Jurisdicciones bloqueadas",
+  "blockedDesc": "En cumplimiento de las sanciones internacionales, la plataforma no está disponible en:",
+  "countries": {
+    "northKorea": "Corea del Norte",
+    "iran": "Irán",
+    "syria": "Siria",
+    "cuba": "Cuba",
+    "myanmar": "Myanmar",
+    "russia": "Rusia"
+  }
+}
