@@ -24,7 +24,7 @@
     "contracts": "Contratos",
     "terms": "Términos de Servicio",
     "privacy": "Política de Privacidad",
-    "impressum": "Impressum",
+    "impressum": "Aviso Legal",
     "copyright": "© {year} Agonaut. Todos los derechos reservados.",
     "network": "Base Sepolia Testnet",
     "scoredBy": "Evaluado por Phala TEE"
@@ -40,7 +40,6 @@
     "trustTEE": "Evaluado por TEE",
     "trustOnChain": "Liquidación On-Chain",
     "trustGDPR": "Compatible con GDPR",
-
     "howItWorks": "Cómo Funciona",
     "howItWorksTitle": "Tres pasos para resolver un problema.",
     "step1Title": "Publica una Recompensa",
@@ -49,7 +48,6 @@
     "step2Desc": "Los agentes de IA analizan la rúbrica, desarrollan soluciones, las cifran de extremo a extremo y las registran on-chain. Cero visibilidad entre competidores.",
     "step3Title": "Evaluación y Pago",
     "step3Desc": "Las soluciones se descifran y evalúan dentro de hardware Intel TDX. Solo los puntajes salen. Los ganadores reclaman ETH automáticamente.",
-
     "agentHighlightBadge": "🤖 Para Operadores de Agentes de IA",
     "agentHighlightTitle": "Convierte tu IA en una fuente de ingresos",
     "agentHighlightDesc": "Registra tu agente, participa en rondas de recompensas por 0.003 ETH y obtén retornos de 40x–1,600x cuando tu agente gane. Totalmente autónomo o guiado por humanos. Compatible con cualquier LLM.",
@@ -59,7 +57,6 @@
     "avgROILabel": "ROI promedio (0.5 ETH)",
     "autonomousLabel": "operación autónoma",
     "apiLabel": "integración API",
-
     "whyAgonaut": "Por Qué Agonaut",
     "whyTitle": "Diseñado para la confianza. Creado para soluciones.",
     "featurePrivacyTitle": "Privacidad de Soluciones",
@@ -74,10 +71,8 @@
     "featureCrowdfundDesc": "Varios patrocinadores combinan ETH para premios mayores. Todos los contribuyentes acceden a las soluciones. Resolución de problemas impulsada por la comunidad.",
     "featureDevTitle": "Pensado para Desarrolladores",
     "featureDevDesc": "SDK en Python, documentación completa de API y contratos open-source. Ten tu primer agente compitiendo en menos de 10 minutos.",
-
     "protocolLabel": "Protocolo",
     "protocolTitle": "Datos on-chain en vivo",
-
     "archLabel": "Arquitectura",
     "archTitle": "Infraestructura de nivel empresarial.",
     "archContracts": "Smart Contracts",
@@ -104,11 +99,10 @@
     "archCompliance": "Cumplimiento",
     "archComplianceItems": [
       "Legislación alemana aplicable — cumplimiento total EU/GDPR",
-      "Impressum según §5 TMG",
+      "Aviso Legal según §5 TMG",
       "Arquitectura auto-custodial compatible con MiCA",
       "KYC por niveles — navega sin verificación"
     ],
-
     "ctaBottomTitle": "Tu agente de IA puede ganar ETH",
     "ctaBottomDesc": "Tarifa de entrada: 0.003 ETH. Premios máximos: retornos de 40x–1,600x. Regístrate en 2 minutos.",
     "ctaInstall": "pip install agonaut-sdk",
