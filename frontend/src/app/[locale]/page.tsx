@@ -8,46 +8,53 @@ export default function Home() {
 
   return (
     <div>
-      {/* Hero */}
-      <section className="relative hero-glow overflow-hidden">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-20 pb-28 text-center">
-          {/* Badge */}
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 mb-8 rounded-full border border-amber-200 bg-amber-50 text-sm font-medium text-amber-800">
-            <span className="w-1.5 h-1.5 rounded-full bg-amber-500 pulse-soft"></span>
-            {t("badge")}
+      {/* Hero — Premium, editorial feel */}
+      <section className="relative overflow-hidden">
+        {/* Subtle radial gradient background */}
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,rgba(217,119,6,0.05),transparent)]" />
+
+        <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-24 pb-32">
+          <div className="max-w-4xl mx-auto text-center">
+            {/* Status pill */}
+            <div className="inline-flex items-center gap-2.5 px-4 py-1.5 mb-10 rounded-full border border-slate-200 bg-white/60 backdrop-blur text-sm text-slate-500">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              {t("badge")}
+            </div>
+
+            {/* Wordmark hero */}
+            <div className="flex justify-center mb-12">
+              <Image src="/logo.svg" alt="Agonaut" width={320} height={60} className="opacity-90" priority />
+            </div>
+
+            <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-[-0.03em] leading-[1.1]">
+              <span className="text-slate-900">{t("heading1")}</span>
+              <br />
+              <span className="bg-gradient-to-r from-slate-500 via-amber-600 to-amber-500 bg-clip-text text-transparent">{t("heading2")}</span>
+            </h1>
+
+            <p className="mt-7 text-lg text-slate-400 max-w-xl mx-auto leading-relaxed font-light">
+              {t("subtitle")}
+            </p>
+
+            <div className="mt-12 flex flex-col sm:flex-row gap-3 justify-center">
+              <Link
+                href="/agents"
+                className="group inline-flex items-center justify-center gap-2.5 px-8 py-3.5 bg-slate-900 hover:bg-slate-800 text-white font-semibold rounded-xl transition-all duration-200 shadow-lg shadow-slate-900/10"
+              >
+                {t("ctaPrimary")}
+                <svg className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>
+              </Link>
+              <Link
+                href="/bounties"
+                className="inline-flex items-center justify-center gap-2 px-8 py-3.5 bg-white border border-slate-200 hover:border-slate-300 text-slate-600 hover:text-slate-900 font-semibold rounded-xl transition-all duration-200"
+              >
+                {t("ctaSecondary")}
+              </Link>
+            </div>
           </div>
 
-          {/* Logo */}
-          <div className="flex justify-center mb-10">
-            <Image src="/logo.svg" alt="Agonaut" width={280} height={52} className="float" priority />
-          </div>
-
-          <h1 className="text-5xl sm:text-6xl md:text-7xl font-extrabold tracking-tight leading-[1.08]">
-            <span className="text-slate-900">{t("heading1")}</span>
-            <br />
-            <span className="gradient-text-dark">{t("heading2")}</span>
-          </h1>
-          <p className="mt-6 text-lg sm:text-xl text-slate-500 max-w-2xl mx-auto leading-relaxed">
-            {t("subtitle")}
-          </p>
-          <div className="mt-10 flex flex-col sm:flex-row gap-3 justify-center">
-            <Link
-              href="/agents"
-              className="group inline-flex items-center justify-center gap-2 px-8 py-3.5 bg-slate-900 hover:bg-slate-800 text-white font-semibold rounded-xl transition-all shadow-sm"
-            >
-              {t("ctaPrimary")}
-              <svg className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>
-            </Link>
-            <Link
-              href="/bounties"
-              className="inline-flex items-center justify-center gap-2 px-8 py-3.5 border border-slate-200 hover:border-slate-300 text-slate-700 hover:text-slate-900 font-semibold rounded-xl transition-all hover:bg-slate-50"
-            >
-              {t("ctaSecondary")}
-            </Link>
-          </div>
-
-          {/* Trust row */}
-          <div className="mt-20 flex flex-wrap justify-center gap-x-8 gap-y-3 text-sm text-slate-400">
+          {/* Trust signals — minimal, spaced */}
+          <div className="mt-24 flex flex-wrap justify-center gap-x-10 gap-y-3 text-[13px] text-slate-300 font-medium tracking-wide uppercase">
             <TrustItem text={t("trustEncrypted")} />
             <TrustItem text={t("trustTEE")} />
             <TrustItem text={t("trustOnChain")} />
@@ -58,14 +65,37 @@ export default function Home() {
 
       <div className="section-divider" />
 
-      {/* How It Works */}
-      <section className="py-24 bg-slate-50/50">
+      {/* How It Works — Connected Flow */}
+      <section className="py-28 bg-slate-50/30">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <SectionHeader label={t("howItWorks")} title={t("howItWorksTitle")} />
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-14">
-            <StepCard number="1" title={t("step1Title")} desc={t("step1Desc")} color="amber" />
-            <StepCard number="2" title={t("step2Title")} desc={t("step2Desc")} color="slate" />
-            <StepCard number="3" title={t("step3Title")} desc={t("step3Desc")} color="gold" />
+          <div className="relative mt-16">
+            {/* Connector line (desktop only) */}
+            <div className="hidden md:block absolute top-[52px] left-[16.67%] right-[16.67%] h-px bg-gradient-to-r from-amber-200 via-slate-300 to-amber-300" />
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-0">
+              <FlowStep
+                number="01"
+                title={t("step1Title")}
+                desc={t("step1Desc")}
+                icon={<BountyIcon />}
+                accent="amber"
+              />
+              <FlowStep
+                number="02"
+                title={t("step2Title")}
+                desc={t("step2Desc")}
+                icon={<AgentIcon />}
+                accent="slate"
+              />
+              <FlowStep
+                number="03"
+                title={t("step3Title")}
+                desc={t("step3Desc")}
+                icon={<PayoutIcon />}
+                accent="gold"
+              />
+            </div>
           </div>
         </div>
       </section>
@@ -195,8 +225,8 @@ export default function Home() {
 function SectionHeader({ label, title }: { label: string; title: string }) {
   return (
     <div className="text-center">
-      <p className="text-sm font-semibold uppercase tracking-wider text-amber-700 mb-3">{label}</p>
-      <h2 className="text-3xl sm:text-4xl font-bold text-slate-900">{title}</h2>
+      <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-amber-600/80 mb-4">{label}</p>
+      <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 tracking-tight">{title}</h2>
     </div>
   );
 }
@@ -212,21 +242,36 @@ function TrustItem({ text }: { text: string }) {
   );
 }
 
-function StepCard({ number, title, desc, color }: { number: string; title: string; desc: string; color: string }) {
-  const bg: Record<string, string> = {
-    amber: "bg-amber-50 text-amber-700 border-amber-100",
-    slate: "bg-slate-100 text-slate-600 border-slate-200",
-    gold: "bg-amber-50 text-amber-800 border-amber-200",
+function FlowStep({ number, title, desc, icon, accent }: { number: string; title: string; desc: string; icon: React.ReactNode; accent: string }) {
+  const dotColor: Record<string, string> = {
+    amber: "bg-amber-400 ring-amber-100",
+    slate: "bg-slate-400 ring-slate-100",
+    gold: "bg-amber-500 ring-amber-100",
   };
   return (
-    <div className="card-hover bg-white border border-slate-200 rounded-2xl p-8">
-      <div className={`inline-flex items-center justify-center w-10 h-10 rounded-xl text-sm font-bold border mb-5 ${bg[color]}`}>
-        {number}
+    <div className="relative flex flex-col items-center text-center px-6">
+      {/* Dot on the connector line */}
+      <div className={`relative z-10 w-8 h-8 rounded-full ${dotColor[accent]} ring-4 flex items-center justify-center mb-6`}>
+        <span className="text-white text-xs font-bold">{number}</span>
       </div>
-      <h3 className="text-lg font-semibold text-slate-900 mb-2">{title}</h3>
-      <p className="text-slate-500 text-sm leading-relaxed">{desc}</p>
+      {/* Icon */}
+      <div className="w-14 h-14 flex items-center justify-center rounded-2xl bg-white border border-slate-200 text-slate-500 mb-5 shadow-sm">
+        {icon}
+      </div>
+      <h3 className="text-lg font-bold text-slate-900 mb-2">{title}</h3>
+      <p className="text-slate-400 text-sm leading-relaxed max-w-[280px]">{desc}</p>
     </div>
   );
+}
+
+function BountyIcon() {
+  return <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" /></svg>;
+}
+function AgentIcon() {
+  return <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8.25 3v1.5M4.5 8.25H3m18 0h-1.5M4.5 12H3m18 0h-1.5m-15 3.75H3m18 0h-1.5M8.25 19.5V21M12 3v1.5m0 15V21m3.75-18v1.5m0 15V21m-9-1.5h10.5a2.25 2.25 0 002.25-2.25V6.75a2.25 2.25 0 00-2.25-2.25H6.75A2.25 2.25 0 004.5 6.75v10.5a2.25 2.25 0 002.25 2.25zm.75-12h9v9h-9v-9z" /></svg>;
+}
+function PayoutIcon() {
+  return <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M2.25 18.75a60.07 60.07 0 0115.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 013 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 00-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 01-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 003 15h-.75M15 10.5a3 3 0 11-6 0 3 3 0 016 0zm3 0h.008v.008H18V10.5zm-12 0h.008v.008H6V10.5z" /></svg>;
 }
 
 function FeatureCard({ icon, title, desc }: { icon: React.ReactNode; title: string; desc: string }) {
