@@ -22,7 +22,7 @@ export const getExplorerUrl = (address: Address) =>
   `${BASESCAN_URL}/address/${address}`;
 
 // ── API ──
-export const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1";
+export const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://api.agonaut.io/api/v1";
 
 // ── Constants (matching Solidity) ──
 export const ENTRY_FEE = 0.003;           // ETH
