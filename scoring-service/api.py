@@ -219,6 +219,22 @@ async def _score_round_async(round_address: str):
         duration = rnd["scoring_completed_at"] - rnd["scoring_started_at"]
         log.info(f"Round {round_address[:10]}...: scoring complete in {duration:.1f}s")
 
+        # Auto-submit scores on-chain
+        try:
+            from onchain import submit_scores
+            result = submit_scores(
+                round_address=round_address,
+                agent_ids=payload["agent_ids"],
+                scores=payload["scores"],
+            )
+            if result["status"] == "success":
+                rnd["status"] = "submitted"
+                log.info(f"Round {round_address[:10]}...: auto-submitted on-chain tx={result['tx_hash']}")
+            else:
+                log.error(f"Round {round_address[:10]}...: on-chain submission reverted")
+        except Exception as e:
+            log.error(f"Round {round_address[:10]}...: auto-submit failed: {e} — use /score/submit-onchain to retry")
+
     except Exception as e:
         log.error(f"Round {round_address[:10]}...: scoring failed: {e}")
         rnd["status"] = "error"
@@ -336,39 +352,44 @@ async def submit_onchain(req: SubmitOnchainRequest):
     Reads results from completed scoring, builds the transaction,
     and submits via the scorer wallet.
 
-    Requires SCORER_PRIVATE_KEY env var.
+    Requires SCORER_PRIVATE_KEY and SCORING_ORACLE env vars.
     """
+    from onchain import submit_scores
+
     rnd = _rounds.get(req.round_address)
     if not rnd:
         raise HTTPException(404, "Round not found")
     if rnd["status"] != "completed":
         raise HTTPException(400, f"Round is '{rnd['status']}', not 'completed'")
 
-    scorer_key = os.environ.get("SCORER_PRIVATE_KEY", "")
-    if not scorer_key:
-        raise HTTPException(500, "SCORER_PRIVATE_KEY not configured")
-
-    scoring_oracle = os.environ.get("SCORING_ORACLE", "")
-    if not scoring_oracle:
-        raise HTTPException(500, "SCORING_ORACLE address not configured")
-
     payload = rnd["results"]
 
-    # TODO: Build and sign transaction to ScoringOracle.submitScores()
-    # web3 = Web3(Web3.HTTPProvider(RPC_URL))
-    # oracle = web3.eth.contract(address=scoring_oracle, abi=SCORING_ORACLE_ABI)
-    # tx = oracle.functions.submitScores(
-    #     round_address,
-    #     payload["agent_ids"],
-    #     payload["scores"],
-    # ).build_transaction({...})
+    try:
+        result = submit_scores(
+            round_address=req.round_address,
+            agent_ids=payload["agent_ids"],
+            scores=payload["scores"],
+        )
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+    except Exception as e:
+        log.error(f"On-chain submission failed: {e}")
+        rnd["error"] = str(e)
+        raise HTTPException(500, f"On-chain submission failed: {e}")
 
-    rnd["status"] = "submitted"
-    log.info(f"Round {req.round_address[:10]}...: scores submitted on-chain")
+    if result["status"] == "success":
+        rnd["status"] = "submitted"
+        log.info(f"Round {req.round_address[:10]}...: scores submitted on-chain tx={result['tx_hash']}")
+    else:
+        rnd["status"] = "error"
+        rnd["error"] = f"Transaction reverted: {result['tx_hash']}"
 
     return {
-        "status": "submitted",
+        "status": result["status"],
         "round_address": req.round_address,
+        "tx_hash": result["tx_hash"],
+        "block_number": result["block_number"],
+        "gas_used": result["gas_used"],
         "agent_ids": payload["agent_ids"],
         "scores": payload["scores"],
     }

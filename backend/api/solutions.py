@@ -3,12 +3,19 @@ Solution API Routes
 
 Endpoints for submitting encrypted solutions and triggering scoring.
 Solutions are encrypted client-side and only decrypted inside Phala TEE.
+
+Backend (port 8000) → Scoring Service (port 8001) → Phala TEE → On-chain
 """
 
+import httpx
+import logging
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
 router = APIRouter(prefix="/solutions", tags=["solutions"])
+log = logging.getLogger("solutions")
+
+SCORING_SERVICE_URL = "http://127.0.0.1:8001"
 
 
 # ── Models ──
@@ -67,14 +74,30 @@ async def submit_solution(req: SubmitSolutionRequest):
     - Round must be in COMMIT phase
     - Sanctions screening on agent wallet
     """
-    # TODO: Verify on-chain commit exists for this agent+round
-    # TODO: Verify commit hash matches keccak256 of encrypted solution
-    # TODO: Store encrypted solution (not decrypted - we CAN'T decrypt it)
-    # TODO: Verify round is in COMMIT phase
+    # Forward to scoring service for storage
+    try:
+        async with httpx.AsyncClient() as client:
+            resp = await client.post(
+                f"{SCORING_SERVICE_URL}/score/receive-solution",
+                json={
+                    "round_address": req.round_address,
+                    "agent_id": req.agent_id,
+                    "encrypted_solution": req.encrypted_solution,
+                    "commit_hash": req.commit_hash,
+                },
+                timeout=10.0,
+            )
+            if resp.status_code >= 400:
+                detail = resp.json().get("detail", resp.text)
+                raise HTTPException(resp.status_code, detail)
+            scoring_resp = resp.json()
+    except httpx.ConnectError:
+        log.error("Scoring service unreachable at %s", SCORING_SERVICE_URL)
+        raise HTTPException(503, "Scoring service temporarily unavailable")
 
     return SubmitSolutionResponse(
         status="accepted",
-        message="Solution received. It will be scored after the commit phase closes.",
+        message=f"Solution received ({scoring_resp.get('solutions_received', '?')}/{scoring_resp.get('solutions_expected', '?')} for this round).",
         round_address=req.round_address,
         agent_id=req.agent_id,
     )
@@ -90,15 +113,38 @@ async def scoring_status(round_address: str):
     3. Scores submitted to ScoringOracle on-chain
     4. BountyRound transitions to SETTLED
     """
-    # TODO: Check scoring service status for this round
-    # TODO: Check ScoringOracle.isResultVerified(round_address)
-    return ScoringStatusResponse(
-        round_address=round_address,
-        phase="pending",
-        solutions_received=0,
-        solutions_expected=0,
-        scores_submitted=False,
-    )
+    try:
+        async with httpx.AsyncClient() as client:
+            resp = await client.get(
+                f"{SCORING_SERVICE_URL}/score/status/{round_address}",
+                timeout=10.0,
+            )
+            if resp.status_code == 404:
+                return ScoringStatusResponse(
+                    round_address=round_address,
+                    phase="pending",
+                    solutions_received=0,
+                    solutions_expected=0,
+                    scores_submitted=False,
+                )
+            data = resp.json()
+            return ScoringStatusResponse(
+                round_address=round_address,
+                phase=data.get("status", "pending"),
+                solutions_received=data.get("solutions_received", 0),
+                solutions_expected=data.get("solutions_expected", 0),
+                scores_submitted=data.get("status") == "submitted",
+                scoring_started_at=data.get("scoring_started_at"),
+                scoring_completed_at=data.get("scoring_completed_at"),
+            )
+    except httpx.ConnectError:
+        return ScoringStatusResponse(
+            round_address=round_address,
+            phase="service_unavailable",
+            solutions_received=0,
+            solutions_expected=0,
+            scores_submitted=False,
+        )
 
 
 @router.post("/trigger-scoring/{round_address}")
@@ -108,10 +154,20 @@ async def trigger_scoring(round_address: str):
     Normally scoring starts automatically when commit phase closes.
     This endpoint is for retries or manual intervention.
     """
-    # TODO: Auth check (operator role)
-    # TODO: Verify round is in SCORING phase
-    # TODO: Trigger scoring service
-    return {"status": "scoring_triggered", "round_address": round_address}
+    try:
+        async with httpx.AsyncClient() as client:
+            resp = await client.post(
+                f"{SCORING_SERVICE_URL}/score/round",
+                json={
+                    "round_address": round_address,
+                    "problem_text": "",  # TODO: fetch from IPFS/on-chain
+                    "solutions": [],     # TODO: collect from stored solutions
+                },
+                timeout=10.0,
+            )
+            return resp.json()
+    except httpx.ConnectError:
+        raise HTTPException(503, "Scoring service temporarily unavailable")
 
 
 @router.post("/sponsor-access", response_model=dict)
@@ -126,12 +182,10 @@ async def request_sponsor_access(req: SponsorSolutionRequest):
     - Requester must be a verified sponsor/contributor for this round
     - Sanctions screening on sponsor wallet
     """
-    # TODO: Verify on-chain: round is SETTLED
-    # TODO: Verify sponsor is a contributor (BountyMarketplace.isContributor or sponsor address)
-    # TODO: Request TEE to re-encrypt solutions for sponsor's public key
-    # TODO: Return encrypted solutions or delivery mechanism
-
+    # TODO: Verify on-chain that round is SETTLED and requester is sponsor
+    # This requires Phala TEE to re-encrypt solutions for sponsor's public key
+    # Implementation depends on Phala's key management API
     return {
-        "status": "processing",
-        "message": "Solutions are being prepared for delivery. You will be notified when ready.",
+        "status": "not_implemented",
+        "message": "Sponsor solution access will be available after Phala TEE key management integration.",
     }
