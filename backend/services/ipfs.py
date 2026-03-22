@@ -96,6 +96,32 @@ class PinataClient:
             logger.error(f"Pinata upload error for bounty {bounty_id}: {e}")
             return None
 
+    def upload_json(self, name: str, data: dict) -> Optional[str]:
+        """Upload arbitrary JSON to Pinata. Returns CID or None."""
+        if not self.enabled:
+            return None
+        try:
+            json_data = json.dumps(data, indent=2).encode("utf-8")
+            files = {"file": (f"{name}.json", json_data, "application/json")}
+            metadata = {"name": name, "keyvalues": {"type": "agonaut_metadata"}}
+            headers = {"pinata_api_key": self.api_key, "pinata_secret_api_key": self.api_secret}
+            response = requests.post(
+                f"{PINATA_API_URL}/pinning/pinFileToIPFS",
+                files=files,
+                data={"pinataMetadata": json.dumps(metadata)},
+                headers=headers,
+                timeout=30,
+            )
+            if response.status_code != 200:
+                logger.error(f"Pinata upload failed for {name}: {response.status_code}")
+                return None
+            cid = response.json()["IpfsHash"]
+            logger.info(f"Uploaded {name} to IPFS: {cid}")
+            return cid
+        except Exception as e:
+            logger.error(f"Pinata upload error for {name}: {e}")
+            return None
+
     def retrieve_rubric(self, cid: str) -> Optional[dict]:
         """
         Retrieve a rubric from IPFS via a public gateway.

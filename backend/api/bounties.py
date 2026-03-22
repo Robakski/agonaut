@@ -14,6 +14,7 @@ from typing import Optional
 from services.chain import get_chain_service
 from services.storage import store_rubric, load_rubric, compute_problem_cid
 from services.ipfs import get_pinata_client
+from services import bounty_index
 
 logger = logging.getLogger(__name__)
 
@@ -166,6 +167,23 @@ async def create_bounty_relay(req: CreateBountyRequest):
         # Also store locally for quick access (fallback)
         store_rubric(result.bounty_id, rubric_metadata)
 
+        # Index for fast listing
+        bounty_index.index_bounty(
+            bounty_id=result.bounty_id,
+            title=req.title,
+            description=req.description,
+            tags=req.tags,
+            sponsor=req.sponsorAddress,
+            bounty_eth=float(req.bountyEth),
+            max_agents=req.maxAgents,
+            commit_hours=req.commitHours,
+            threshold=req.threshold,
+            graduated=req.graduated,
+            round_address=result.round_address,
+            problem_cid=result.problem_cid,
+            rubric_cid=ipfs_cid,
+        )
+
         logger.info(
             f"Bounty created: id={result.bounty_id}, "
             f"round={result.round_address}, "
@@ -193,38 +211,34 @@ async def create_bounty_relay(req: CreateBountyRequest):
 
 @router.get("/", response_model=list[BountyResponse])
 async def list_bounties(
-    phase: Optional[str] = Query(None, description="Filter by phase: OPEN, FUNDED, COMMIT, SCORING, SETTLED"),
+    phase: Optional[str] = Query(None, description="Filter by phase: CREATED, FUNDED, COMMIT, SCORING, SETTLED"),
+    sponsor: Optional[str] = Query(None, description="Filter by sponsor wallet address"),
     limit: int = Query(20, ge=1, le=100),
     offset: int = Query(0, ge=0),
 ):
-    """List active bounties with optional phase filter."""
-    # Read stored bounties and enrich with on-chain data
+    """List bounties with optional phase/sponsor filter. Fast indexed queries."""
     try:
-        chain = get_chain_service()
-        total = chain.get_bounty_count()
-
-        bounties = []
-        start = max(1, total - offset - limit + 1)
-        end = max(1, total - offset + 1)
-
-        for bounty_id in range(min(end, total + 1), max(start - 1, 0), -1):
-            stored = load_rubric(bounty_id)
-            if stored:
-                bounties.append(BountyResponse(
-                    bounty_id=bounty_id,
-                    problem_title=stored.get("title", f"Bounty #{bounty_id}"),
-                    problem_cid=stored.get("problem_cid", ""),
-                    sponsor=stored.get("sponsor", ""),
-                    total_bounty_eth=float(stored.get("bounty_eth", 0)),
-                    entry_fee_eth=0.003,
-                    agents_entered=0,  # TODO: read from round contract
-                    max_agents=stored.get("max_agents", 0),
-                    phase="OPEN",  # TODO: read from round contract
-                    created_at=0,  # TODO: read from chain
-                ))
-
-        return bounties[:limit]
-
+        total, bounties = bounty_index.list_bounties(
+            phase=phase,
+            sponsor=sponsor,
+            limit=limit,
+            offset=offset,
+        )
+        return [
+            BountyResponse(
+                bounty_id=b["bounty_id"],
+                problem_title=b["title"],
+                problem_cid=b.get("problem_cid", ""),
+                sponsor=b.get("sponsor", ""),
+                total_bounty_eth=b.get("bounty_eth", 0),
+                entry_fee_eth=b.get("entry_fee_eth", 0.003),
+                agents_entered=b.get("agent_count", 0),
+                max_agents=b.get("max_agents", 0),
+                phase=b.get("phase", "CREATED"),
+                created_at=b.get("created_at", 0),
+            )
+            for b in bounties
+        ]
     except Exception as e:
         logger.warning(f"Failed to list bounties: {e}")
         return []

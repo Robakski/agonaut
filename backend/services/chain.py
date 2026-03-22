@@ -153,6 +153,64 @@ BOUNTY_ROUND_ABI = json.loads("""[
     "inputs": [],
     "outputs": [{"type": "uint256", "name": ""}],
     "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "commitDeadline",
+    "inputs": [],
+    "outputs": [{"type": "uint256", "name": ""}],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "getCommitment",
+    "inputs": [{"type": "address", "name": "agent"}],
+    "outputs": [{"type": "bytes32", "name": ""}],
+    "stateMutability": "view"
+  }
+]""")
+
+ARENA_REGISTRY_ABI = json.loads("""[
+  {
+    "type": "function",
+    "name": "registerAgent",
+    "inputs": [
+      {"type": "string", "name": "metadataCid"},
+      {"type": "string", "name": "name"}
+    ],
+    "outputs": [{"type": "uint256", "name": "agentId"}],
+    "stateMutability": "payable"
+  },
+  {
+    "type": "function",
+    "name": "registrationFee",
+    "inputs": [],
+    "outputs": [{"type": "uint256", "name": ""}],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "getAgent",
+    "inputs": [{"type": "uint256", "name": "agentId"}],
+    "outputs": [{
+      "type": "tuple",
+      "name": "agent",
+      "components": [
+        {"type": "address", "name": "owner"},
+        {"type": "string", "name": "metadataCid"},
+        {"type": "string", "name": "name"},
+        {"type": "uint256", "name": "registeredAt"},
+        {"type": "bool", "name": "active"}
+      ]
+    }],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "nextAgentId",
+    "inputs": [],
+    "outputs": [{"type": "uint256", "name": ""}],
+    "stateMutability": "view"
   }
 ]""")
 
@@ -299,6 +357,80 @@ class ChainService:
         """Operator ETH balance."""
         bal = self.w3.eth.get_balance(self.operator.address)
         return float(self.w3.from_wei(bal, "ether"))
+
+    def verify_commitment(self, round_address: str, agent_address: str, commit_hash: str) -> bool:
+        """Verify an agent's on-chain commitment matches the submitted hash."""
+        contract = self.w3.eth.contract(
+            address=Web3.to_checksum_address(round_address),
+            abi=BOUNTY_ROUND_ABI,
+        )
+        on_chain_hash = contract.functions.getCommitment(
+            Web3.to_checksum_address(agent_address)
+        ).call()
+        # on_chain_hash is bytes32, commit_hash is hex string
+        expected = bytes.fromhex(commit_hash.replace("0x", ""))
+        return on_chain_hash == expected
+
+    def get_round_details(self, round_address: str) -> dict:
+        """Read full round state for dashboard/listing."""
+        contract = self.w3.eth.contract(
+            address=Web3.to_checksum_address(round_address),
+            abi=BOUNTY_ROUND_ABI,
+        )
+        phase = contract.functions.phase().call()
+        agent_count = contract.functions.agentCount().call()
+        sponsor = contract.functions.sponsor().call()
+        deposit = contract.functions.sponsorDeposit().call()
+        deadline = contract.functions.commitDeadline().call()
+
+        PHASE_NAMES = {0: "CREATED", 1: "FUNDED", 2: "COMMIT", 3: "SCORING", 4: "SETTLED", 5: "CANCELLED"}
+        return {
+            "phase": PHASE_NAMES.get(phase, f"UNKNOWN({phase})"),
+            "phase_id": phase,
+            "agent_count": agent_count,
+            "sponsor": sponsor,
+            "deposit_wei": str(deposit),
+            "deposit_eth": float(self.w3.from_wei(deposit, "ether")),
+            "commit_deadline": deadline,
+        }
+
+    def build_register_agent_tx(self, owner_address: str, name: str, metadata_cid: str) -> dict:
+        """Build unsigned transaction for agent registration."""
+        registry = self.w3.eth.contract(
+            address=Web3.to_checksum_address(config.ARENA_REGISTRY),
+            abi=ARENA_REGISTRY_ABI,
+        )
+        reg_fee = registry.functions.registrationFee().call()
+        tx_data = registry.functions.registerAgent(metadata_cid, name)
+
+        # Build unsigned transaction
+        tx = tx_data.build_transaction({
+            "from": Web3.to_checksum_address(owner_address),
+            "value": reg_fee,
+            "gas": 300_000,
+            "maxFeePerGas": self.w3.eth.gas_price * 2,
+            "maxPriorityFeePerGas": self.w3.to_wei(0.001, "gwei"),
+            "chainId": config.CHAIN_ID,
+            "nonce": self.w3.eth.get_transaction_count(Web3.to_checksum_address(owner_address)),
+        })
+
+        try:
+            estimated = self.w3.eth.estimate_gas(tx)
+            tx["gas"] = int(estimated * 1.2)
+        except Exception as e:
+            logger.warning(f"Gas estimation failed for registerAgent: {e}")
+
+        return {
+            "to": config.ARENA_REGISTRY,
+            "data": tx["data"],
+            "value": hex(reg_fee),
+            "gas": hex(tx["gas"]),
+            "maxFeePerGas": hex(tx["maxFeePerGas"]),
+            "maxPriorityFeePerGas": hex(tx["maxPriorityFeePerGas"]),
+            "chainId": hex(config.CHAIN_ID),
+            "registrationFeeWei": str(reg_fee),
+            "registrationFeeEth": str(float(self.w3.from_wei(reg_fee, "ether"))),
+        }
 
 
 # Singleton

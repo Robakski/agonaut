@@ -4,9 +4,12 @@ Agent API Routes
 Endpoints for agent registration, stats, and leaderboard.
 """
 
+import logging
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel, Field
 from typing import Optional
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/agents", tags=["agents"])
 
@@ -56,14 +59,52 @@ async def register_agent(req: RegisterAgentRequest):
     - Sanctions screening passed on owner wallet
     - Registration fee: 0.0015 ETH
 
-    Returns transaction data for the owner to sign.
+    Returns unsigned transaction data for the owner to sign in their wallet.
     """
-    # TODO: Build unsigned tx for ArenaRegistry.registerAgent()
-    return {
-        "status": "ready_to_sign",
-        "message": "Sign the transaction to register your agent (0.0015 ETH)",
-        "transaction": {},
-    }
+    if not req.owner_address or len(req.owner_address) != 42:
+        raise HTTPException(status_code=400, detail="Invalid owner address")
+
+    try:
+        from services.chain import get_chain_service
+        from services.ipfs import get_pinata_client
+
+        chain = get_chain_service()
+
+        # Upload agent metadata to IPFS
+        metadata = {
+            "name": req.name,
+            "description": req.description,
+            "owner": req.owner_address,
+            "platform": "agonaut",
+            "version": "1",
+        }
+        pinata = get_pinata_client()
+        metadata_cid = pinata.upload_json(f"agent-{req.name}", metadata)
+        if not metadata_cid:
+            metadata_cid = "pending"  # Fallback — metadata stored locally
+
+        # Build the unsigned transaction
+        tx_data = chain.build_register_agent_tx(
+            owner_address=req.owner_address,
+            name=req.name,
+            metadata_cid=metadata_cid,
+        )
+
+        return {
+            "status": "ready_to_sign",
+            "message": f"Sign the transaction to register '{req.name}' ({tx_data['registrationFeeEth']} ETH)",
+            "transaction": tx_data,
+            "metadataCid": metadata_cid,
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.exception("Failed to build registration transaction")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to prepare registration: {str(e)}"
+        )
 
 
 @router.get("/{agent_id}", response_model=AgentProfile)

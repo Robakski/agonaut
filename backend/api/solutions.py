@@ -74,6 +74,33 @@ async def submit_solution(req: SubmitSolutionRequest):
     - Round must be in COMMIT phase
     - Sanctions screening on agent wallet
     """
+    # ── Verify on-chain commitment before accepting ──
+    try:
+        from services.chain import get_chain_service
+        chain = get_chain_service()
+
+        # 1. Verify round is in COMMIT phase (phase_id == 2)
+        round_details = chain.get_round_details(req.round_address)
+        if round_details["phase_id"] != 2:
+            raise HTTPException(
+                400,
+                f"Round is in {round_details['phase']} phase, not COMMIT. Solutions can only be submitted during COMMIT phase."
+            )
+
+        # 2. Verify agent has committed on-chain and hash matches
+        if not chain.verify_commitment(req.round_address, req.agent_address, req.commit_hash):
+            raise HTTPException(
+                400,
+                "Commit hash does not match on-chain commitment. "
+                "Ensure you committed via BountyRound.commitSolution() first."
+            )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        log.error(f"On-chain verification failed: {e}")
+        raise HTTPException(503, "Unable to verify on-chain commitment. Please try again.")
+
     # Forward to scoring service for storage
     try:
         async with httpx.AsyncClient() as client:
