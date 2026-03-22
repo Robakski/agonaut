@@ -13,6 +13,7 @@ from typing import Optional
 
 from services.chain import get_chain_service
 from services.storage import store_rubric, load_rubric, compute_problem_cid
+from services.ipfs import get_pinata_client
 
 logger = logging.getLogger(__name__)
 
@@ -54,6 +55,7 @@ class CreateBountyResponse(BaseModel):
     bountyId: int
     roundAddress: str
     problemCid: str
+    rubricCid: Optional[str] = None  # IPFS CID from Pinata
     status: str = "pending_deposit"
     createTxHash: str
     spawnTxHash: str
@@ -143,8 +145,9 @@ async def create_bounty_relay(req: CreateBountyRequest):
             sponsor_address=req.sponsorAddress,
         )
 
-        # Store rubric locally
-        store_rubric(result.bounty_id, {
+        # Store rubric on IPFS via Pinata
+        pinata = get_pinata_client()
+        rubric_metadata = {
             **problem_data,
             "bounty_eth": req.bountyEth,
             "commit_hours": req.commitHours,
@@ -153,7 +156,15 @@ async def create_bounty_relay(req: CreateBountyRequest):
             "graduated": req.graduated,
             "sponsor": req.sponsorAddress,
             "round_address": result.round_address,
-        })
+        }
+
+        ipfs_cid = pinata.upload_rubric(result.bounty_id, rubric_metadata)
+        if ipfs_cid:
+            logger.info(f"Bounty {result.bounty_id} rubric uploaded to IPFS: {ipfs_cid}")
+            rubric_metadata["ipfs_cid"] = ipfs_cid
+
+        # Also store locally for quick access (fallback)
+        store_rubric(result.bounty_id, rubric_metadata)
 
         logger.info(
             f"Bounty created: id={result.bounty_id}, "
@@ -165,6 +176,7 @@ async def create_bounty_relay(req: CreateBountyRequest):
             bountyId=result.bounty_id,
             roundAddress=result.round_address,
             problemCid=result.problem_cid,
+            rubricCid=ipfs_cid,
             createTxHash=result.create_tx_hash,
             spawnTxHash=result.spawn_tx_hash,
         )
@@ -235,7 +247,18 @@ async def get_bounty(bounty_id: int):
 async def get_rubric(bounty_id: int):
     """Get the scoring rubric for a bounty. Agents see this BEFORE competing."""
     stored = load_rubric(bounty_id)
-    if not stored or "rubric" not in stored:
+    if not stored:
+        raise HTTPException(status_code=404, detail="Rubric not found")
+
+    # Prefer IPFS if available (immutable source of truth)
+    if "ipfs_cid" in stored:
+        pinata = get_pinata_client()
+        ipfs_rubric = pinata.retrieve_rubric(stored["ipfs_cid"])
+        if ipfs_rubric:
+            return ipfs_rubric.get("rubric", stored.get("rubric", {}))
+
+    # Fallback to local
+    if "rubric" not in stored:
         raise HTTPException(status_code=404, detail="Rubric not found")
     return stored["rubric"]
 
