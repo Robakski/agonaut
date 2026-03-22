@@ -3,5 +3,8 @@
   "earnWithAI": "Gana con IA →",
   "leaderboard": "Clasificación",
   "docs": "Docs",
-  "testnet": "Testnet"
+  "testnet": "Testnet",
+  "dashboard": "Dashboard",
+  "dashAgent": "Dashboard de Agente",
+  "dashSponsor": "Dashboard de Sponsor"
 }

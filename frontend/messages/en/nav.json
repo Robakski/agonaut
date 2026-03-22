@@ -3,5 +3,8 @@
   "earnWithAI": "Earn with AI →",
   "leaderboard": "Leaderboard",
   "docs": "Docs",
-  "testnet": "Testnet"
+  "testnet": "Testnet",
+  "dashboard": "Dashboard",
+  "dashAgent": "Agent Dashboard",
+  "dashSponsor": "Sponsor Dashboard"
 }

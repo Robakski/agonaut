@@ -3,5 +3,8 @@
   "earnWithAI": "用 AI 赚钱 →",
   "leaderboard": "排行榜",
   "docs": "文档",
-  "testnet": "测试网"
+  "testnet": "测试网",
+  "dashboard": "仪表板",
+  "dashAgent": "代理仪表板",
+  "dashSponsor": "赞助商仪表板"
 }

@@ -12,6 +12,8 @@ export function Navbar() {
   const router = useRouter();
   const pathname = usePathname();
 
+  const [dashOpen, setDashOpen] = useState(false);
+  const dashRef = useRef<HTMLDivElement>(null);
   const [langOpen, setLangOpen] = useState(false);
   const langRef = useRef<HTMLDivElement>(null);
   const LOCALES = [
@@ -25,14 +27,15 @@ export function Navbar() {
     router.replace(pathname, { locale: next });
   };
 
-  // Close lang dropdown on outside click
+  // Close dropdowns on outside click
   useEffect(() => {
     function handleClick(e: MouseEvent) {
       if (langRef.current && !langRef.current.contains(e.target as Node)) setLangOpen(false);
+      if (dashRef.current && !dashRef.current.contains(e.target as Node)) setDashOpen(false);
     }
-    if (langOpen) document.addEventListener("mousedown", handleClick);
+    if (langOpen || dashOpen) document.addEventListener("mousedown", handleClick);
     return () => document.removeEventListener("mousedown", handleClick);
-  }, [langOpen]);
+  }, [langOpen, dashOpen]);
 
   // Scroll detection for subtle shadow
   const [scrolled, setScrolled] = useState(false);
@@ -51,6 +54,32 @@ export function Navbar() {
           <div className="hidden lg:flex items-center gap-1 flex-1">
             <NavLink href="/bounties" pathname={pathname}>{t("bounties")}</NavLink>
             <NavLink href="/agents" pathname={pathname}>{t("earnWithAI")}</NavLink>
+            {/* Dashboard dropdown */}
+            <div className="relative" ref={dashRef}>
+              <button
+                onClick={() => setDashOpen(!dashOpen)}
+                className={`px-3.5 py-2 text-[13px] font-medium rounded-lg transition-all duration-200 flex items-center gap-1 ${
+                  pathname.startsWith("/dashboard")
+                    ? "text-slate-900 bg-slate-50"
+                    : "text-slate-400 hover:text-slate-700 hover:bg-slate-50/50"
+                }`}
+              >
+                {t("dashboard")}
+                <svg className={`w-3 h-3 transition-transform ${dashOpen ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+              </button>
+              {dashOpen && (
+                <div className="absolute left-0 mt-2 z-50 bg-white border border-slate-200 rounded-xl shadow-lg shadow-slate-200/50 py-1.5 min-w-[180px] animate-in fade-in slide-in-from-top-1 duration-150">
+                  <Link href="/dashboard/agent" onClick={() => setDashOpen(false)}
+                    className="block px-4 py-2.5 text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-colors">
+                    🤖 {t("dashAgent")}
+                  </Link>
+                  <Link href="/dashboard/sponsor" onClick={() => setDashOpen(false)}
+                    className="block px-4 py-2.5 text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-colors">
+                    💼 {t("dashSponsor")}
+                  </Link>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Center logo */}
@@ -141,6 +170,8 @@ export function Navbar() {
           <div className="lg:hidden pb-4 space-y-0.5 border-t border-slate-100 pt-3">
             <MobileNavLink href="/bounties" onClick={() => setMobileOpen(false)}>{t("bounties")}</MobileNavLink>
             <MobileNavLink href="/agents" onClick={() => setMobileOpen(false)}>{t("earnWithAI")}</MobileNavLink>
+            <MobileNavLink href="/dashboard/agent" onClick={() => setMobileOpen(false)}>🤖 {t("dashAgent")}</MobileNavLink>
+            <MobileNavLink href="/dashboard/sponsor" onClick={() => setMobileOpen(false)}>💼 {t("dashSponsor")}</MobileNavLink>
             <MobileNavLink href="/leaderboard" onClick={() => setMobileOpen(false)}>{t("leaderboard")}</MobileNavLink>
             <MobileNavLink href="/docs" onClick={() => setMobileOpen(false)}>{t("docs")}</MobileNavLink>
             <div className="pt-2 mt-2 border-t border-slate-100">

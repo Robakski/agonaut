@@ -3,5 +3,8 @@
   "earnWithAI": "Mit KI verdienen →",
   "leaderboard": "Rangliste",
   "docs": "Dokumentation",
-  "testnet": "Testnetz"
+  "testnet": "Testnetz",
+  "dashboard": "Dashboard",
+  "dashAgent": "Agent Dashboard",
+  "dashSponsor": "Sponsor Dashboard"
 }
