@@ -102,6 +102,23 @@ contract ArbitrationDAO is
     mapping(address => uint256) public roundToDisputeId;
     mapping(address => bool) public roundDisputed;
 
+    /// @dev Commit-reveal entropy for arbitrator selection.
+    ///      Dispute opener commits a secret seed hash; reveals it to trigger selection.
+    ///      Prevents sequencer manipulation of blockhash-only randomness on L2.
+    struct PendingDispute {
+        address opener;
+        address round;
+        uint256 bond;
+        string reason;
+        bytes32 seedCommit;   // keccak256(seed)
+        uint64 committedAt;
+        uint64 revealDeadline;
+    }
+    uint256 public nextPendingId;
+    mapping(uint256 => PendingDispute) public pendingDisputes;
+    /// @dev Reveal window after commit.
+    uint64 public constant REVEAL_WINDOW = 1 hours;
+
     /// @dev Vote tracking: disputeId => arbitrator => voted.
     mapping(uint256 => mapping(address => bool)) public hasVoted;
 
@@ -175,10 +192,27 @@ contract ArbitrationDAO is
     //                        OPEN DISPUTE
     // ============================================================
 
-    /// @notice Open a dispute against a bounty round's outcome.
+    // ── Errors for commit-reveal ──
+    error RevealDeadlinePassed();
+    error RevealDeadlineNotReached();
+    error InvalidSeedReveal();
+    error PendingDisputeNotFound();
+    error NotPendingOpener();
+
+    // ── Events for commit-reveal ──
+    event DisputeCommitted(uint256 indexed pendingId, address indexed opener, address indexed round);
+
+    /// @notice Step 1: Commit a dispute with a hashed seed for fair arbitrator selection.
+    /// @dev The seed prevents L2 sequencer manipulation of arbitrator randomness.
+    ///      Opener must call revealDispute() within REVEAL_WINDOW to finalize.
     /// @param roundAddr The BountyRound contract address.
     /// @param reason Human-readable explanation.
-    function openDispute(address roundAddr, string calldata reason) external payable nonReentrant {
+    /// @param seedCommit keccak256(abi.encodePacked(seed)) where seed is a random bytes32.
+    function commitDispute(
+        address roundAddr,
+        string calldata reason,
+        bytes32 seedCommit
+    ) external payable nonReentrant {
         if (roundAddr == address(0)) revert ZeroAddress();
         if (roundDisputed[roundAddr]) revert RoundAlreadyDisputed(roundAddr);
 
@@ -200,25 +234,76 @@ contract ArbitrationDAO is
             revert NotEnoughArbitrators(arbitratorList.length, count);
         }
 
-        // Create dispute
+        // Store pending dispute (not yet active — awaits reveal)
+        uint256 pendingId = nextPendingId++;
+        pendingDisputes[pendingId] = PendingDispute({
+            opener: msg.sender,
+            round: roundAddr,
+            bond: msg.value,
+            reason: reason,
+            seedCommit: seedCommit,
+            committedAt: uint64(block.timestamp),
+            revealDeadline: uint64(block.timestamp) + REVEAL_WINDOW
+        });
+
+        // Mark round as disputed early to prevent double-dispute
+        roundDisputed[roundAddr] = true;
+
+        emit DisputeCommitted(pendingId, msg.sender, roundAddr);
+    }
+
+    /// @notice Step 2: Reveal the seed to finalize dispute and select arbitrators.
+    /// @dev Must be called within REVEAL_WINDOW. The revealed seed is mixed with
+    ///      blockhash for entropy — neither party can predict the combination.
+    /// @param pendingId The pending dispute ID from commitDispute().
+    /// @param seed The original random bytes32 whose hash was committed.
+    function revealDispute(uint256 pendingId, bytes32 seed) external nonReentrant {
+        PendingDispute storage pd = pendingDisputes[pendingId];
+        if (pd.opener == address(0)) revert PendingDisputeNotFound();
+        if (msg.sender != pd.opener) revert NotPendingOpener();
+        if (block.timestamp > pd.revealDeadline) revert RevealDeadlinePassed();
+        if (keccak256(abi.encodePacked(seed)) != pd.seedCommit) revert InvalidSeedReveal();
+
+        // Create the real dispute
         uint256 disputeId = nextDisputeId++;
         Dispute storage d = disputes[disputeId];
         d.id = disputeId;
-        d.opener = msg.sender;
-        d.round = roundAddr;
-        d.bond = msg.value;
-        d.reason = reason;
+        d.opener = pd.opener;
+        d.round = pd.round;
+        d.bond = pd.bond;
+        d.reason = pd.reason;
         d.openedAt = uint64(block.timestamp);
         d.deadline = uint64(block.timestamp) + Constants.ARBITRATION_WINDOW;
         d.status = DisputeStatus.OPEN;
 
-        roundDisputed[roundAddr] = true;
-        roundToDisputeId[roundAddr] = disputeId;
+        roundToDisputeId[pd.round] = disputeId;
 
-        // Select arbitrators pseudo-randomly
-        _selectArbitrators(disputeId);
+        // Select arbitrators using committed seed + blockhash (neither party controls both)
+        _selectArbitratorsWithSeed(disputeId, seed);
 
-        emit DisputeOpened(disputeId, msg.sender, roundAddr, msg.value, reason);
+        // Clean up pending
+        delete pendingDisputes[pendingId];
+
+        emit DisputeOpened(disputeId, d.opener, d.round, d.bond, pd.reason);
+    }
+
+    /// @notice Reclaim bond if reveal window expires (opener failed to reveal).
+    /// @param pendingId The pending dispute ID.
+    function reclaimExpiredCommit(uint256 pendingId) external nonReentrant {
+        PendingDispute storage pd = pendingDisputes[pendingId];
+        if (pd.opener == address(0)) revert PendingDisputeNotFound();
+        if (block.timestamp <= pd.revealDeadline) revert RevealDeadlineNotReached();
+
+        address opener = pd.opener;
+        uint256 bond = pd.bond;
+        address round = pd.round;
+
+        // Unmark round so it can be disputed again
+        roundDisputed[round] = false;
+
+        delete pendingDisputes[pendingId];
+
+        _safeTransferEth(opener, bond);
     }
 
     // ============================================================
@@ -338,10 +423,11 @@ contract ArbitrationDAO is
     //                        INTERNALS
     // ============================================================
 
-    /// @dev Pseudo-random selection of ARBITRATOR_COUNT arbitrators from the eligible pool.
-    ///      Only arbitrators who have been staked for at least MIN_STAKE_AGE are eligible.
-    ///      This prevents flash-loan-stake-vote-unstake attacks within a single block.
-    function _selectArbitrators(uint256 disputeId) internal {
+    /// @dev Select arbitrators using commit-reveal seed + blockhash for manipulation-resistant
+    ///      randomness on L2. Neither the sequencer nor the dispute opener controls both entropy sources.
+    /// @param disputeId The dispute to assign arbitrators to.
+    /// @param seed The revealed random seed from the dispute opener.
+    function _selectArbitratorsWithSeed(uint256 disputeId, bytes32 seed) internal {
         uint256 poolSize = arbitratorList.length;
         uint256 count = Constants.ARBITRATOR_COUNT;
         Dispute storage d = disputes[disputeId];
@@ -359,10 +445,16 @@ contract ArbitrationDAO is
 
         if (eligibleCount < count) revert NotEnoughArbitrators(eligibleCount, count);
 
-        // Fisher-Yates partial shuffle on eligible pool
+        // Fisher-Yates partial shuffle — entropy = seed (user) XOR blockhash (sequencer)
+        // Neither party controls both, so manipulation requires collusion
         for (uint256 i; i < count; ++i) {
             uint256 remaining = eligibleCount - i;
-            uint256 rand = uint256(keccak256(abi.encodePacked(blockhash(block.number - 1), disputeId, i)));
+            uint256 rand = uint256(keccak256(abi.encodePacked(
+                seed,
+                blockhash(block.number - 1),
+                disputeId,
+                i
+            )));
             uint256 idx = i + (rand % remaining);
 
             // Swap
