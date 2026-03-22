@@ -152,6 +152,8 @@ contract BountyFactory is
     /// @notice Thrown when acceptanceThreshold is outside allowed range.
     /// @param provided The supplied threshold.
     error InvalidAcceptanceThreshold(uint16 provided);
+    /// @dev maxAgents exceeds MAX_AGENTS_PER_ROUND (gas safety).
+    error InvalidMaxAgents(uint8 provided);
 
     /// @notice Thrown when any required contract address is the zero address.
     /// @param name A short label identifying which address is missing.
@@ -681,6 +683,11 @@ contract BountyFactory is
             config.commitDuration > Constants.MAX_COMMIT_DURATION
         ) {
             revert InvalidCommitDuration(config.commitDuration);
+        }
+
+        // ── Max agents (gas safety — O(n²) sort in finalize) ──────────────────
+        if (config.maxAgents > Constants.MAX_AGENTS_PER_ROUND) {
+            revert InvalidMaxAgents(config.maxAgents);
         }
 
         // ── Prize distribution ────────────────────────────────────────────────

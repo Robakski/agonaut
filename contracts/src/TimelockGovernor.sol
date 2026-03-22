@@ -45,8 +45,21 @@ contract TimelockGovernor is TimelockController {
     //                   DELAY GUARD
     // ============================================================
 
+    /// @dev Shadow variable for delay — avoids fragile assembly access to OZ5's
+    ///      private ERC-7201 namespaced storage. This is the canonical delay value.
+    uint256 private _agonautDelay;
+    bool private _delayInitialized;
+
+    /// @notice Returns the minimum delay. Overrides OZ to use our shadow variable.
+    function getMinDelay() public view override returns (uint256) {
+        if (_delayInitialized) {
+            return _agonautDelay;
+        }
+        return super.getMinDelay();
+    }
+
     /// @dev Override to enforce MAX_DELAY cap. Only callable by the timelock itself
-    ///      (via a scheduled operation).
+    ///      (via a scheduled operation). Uses shadow variable instead of assembly.
     function updateDelay(uint256 newDelay) external override {
         if (_msgSender() != address(this)) {
             revert TimelockUnauthorizedCaller(_msgSender());
@@ -55,24 +68,8 @@ contract TimelockGovernor is TimelockController {
             revert DelayTooLong(newDelay, Constants.TIMELOCK_MAX_DELAY);
         }
         emit MinDelayChange(getMinDelay(), newDelay);
-        // _minDelay is private in parent; write directly to its storage slot.
-        // In TimelockController, _minDelay is the first declared state var (slot 0
-        // after inherited AccessControl storage).
-        // We use the same approach as OZ: just set the value.
-        // Since we can't access private _minDelay, we use assembly.
-        // TimelockController inherits: Context → AccessControl → TimelockController
-        // AccessControl has: mapping(bytes32 => RoleData) _roles → slot 0
-        // TimelockController adds: _minDelay → slot 1, then mappings
-        // Actually with ERC-7201 namespaced storage in OZ5, it uses specific slots.
-        // Let's find it empirically.
-        assembly {
-            // Read current delay via getMinDelay() to find the slot
-            // OZ5 uses ERC-7201 namespaced storage
-            // TimelockController storage namespace: keccak256("openzeppelin.storage.TimelockController") - 1
-            // The _minDelay field is the first field in the struct
-            let slot := 0x9b27b21867a0be1e8ec4cfbf9e42e06e5e1e48a50edc0db0a20c13e344e41a00
-            sstore(slot, newDelay)
-        }
+        _agonautDelay = newDelay;
+        _delayInitialized = true;
     }
 
     // ============================================================

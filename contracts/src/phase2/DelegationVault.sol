@@ -562,14 +562,12 @@ contract DelegationVault is
 
                     if (share > 0) {
                         unchecked { distributed += share; }
-                        // Push payment; ignore revert so one bad actor can't block others
+                        // Push payment; fallback to claimable if transfer fails
                         // slither-disable-next-line low-level-calls
                         (bool ok,) = d.delegator.call{value: share}("");
-                        // Silently skip failed transfers; funds remain in contract
-                        // A governance upgrade can add a pull-based rescue path if needed
                         if (!ok) {
-                            // Revert distributed counter so remainder stays in contract
-                            unchecked { distributed -= share; }
+                            // Credit to pull-based claimable so funds are never trapped
+                            claimable[d.delegator] += share;
                         }
                     }
                 }

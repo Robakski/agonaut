@@ -54,8 +54,10 @@ CHAIN_ID=84532
 SCORING_ORACLE=0xb7597d71e00cd1c45c51dd093ce0d3dbd5b86e91
 
 # Scorer wallet (has SCORER_ROLE on ScoringOracle)
-SCORER_PRIVATE_KEY=0x5c7dee1cda7d89cf2ba7e15116d4a039c30d858ef34243bc7379a637906c2b27
-SCORER_ADDRESS=0x758719d3f12ba9779AFBBCB83b6f9E594DBEf381
+# SECURITY: Never commit private keys. Set manually during deployment:
+#   read -sp "Scorer private key: " SCORER_PRIVATE_KEY
+SCORER_PRIVATE_KEY=
+SCORER_ADDRESS=
 
 # Phala TEE (fill in after signup)
 PHALA_API_KEY=

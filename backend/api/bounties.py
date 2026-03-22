@@ -45,7 +45,7 @@ class CreateBountyRequest(BaseModel):
     tags: list[str] = Field(default=[], max_length=5)
     bountyEth: str  # ETH amount as string (e.g., "0.125")
     commitHours: int = Field(ge=1, le=168)
-    maxAgents: int = Field(ge=0, le=255, default=0)
+    maxAgents: int = Field(ge=0, le=50, default=0)  # MAX_AGENTS_PER_ROUND = 50 (gas safety)
     threshold: int = Field(ge=1000, le=9500, default=7000)
     graduated: bool = True
     rubric: dict  # { criteria: [{ name, checks: [{ description, weight, required }] }] }

@@ -139,6 +139,9 @@ library Constants {
     bytes32 internal constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
     uint32 internal constant TIMELOCK_MIN_DELAY = 24 hours;
     uint32 internal constant TIMELOCK_MAX_DELAY = 7 days;
+    /// @dev Max agents per round — caps O(n²) sort in finalize() for gas safety.
+    ///      255 agents would cost ~978k gas for sort alone. 50 keeps it under 100k.
+    uint8 internal constant MAX_AGENTS_PER_ROUND = 50;
     uint16 internal constant MAX_PROTOCOL_FEE_BPS = 500;   // 5% absolute max (anti-rug)
     uint16 internal constant MAX_SCORING_FEE_BPS = 200;     // 2% absolute max
     uint32 internal constant UNPAUSE_COOLDOWN = 1 hours;

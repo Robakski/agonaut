@@ -7,6 +7,7 @@ Solutions are encrypted client-side and only decrypted inside Phala TEE.
 Backend (port 8000) → Scoring Service (port 8001) → Phala TEE → On-chain
 """
 
+import os
 import httpx
 import logging
 from fastapi import APIRouter, HTTPException
@@ -16,6 +17,15 @@ router = APIRouter(prefix="/solutions", tags=["solutions"])
 log = logging.getLogger("solutions")
 
 SCORING_SERVICE_URL = "http://127.0.0.1:8001"
+SCORING_API_KEY = os.environ.get("SCORING_API_KEY", "")
+
+
+def _scoring_headers() -> dict:
+    """Auth headers for scoring service communication."""
+    headers = {}
+    if SCORING_API_KEY:
+        headers["X-Scoring-Key"] = SCORING_API_KEY
+    return headers
 
 
 # ── Models ──
@@ -113,6 +123,7 @@ async def submit_solution(req: SubmitSolutionRequest):
                     "commit_hash": req.commit_hash,
                 },
                 timeout=10.0,
+                headers=_scoring_headers(),
             )
             if resp.status_code >= 400:
                 detail = resp.json().get("detail", resp.text)
@@ -145,6 +156,7 @@ async def scoring_status(round_address: str):
             resp = await client.get(
                 f"{SCORING_SERVICE_URL}/score/status/{round_address}",
                 timeout=10.0,
+                headers=_scoring_headers(),
             )
             if resp.status_code == 404:
                 return ScoringStatusResponse(
@@ -191,6 +203,7 @@ async def trigger_scoring(round_address: str):
                     "solutions": [],     # TODO: collect from stored solutions
                 },
                 timeout=10.0,
+                headers=_scoring_headers(),
             )
             return resp.json()
     except httpx.ConnectError:

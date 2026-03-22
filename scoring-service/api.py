@@ -27,7 +27,9 @@ import time
 from pathlib import Path
 from typing import Optional
 
-from fastapi import FastAPI, HTTPException, BackgroundTasks
+from fastapi import FastAPI, HTTPException, BackgroundTasks, Request
+from fastapi.responses import JSONResponse
+from starlette.middleware.base import BaseHTTPMiddleware
 from pydantic import BaseModel, Field
 
 from scorer import (
@@ -45,6 +47,34 @@ app = FastAPI(
     description="TEE-backed AI scoring for Agonaut bounty rounds",
     version="0.1.0",
 )
+
+# ── Authentication ──
+# Only the backend API (port 8000) should communicate with this service.
+# SCORING_API_KEY must match between backend and scoring service .env files.
+
+SCORING_API_KEY = os.environ.get("SCORING_API_KEY", "")
+
+
+class ScoringAuthMiddleware(BaseHTTPMiddleware):
+    """Require API key for all endpoints except /health."""
+
+    async def dispatch(self, request: Request, call_next):
+        if request.url.path == "/health":
+            return await call_next(request)
+
+        if not SCORING_API_KEY:
+            log.warning("SCORING_API_KEY not set — scoring service is UNPROTECTED")
+            return await call_next(request)
+
+        auth = request.headers.get("X-Scoring-Key", "")
+        if auth != SCORING_API_KEY:
+            log.warning(f"Unauthorized scoring request from {request.client.host}: {request.url.path}")
+            return JSONResponse(status_code=403, content={"detail": "Forbidden"})
+
+        return await call_next(request)
+
+
+app.add_middleware(ScoringAuthMiddleware)
 
 # ── In-memory state (replace with Redis/DB in production) ──
 

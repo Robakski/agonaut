@@ -8,6 +8,7 @@ import { ConnectKitButton } from "connectkit";
 import { MIN_BOUNTY_DEPOSIT, ENTRY_FEE, PROTOCOL_FEE_BPS, BPS_DENOMINATOR, BASESCAN_URL, API_URL } from "@/lib/contracts";
 import { BountyRoundABI } from "@/lib/abis/BountyRound";
 import { createBountyRelay, type CreateBountyRequest } from "@/lib/api";
+import { validateCreateBounty } from "@/lib/validation";
 
 /* ─── Types ─── */
 interface RubricCheck {
@@ -263,6 +264,15 @@ export default function CreateBountyPage() {
         },
         sponsorAddress: address,
       };
+
+      // Runtime validation before API call (defense-in-depth)
+      try {
+        validateCreateBounty(payload);
+      } catch (validationError: any) {
+        const msg = validationError?.errors?.[0]?.message || "Invalid bounty data";
+        setSubmitState({ kind: "error", message: `Validation error: ${msg}` });
+        return;
+      }
 
       const result = await createBountyRelay(payload);
 
