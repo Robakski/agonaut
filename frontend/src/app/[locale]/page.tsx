@@ -19,7 +19,7 @@ export default function Home() {
           <h1 className="text-5xl sm:text-6xl font-extrabold tracking-[-0.04em] leading-[1.05] text-slate-900 mb-6">
             {t("heading1")}
             <br />
-            <span className="bg-gradient-to-r from-amber-500 to-amber-600 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-slate-400 via-amber-600 to-amber-500 bg-clip-text text-transparent">
               {t("heading2")}
             </span>
           </h1>
