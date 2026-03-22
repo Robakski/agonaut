@@ -15,7 +15,7 @@ Production:
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from api import bounties, agents, solutions, compliance
+from api import bounties, agents, solutions, compliance, activity
 from middleware.sanctions_middleware import SanctionsMiddleware
 import config
 
@@ -57,6 +57,7 @@ app.include_router(bounties.router, prefix="/api/v1")
 app.include_router(agents.router, prefix="/api/v1")
 app.include_router(solutions.router, prefix="/api/v1")
 app.include_router(compliance.router, prefix="/api/v1")
+app.include_router(activity.router, prefix="/api/v1")
 
 
 # ── Health ──

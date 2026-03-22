@@ -5,6 +5,12 @@ import { WagmiProvider } from "wagmi";
 import { ConnectKitProvider } from "connectkit";
 import { config } from "@/lib/wagmi";
 import { useState } from "react";
+import { useActivityTracker } from "@/hooks/useActivityTracker";
+
+function ActivityTracker() {
+  useActivityTracker();
+  return null;
+}
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(() => new QueryClient());
@@ -13,6 +19,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
     <WagmiProvider config={config}>
       <QueryClientProvider client={queryClient}>
         <ConnectKitProvider theme="midnight">
+          <ActivityTracker />
           {children}
         </ConnectKitProvider>
       </QueryClientProvider>

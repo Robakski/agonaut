@@ -127,3 +127,27 @@ export async function getBlockedJurisdictions() {
 export async function getProtocolInfo() {
   return fetchApi<any>("/protocol");
 }
+
+// ── Activity Tracking ──
+
+export async function trackActivity(
+  wallet: string,
+  event: string,
+  detail?: string,
+  amountWei?: string
+) {
+  try {
+    await fetch(`${API_URL}/activity/track`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        wallet: wallet.toLowerCase(),
+        event,
+        detail,
+        amount_wei: amountWei,
+      }),
+    });
+  } catch {
+    // Silent — tracking never blocks UX
+  }
+}

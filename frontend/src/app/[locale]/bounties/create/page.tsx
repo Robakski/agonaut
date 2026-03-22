@@ -5,7 +5,7 @@ import { useTranslations } from "next-intl";
 import { useAccount, useWriteContract, useWaitForTransactionReceipt } from "wagmi";
 import { parseEther, type Address } from "viem";
 import { ConnectKitButton } from "connectkit";
-import { MIN_BOUNTY_DEPOSIT, ENTRY_FEE, PROTOCOL_FEE_BPS, BPS_DENOMINATOR, BASESCAN_URL } from "@/lib/contracts";
+import { MIN_BOUNTY_DEPOSIT, ENTRY_FEE, PROTOCOL_FEE_BPS, BPS_DENOMINATOR, BASESCAN_URL, API_URL } from "@/lib/contracts";
 import { BountyRoundABI } from "@/lib/abis/BountyRound";
 import { createBountyRelay, type CreateBountyRequest } from "@/lib/api";
 
@@ -265,6 +265,15 @@ export default function CreateBountyPage() {
       };
 
       const result = await createBountyRelay(payload);
+
+      // Track bounty creation for airdrop
+      if (typeof window !== "undefined") {
+        fetch(`${API_URL}/activity/track`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ wallet: address.toLowerCase(), event: "bounty_created", detail: String(result.bountyId) }),
+        }).catch(() => {});
+      }
 
       // Step 2: Deposit ETH to the round contract
       setSubmitState({
