@@ -1,0 +1,22 @@
+{
+  "buttonLabel": "反馈",
+  "title": "分享您的反馈",
+  "subtitle": "帮助我们构建更好的平台",
+  "typeLabel": "什么类型的反馈？",
+  "type_idea": "创意",
+  "type_bug": "漏洞",
+  "type_ux": "体验",
+  "type_other": "其他",
+  "messageLabel": "您的消息",
+  "messagePlaceholder": "告诉我们您的想法、什么可以改进、或您希望看到什么...",
+  "emailLabel": "邮箱（可选）",
+  "emailPlaceholder": "以便我们后续联系",
+  "contextPage": "页面",
+  "contextWallet": "钱包",
+  "submit": "发送反馈",
+  "sending": "发送中...",
+  "errorRetry": "重试",
+  "errorMessage": "出现问题，请重试。",
+  "thankYou": "谢谢！",
+  "thankYouDesc": "您的反馈帮助我们为所有人构建更好的平台。"
+}

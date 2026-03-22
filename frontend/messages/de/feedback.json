@@ -1,0 +1,22 @@
+{
+  "buttonLabel": "Feedback",
+  "title": "Teilen Sie Ihr Feedback",
+  "subtitle": "Helfen Sie uns, eine bessere Plattform zu bauen",
+  "typeLabel": "Welche Art von Feedback?",
+  "type_idea": "Idee",
+  "type_bug": "Bug",
+  "type_ux": "UX",
+  "type_other": "Sonstiges",
+  "messageLabel": "Ihre Nachricht",
+  "messagePlaceholder": "Sagen Sie uns, was Sie denken, was besser sein könnte oder was Sie sich wünschen...",
+  "emailLabel": "E-Mail (optional)",
+  "emailPlaceholder": "Falls wir nachfragen möchten",
+  "contextPage": "Seite",
+  "contextWallet": "Wallet",
+  "submit": "Feedback senden",
+  "sending": "Wird gesendet...",
+  "errorRetry": "Erneut versuchen",
+  "errorMessage": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut.",
+  "thankYou": "Vielen Dank!",
+  "thankYouDesc": "Ihr Feedback hilft uns, eine bessere Plattform für alle zu bauen."
+}

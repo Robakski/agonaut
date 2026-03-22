@@ -6,6 +6,7 @@ import { ConnectKitProvider } from "connectkit";
 import { config } from "@/lib/wagmi";
 import { useState } from "react";
 import { useActivityTracker } from "@/hooks/useActivityTracker";
+import { FeedbackWidget } from "./FeedbackWidget";
 
 function ActivityTracker() {
   useActivityTracker();
@@ -20,6 +21,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
       <QueryClientProvider client={queryClient}>
         <ConnectKitProvider theme="midnight">
           <ActivityTracker />
+          <FeedbackWidget />
           {children}
         </ConnectKitProvider>
       </QueryClientProvider>

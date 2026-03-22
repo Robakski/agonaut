@@ -114,6 +114,24 @@ DASHBOARD_HTML = r"""<!DOCTYPE html>
   <div id="timelineChart" style="height:120px;display:flex;align-items:flex-end;gap:2px"></div>
 </div>
 
+<!-- User Feedback -->
+<div class="card">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+    <h2 style="margin:0">💡 User Feedback</h2>
+    <div style="display:flex;gap:4px">
+      <select id="feedbackFilter" onchange="loadFeedback()" style="padding:4px 8px;border:1px solid var(--border);border-radius:6px;font-size:11px">
+        <option value="">All</option>
+        <option value="new">New</option>
+        <option value="idea">Ideas</option>
+        <option value="bug">Bugs</option>
+        <option value="ux">UX</option>
+      </select>
+    </div>
+  </div>
+  <div id="feedbackList"></div>
+  <div id="feedbackCount" style="margin-top:8px;font-size:11px;color:var(--muted)"></div>
+</div>
+
 <!-- Wallet Table -->
 <div class="card">
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
@@ -345,9 +363,70 @@ function exportCSV(){
   a.click();
 }
 
+// Feedback
+async function loadFeedback(){
+  try{
+    const filter=document.getElementById('feedbackFilter').value;
+    let url='/feedback/list?key='+KEY+'&limit=50';
+    if(filter==='new')url+='&status=new';
+    else if(filter)url+='&type='+filter;
+    const data=await q(url.replace('/api/v1',''));
+    // fix: feedback endpoint is at /api/v1/feedback/list
+    const res=await fetch(`${API}/feedback/list?key=${KEY}&limit=50${filter==='new'?'&status=new':filter?'&type='+filter:''}`);
+    const d=await res.json();
+    renderFeedback(d);
+  }catch(e){
+    document.getElementById('feedbackList').innerHTML='<div style="color:var(--muted);font-size:12px;padding:12px">No feedback yet</div>';
+  }
+}
+
+function renderFeedback(data){
+  const items=data.items||[];
+  const fmt=(ts)=>ts?new Date(ts*1000).toLocaleString('de-DE'):'—';
+  const typeEmoji={idea:'💡',bug:'🐛',ux:'✨',other:'💬'};
+  const statusColor={new:'color:var(--accent);font-weight:700',reviewed:'color:var(--green)',done:'color:var(--green)',dismissed:'color:var(--muted)'};
+
+  if(!items.length){
+    document.getElementById('feedbackList').innerHTML='<div style="color:var(--muted);font-size:12px;padding:20px;text-align:center">No feedback yet — the widget is live on the site!</div>';
+    document.getElementById('feedbackCount').textContent='';
+    return;
+  }
+
+  document.getElementById('feedbackList').innerHTML=items.map(f=>`
+    <div style="border-bottom:1px solid #f1f5f9;padding:12px 0">
+      <div style="display:flex;justify-content:space-between;align-items:start;gap:8px">
+        <div>
+          <span style="font-size:14px">${typeEmoji[f.type]||'💬'}</span>
+          <span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-left:4px">${f.type}</span>
+          <span style="font-size:10px;margin-left:8px;${statusColor[f.status]||''}">${f.status}</span>
+        </div>
+        <div style="font-size:10px;color:var(--muted)">${fmt(f.ts)}</div>
+      </div>
+      <div style="font-size:13px;color:var(--text);margin:6px 0;line-height:1.5">${f.message.replace(/</g,'&lt;').replace(/\n/g,'<br>')}</div>
+      <div style="display:flex;gap:8px;font-size:10px;color:var(--muted)">
+        ${f.wallet?'<span class="mono">'+f.wallet.slice(0,6)+'…'+f.wallet.slice(-4)+'</span>':''}
+        ${f.page?'<span>'+f.page+'</span>':''}
+        ${f.email?'<span>📧 '+f.email+'</span>':''}
+      </div>
+      <div style="margin-top:6px;display:flex;gap:4px">
+        <button onclick="updateFeedbackStatus(${f.id},'reviewed')" style="font-size:10px;padding:2px 8px;border:1px solid var(--border);border-radius:4px;cursor:pointer;background:var(--card)">✓ Reviewed</button>
+        <button onclick="updateFeedbackStatus(${f.id},'done')" style="font-size:10px;padding:2px 8px;border:1px solid var(--border);border-radius:4px;cursor:pointer;background:var(--card)">✅ Done</button>
+        <button onclick="updateFeedbackStatus(${f.id},'dismissed')" style="font-size:10px;padding:2px 8px;border:1px solid var(--border);border-radius:4px;cursor:pointer;background:var(--card)">✕</button>
+      </div>
+    </div>
+  `).join('');
+  document.getElementById('feedbackCount').textContent=data.total+' total feedback items';
+}
+
+async function updateFeedbackStatus(id,status){
+  await fetch(`${API}/feedback/update-status?id=${id}&status=${status}&key=${KEY}`,{method:'POST'});
+  loadFeedback();
+}
+
 // Auto-refresh every 60 seconds
 loadAll();
-setInterval(loadAll,60000);
+loadFeedback();
+setInterval(()=>{loadAll();loadFeedback()},60000);
 
 // Keyboard: Escape closes detail
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeDetail()});
