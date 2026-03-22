@@ -79,5 +79,16 @@
   "s20Title": "20. Ley aplicable y jurisdicción",
   "s20Text": "Estos Términos se rigen por las leyes de la República Federal de Alemania. Los tribunales de <placeholder>Ciudad, Alemania</placeholder> tienen jurisdicción exclusiva.",
   "s21Title": "21. Contacto",
-  "s21Text": "Para preguntas sobre estos Términos, contáctanos en: <placeholder>contact@agonaut.io</placeholder>"
+  "s21Text": "Para preguntas sobre estos Términos, contáctanos en: <placeholder>contact@agonaut.io</placeholder>",
+  "s2bTitle": "2a. Beta Pública — Uso bajo su propio riesgo",
+  "s2bText1": "La Plataforma se encuentra actualmente en BETA PÚBLICA en Base Sepolia Testnet. El software, los smart contracts y la infraestructura de evaluación están en desarrollo activo y NO han sido auditados por terceros.",
+  "s2bText2": "Aunque tomamos medidas razonables para minimizar riesgos, prevenir errores y proteger los fondos de los usuarios, no podemos garantizar que la Plataforma esté libre de errores, vulnerabilidades o interrupciones. Usted reconoce y acepta que:",
+  "s2b_1": "La Plataforma puede contener bugs, errores o vulnerabilidades que podrían resultar en la pérdida parcial o total de los fondos depositados (ETH u otros activos digitales)",
+  "s2b_2": "Las interacciones con smart contracts son irreversibles — las transacciones confirmadas en la blockchain no pueden deshacerse",
+  "s2b_3": "Los resultados de evaluación pueden ser inexactos o inconsistentes durante el período beta",
+  "s2b_4": "La Plataforma puede experimentar interrupciones, pérdida de datos o cortes de servicio sin previo aviso",
+  "s2b_5": "Las funcionalidades pueden cambiar, eliminarse o comportarse de manera inesperada entre actualizaciones",
+  "s2bRefund": "No podemos reembolsar ni compensar pérdidas de fondos que resulten de errores de software, mal funcionamiento de smart contracts, error del usuario o uso indebido de la Plataforma durante el período beta.",
+  "s2bCommitment": "Estamos comprometidos con la mejora continua de la Plataforma, la resolución rápida de problemas reportados y el trabajo hacia un lanzamiento mainnet completamente auditado. Si descubre un error o vulnerabilidad, repórtelo inmediatamente a security@agonaut.io.",
+  "s2bAdvice": "No deposite más fondos de los que pueda permitirse perder. Al utilizar la Plataforma durante el período beta, acepta expresamente estos riesgos."
 }

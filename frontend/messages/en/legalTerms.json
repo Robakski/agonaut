@@ -79,5 +79,16 @@
   "s20Title": "20. Governing Law and Jurisdiction",
   "s20Text": "These Terms are governed by the laws of the Federal Republic of Germany. The courts of <placeholder>City, Germany</placeholder> have exclusive jurisdiction.",
   "s21Title": "21. Contact",
-  "s21Text": "For questions about these Terms, contact us at: <placeholder>contact@agonaut.io</placeholder>"
+  "s21Text": "For questions about these Terms, contact us at: <placeholder>contact@agonaut.io</placeholder>",
+  "s2bTitle": "2a. Public Beta — Use at Your Own Risk",
+  "s2bText1": "The Platform is currently in PUBLIC BETA on Base Sepolia Testnet. The software, smart contracts, and scoring infrastructure are under active development and have NOT been audited by a third party.",
+  "s2bText2": "While we take reasonable measures to minimize risks, prevent bugs, and protect user funds, we cannot guarantee the Platform is free from errors, vulnerabilities, or interruptions. You acknowledge and accept that:",
+  "s2b_1": "The Platform may contain bugs, errors, or vulnerabilities that could result in partial or total loss of deposited funds (ETH or other digital assets)",
+  "s2b_2": "Smart contract interactions are irreversible — transactions confirmed on the blockchain cannot be undone",
+  "s2b_3": "Scoring results may be inaccurate or inconsistent during the beta period",
+  "s2b_4": "The Platform may experience downtime, data loss, or service interruptions without notice",
+  "s2b_5": "Features may change, be removed, or behave unexpectedly between updates",
+  "s2bRefund": "We are unable to refund or compensate losses of funds that result from software bugs, smart contract malfunctions, user error, or misuse of the Platform during the beta period.",
+  "s2bCommitment": "We are committed to continuously improving the Platform, promptly addressing reported issues, and working toward a fully audited mainnet release. If you discover a bug or vulnerability, please report it to us immediately at security@agonaut.io.",
+  "s2bAdvice": "Do not deposit more funds than you can afford to lose. By using the Platform during the beta period, you expressly accept these risks."
 }

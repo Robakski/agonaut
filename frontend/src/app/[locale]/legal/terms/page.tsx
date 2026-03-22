@@ -19,6 +19,24 @@ export default function TermsPage() {
           <p>{t("s2Text")}</p>
         </Section>
 
+        {/* Public Beta Disclaimer — prominent warning */}
+        <div className="bg-amber-50 border-2 border-amber-200 rounded-2xl p-6 -mx-2">
+          <Section title={t("s2bTitle")}>
+            <p className="font-semibold text-slate-800">{t("s2bText1")}</p>
+            <p>{t("s2bText2")}</p>
+            <ul className="list-disc pl-6 space-y-1">
+              <li>{t("s2b_1")}</li>
+              <li>{t("s2b_2")}</li>
+              <li>{t("s2b_3")}</li>
+              <li>{t("s2b_4")}</li>
+              <li>{t("s2b_5")}</li>
+            </ul>
+            <p className="font-semibold text-slate-800">{t("s2bRefund")}</p>
+            <p>{t("s2bCommitment")}</p>
+            <p className="font-semibold text-amber-800">{t("s2bAdvice")}</p>
+          </Section>
+        </div>
+
         <Section title={t("s3Title")}>
           <ul className="list-disc pl-6 space-y-1">
             <li>{t("s3_1")}</li>

@@ -79,5 +79,16 @@
   "s20Title": "20. Anwendbares Recht und Gerichtsstand",
   "s20Text": "Diese Bedingungen unterliegen dem Recht der Bundesrepublik Deutschland. Die Gerichte in <placeholder>Stadt, Deutschland</placeholder> haben ausschließliche Zuständigkeit.",
   "s21Title": "21. Kontakt",
-  "s21Text": "Bei Fragen zu diesen Bedingungen kontaktiere uns unter: <placeholder>contact@agonaut.io</placeholder>"
+  "s21Text": "Bei Fragen zu diesen Bedingungen kontaktiere uns unter: <placeholder>contact@agonaut.io</placeholder>",
+  "s2bTitle": "2a. Öffentliche Beta — Nutzung auf eigenes Risiko",
+  "s2bText1": "Die Plattform befindet sich derzeit in der ÖFFENTLICHEN BETA auf dem Base Sepolia Testnet. Die Software, Smart Contracts und Scoring-Infrastruktur befinden sich in aktiver Entwicklung und wurden NICHT von Dritten auditiert.",
+  "s2bText2": "Obwohl wir angemessene Maßnahmen ergreifen, um Risiken zu minimieren, Fehler zu vermeiden und Nutzergelder zu schützen, können wir nicht garantieren, dass die Plattform frei von Fehlern, Schwachstellen oder Unterbrechungen ist. Sie erkennen an und akzeptieren, dass:",
+  "s2b_1": "Die Plattform Bugs, Fehler oder Schwachstellen enthalten kann, die zu einem teilweisen oder vollständigen Verlust eingezahlter Gelder (ETH oder andere digitale Vermögenswerte) führen können",
+  "s2b_2": "Smart-Contract-Interaktionen irreversibel sind — auf der Blockchain bestätigte Transaktionen können nicht rückgängig gemacht werden",
+  "s2b_3": "Scoring-Ergebnisse während der Beta-Phase ungenau oder inkonsistent sein können",
+  "s2b_4": "Die Plattform ohne Vorankündigung Ausfallzeiten, Datenverlust oder Dienstunterbrechungen erfahren kann",
+  "s2b_5": "Funktionen zwischen Updates geändert, entfernt werden oder sich unerwartet verhalten können",
+  "s2bRefund": "Wir sind nicht in der Lage, Verluste von Geldern zu erstatten oder zu kompensieren, die durch Softwarefehler, Smart-Contract-Fehlfunktionen, Benutzerfehler oder Missbrauch der Plattform während der Beta-Phase entstehen.",
+  "s2bCommitment": "Wir verpflichten uns, die Plattform kontinuierlich zu verbessern, gemeldete Probleme zeitnah zu beheben und auf eine vollständig auditierte Mainnet-Veröffentlichung hinzuarbeiten. Wenn Sie einen Fehler oder eine Schwachstelle entdecken, melden Sie diese bitte umgehend an security@agonaut.io.",
+  "s2bAdvice": "Zahlen Sie nicht mehr Gelder ein, als Sie sich leisten können zu verlieren. Durch die Nutzung der Plattform während der Beta-Phase akzeptieren Sie diese Risiken ausdrücklich."
 }
