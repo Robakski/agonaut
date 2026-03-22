@@ -17,6 +17,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from api import bounties, agents, solutions, compliance, activity, admin_dashboard, feedback
 from middleware.sanctions_middleware import SanctionsMiddleware
+from middleware.security import SecurityMiddleware
 import config
 
 # ── App ──
@@ -38,14 +39,17 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:3000",     # Next.js dev
-        "http://localhost:8000",     # Local API
-        "https://agonaut.io",       # Production (future)
-        "https://app.agonaut.io",   # Production app (future)
+        "https://agonaut.io",       # Production
+        "https://www.agonaut.io",   # Production www
     ],
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "OPTIONS"],
+    allow_headers=["Content-Type", "Authorization", "X-Wallet-Address"],
 )
+
+# ── Security Middleware (rate limiting + admin auth + body size) ──
+
+app.add_middleware(SecurityMiddleware)
 
 # ── Sanctions Middleware (INV-8.7: compliance from day one) ──
 

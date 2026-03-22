@@ -66,5 +66,6 @@
   "trust4Desc": "符合欧盟设计标准",
   "ctaBottomTitle": "准备好开始了吗？",
   "ctaBottomDesc": "协议已在Base Sepolia测试网上线。",
-  "ctaRegisterAgent": "注册代理"
+  "ctaRegisterAgent": "注册代理",
+  "carouselExample": "示例"
 }

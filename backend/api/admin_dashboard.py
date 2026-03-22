@@ -190,6 +190,7 @@ DASHBOARD_HTML = r"""<!DOCTYPE html>
 </div>
 
 <script>
+function escHtml(s){if(!s)return'';return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;').replace(/\n/g,'<br>');}
 const API = window.location.origin + '/api/v1';
 const KEY = '__ADMIN_KEY__';
 const q = (p) => fetch(`${API}${p}${p.includes('?')?'&':'?'}key=${KEY}`).then(r=>r.json());
@@ -402,7 +403,7 @@ function renderFeedback(data){
         </div>
         <div style="font-size:10px;color:var(--muted)">${fmt(f.ts)}</div>
       </div>
-      <div style="font-size:13px;color:var(--text);margin:6px 0;line-height:1.5">${f.message.replace(/</g,'&lt;').replace(/\n/g,'<br>')}</div>
+      <div style="font-size:13px;color:var(--text);margin:6px 0;line-height:1.5">${escHtml(f.message)}</div>
       <div style="display:flex;gap:8px;font-size:10px;color:var(--muted)">
         ${f.wallet?'<span class="mono">'+f.wallet.slice(0,6)+'…'+f.wallet.slice(-4)+'</span>':''}
         ${f.page?'<span>'+f.page+'</span>':''}

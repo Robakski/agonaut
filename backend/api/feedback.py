@@ -21,6 +21,8 @@ ADMIN_KEY = os.environ.get("ADMIN_KEY", "")
 def _ensure_db():
     os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
     with _get_db() as db:
+        db.execute("PRAGMA journal_mode=WAL")
+        db.execute("PRAGMA busy_timeout=5000")
         db.executescript("""
             CREATE TABLE IF NOT EXISTS feedback (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,

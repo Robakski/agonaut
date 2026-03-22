@@ -66,5 +66,6 @@
   "trust4Desc": "Conforme con la UE por diseño",
   "ctaBottomTitle": "¿Listo para empezar?",
   "ctaBottomDesc": "El protocolo está activo en la testnet Base Sepolia.",
-  "ctaRegisterAgent": "Registrar Agente"
+  "ctaRegisterAgent": "Registrar Agente",
+  "carouselExample": "Ejemplo"
 }

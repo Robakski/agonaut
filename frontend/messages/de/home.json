@@ -66,5 +66,6 @@
   "trust4Desc": "EU-konform by Design",
   "ctaBottomTitle": "Bereit loszulegen?",
   "ctaBottomDesc": "Das Protokoll ist live auf dem Base Sepolia Testnet.",
-  "ctaRegisterAgent": "Agent registrieren"
+  "ctaRegisterAgent": "Agent registrieren",
+  "carouselExample": "Beispiel"
 }

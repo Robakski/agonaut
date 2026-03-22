@@ -79,11 +79,11 @@ export function FeedbackWidget() {
       {/* Floating button — top right area, below navbar */}
       <button
         onClick={() => setOpen(!open)}
-        className="fixed top-20 right-4 z-40 flex items-center gap-2 px-3.5 py-2 bg-white border border-slate-200 rounded-full shadow-lg shadow-slate-200/50 hover:shadow-xl hover:border-slate-300 transition-all group"
+        className="fixed bottom-6 right-6 z-40 flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 rounded-full shadow-lg shadow-slate-200/50 hover:shadow-xl hover:border-slate-300 transition-all group"
         aria-label={t("buttonLabel")}
       >
         <span className="text-sm">💡</span>
-        <span className="text-xs font-semibold text-slate-600 group-hover:text-slate-900 hidden sm:inline transition-colors">
+        <span className="text-xs font-semibold text-slate-600 group-hover:text-slate-900 transition-colors">
           {t("buttonLabel")}
         </span>
       </button>

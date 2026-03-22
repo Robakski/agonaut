@@ -24,8 +24,9 @@ export function BountyCarousel() {
     <section className="pb-20 overflow-hidden">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mb-6">
         <div className="flex items-center justify-between">
-          <h2 className="text-xs font-bold text-slate-400 uppercase tracking-widest">
+          <h2 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
             {t("carouselLabel")}
+            <span className="text-[9px] font-medium text-slate-300 normal-case tracking-normal bg-slate-100 px-1.5 py-0.5 rounded">{t("carouselExample")}</span>
           </h2>
           <Link href="/bounties" className="text-xs font-semibold text-slate-400 hover:text-slate-700 transition-colors">
             {t("carouselBrowse")}

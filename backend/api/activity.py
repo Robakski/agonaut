@@ -10,8 +10,8 @@ import time
 import os
 from contextlib import contextmanager
 from typing import Optional
-from fastapi import APIRouter, Query
-from pydantic import BaseModel
+from fastapi import APIRouter, Query, HTTPException
+from pydantic import BaseModel, Field
 
 router = APIRouter(prefix="/activity", tags=["activity"])
 
@@ -21,6 +21,8 @@ DB_PATH = os.environ.get("ACTIVITY_DB", "/opt/agonaut-api/data/activity.db")
 def _ensure_db():
     os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
     with _get_db() as db:
+        db.execute("PRAGMA journal_mode=WAL")
+        db.execute("PRAGMA busy_timeout=5000")
         db.executescript("""
             CREATE TABLE IF NOT EXISTS wallets (
                 address TEXT PRIMARY KEY,
@@ -87,13 +89,19 @@ def _get_db():
 # referral_used    — used someone's referral code
 
 
+VALID_EVENTS = {
+    "connect", "disconnect", "page_view", "bounty_created", "bounty_deposited",
+    "agent_registered", "solution_submit", "entry_fee_paid", "bounty_won", "referral_used",
+}
+
+
 class TrackEventRequest(BaseModel):
-    wallet: str
-    event: str
-    detail: Optional[str] = None
-    page: Optional[str] = None
-    session_id: Optional[str] = None
-    amount_wei: Optional[str] = None
+    wallet: str = Field(min_length=42, max_length=42, pattern=r"^0x[a-fA-F0-9]{40}$")
+    event: str = Field(min_length=1, max_length=30)
+    detail: Optional[str] = Field(None, max_length=200)
+    page: Optional[str] = Field(None, max_length=200)
+    session_id: Optional[str] = Field(None, max_length=50)
+    amount_wei: Optional[str] = Field(None, max_length=30)
 
 
 class TrackEventResponse(BaseModel):
@@ -103,6 +111,8 @@ class TrackEventResponse(BaseModel):
 @router.post("/track", response_model=TrackEventResponse)
 async def track_event(req: TrackEventRequest):
     """Log a wallet activity event."""
+    if req.event not in VALID_EVENTS:
+        raise HTTPException(400, f"Invalid event type: {req.event}")
     _ensure_db()
     now = int(time.time())
     wallet = req.wallet.lower()

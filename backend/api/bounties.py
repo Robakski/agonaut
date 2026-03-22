@@ -129,7 +129,7 @@ async def create_bounty_relay(req: CreateBountyRequest):
             logger.error(f"Operator balance too low: {balance} ETH")
             raise HTTPException(
                 status_code=503,
-                detail="Service temporarily unavailable (operator funds low)"
+                detail="Service temporarily unavailable. Please try again later."
             )
 
         # Create bounty + spawn round on-chain
