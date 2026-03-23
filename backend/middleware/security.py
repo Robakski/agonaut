@@ -36,6 +36,13 @@ RATE_LIMITS = {
     "/api/v1/activity/export": "10/minute",
     "/api/v1/feedback/list": "30/minute",
     "/admin/dashboard": "20/minute",
+    # Agent API key endpoints
+    "/api/v1/keys/create": "5/minute",
+    "/api/v1/keys/challenge": "30/minute",
+    "/api/v1/keys/revoke": "10/minute",
+    # Agent data endpoints (authenticated)
+    "/api/v1/agent/bounties": "120/minute",
+    "/api/v1/agent/me": "60/minute",
 }
 
 # Endpoints that require ADMIN_KEY
