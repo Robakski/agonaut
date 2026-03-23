@@ -394,13 +394,13 @@ DASHBOARD_HTML = r"""<!DOCTYPE html>
 </div>
 
 <!-- Email Read Panel -->
-<div class="detail-panel" id="emailPanel" style="width:560px">
+<div class="detail-panel" id="emailPanel" style="width:min(560px,100%)">
   <button class="close" onclick="closeEmailPanel()">✕</button>
   <div id="emailContent"></div>
 </div>
 
 <!-- Compose Panel -->
-<div class="detail-panel" id="composePanel" style="width:500px">
+<div class="detail-panel" id="composePanel" style="width:min(500px,100%)">
   <button class="close" onclick="closeCompose()">✕</button>
   <h2 style="margin-bottom:16px">New Email</h2>
   <div style="display:flex;flex-direction:column;gap:12px">
@@ -714,7 +714,7 @@ async function readEmail(uid){
           <button onclick="forwardEmail('${uid}')" style="padding:4px 12px;border:1px solid var(--border);border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;background:var(--card)">↗ Forward</button>
         </div>
       </div>
-      <div style="font-size:13px;line-height:1.7;white-space:pre-wrap">${m.body_html?m.body_html:escHtml(m.body_text||'(No content)')}</div>
+      <div style="font-size:13px;line-height:1.7;white-space:pre-wrap;overflow-x:auto;word-break:break-word;max-width:100%">${m.body_html?'<div style="max-width:100%;overflow-x:auto">'+m.body_html+'</div>':escHtml(m.body_text||'(No content)')}</div>
     `;
     loadEmails(); // refresh unread count
   }catch(e){
