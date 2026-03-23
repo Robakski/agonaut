@@ -192,7 +192,7 @@ def verify_webhook_signature(body: bytes, signature: str) -> bool:
     expected = hmac.new(
         SUMSUB_WEBHOOK_SECRET.encode(),
         body,
-        hashlib.sha1
+        hashlib.sha256
     ).hexdigest()
 
     return hmac.compare_digest(expected, signature)
