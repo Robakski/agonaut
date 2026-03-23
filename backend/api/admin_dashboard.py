@@ -279,7 +279,7 @@ DASHBOARD_HTML = r"""<!DOCTYPE html>
   .chart-bar .ct{font-size:11px;font-weight:600;color:var(--text)}
   #loading{text-align:center;padding:40px;color:var(--muted);font-size:14px}
   .refresh-btn{font-size:11px;color:var(--accent);cursor:pointer;border:none;background:none;font-weight:600}
-  @media(max-width:768px){body{padding:12px}.stats{grid-template-columns:1fr 1fr}.detail-panel{width:100%}}
+  @media(max-width:768px){body{padding:12px}.stats{grid-template-columns:1fr 1fr}.detail-panel{width:100%!important;padding:16px;left:0;right:0}}
 </style>
 </head>
 <body>
