@@ -402,16 +402,25 @@ DASHBOARD_HTML = r"""<!DOCTYPE html>
 <!-- Compose Panel -->
 <div class="detail-panel" id="composePanel" style="width:min(500px,100%)">
   <button class="close" onclick="closeCompose()">✕</button>
-  <h2 style="margin-bottom:16px">New Email</h2>
-  <div style="display:flex;flex-direction:column;gap:12px">
-    <input id="composeTo" type="email" placeholder="To" style="padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px">
-    <input id="composeSubject" type="text" placeholder="Subject" style="padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px">
-    <textarea id="composeBody" rows="12" placeholder="Message..." style="padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;resize:vertical"></textarea>
-    <div style="display:flex;gap:8px;justify-content:flex-end">
-      <button onclick="closeCompose()" style="padding:6px 16px;border:1px solid var(--border);border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;background:var(--card)">Cancel</button>
-      <button onclick="sendComposedEmail()" id="sendBtn" style="padding:6px 16px;border:none;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;background:var(--accent);color:#fff">Send</button>
+  <h2 id="composeTitle" style="margin-bottom:16px">New Email</h2>
+  <div style="display:flex;flex-direction:column;gap:10px">
+    <div>
+      <label style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:var(--muted);display:block;margin-bottom:4px">To</label>
+      <input id="composeTo" type="email" placeholder="recipient@example.com" style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:10px;font-size:14px;outline:none;transition:border .2s" onfocus="this.style.borderColor='#d97706'" onblur="this.style.borderColor='var(--border)'">
     </div>
-    <div id="composeStatus" style="font-size:11px"></div>
+    <div>
+      <label style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:var(--muted);display:block;margin-bottom:4px">Subject</label>
+      <input id="composeSubject" type="text" placeholder="Email subject" style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:10px;font-size:14px;outline:none;transition:border .2s" onfocus="this.style.borderColor='#d97706'" onblur="this.style.borderColor='var(--border)'">
+    </div>
+    <div>
+      <label style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:var(--muted);display:block;margin-bottom:4px">Message</label>
+      <textarea id="composeBody" rows="10" placeholder="Write your message here..." style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:10px;font-size:14px;font-family:inherit;resize:vertical;outline:none;transition:border .2s;min-height:180px" onfocus="this.style.borderColor='#d97706'" onblur="this.style.borderColor='var(--border)'"></textarea>
+    </div>
+    <div id="composeStatus" style="font-size:12px;min-height:18px"></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;padding-top:4px">
+      <button onclick="closeCompose()" style="padding:8px 20px;border:1px solid var(--border);border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;background:var(--card);transition:background .2s" onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='var(--card)'">Cancel</button>
+      <button onclick="sendComposedEmail()" id="sendBtn" style="padding:8px 24px;border:none;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;background:var(--accent);color:#fff;transition:opacity .2s" onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">✉ Send</button>
+    </div>
   </div>
 </div>
 
@@ -716,6 +725,7 @@ async function readEmail(uid){
       </div>
       <div style="font-size:13px;line-height:1.7;white-space:pre-wrap;overflow-x:auto;word-break:break-word;max-width:100%">${m.body_html?'<div style="max-width:100%;overflow-x:auto">'+m.body_html+'</div>':escHtml(m.body_text||'(No content)')}</div>
     `;
+    _lastEmailBody=m.body_text||'';
     loadEmails(); // refresh unread count
   }catch(e){
     content.innerHTML='<div style="padding:24px;color:var(--red)">Failed to load email</div>';
@@ -724,20 +734,28 @@ async function readEmail(uid){
 
 function closeEmailPanel(){document.getElementById('emailPanel').classList.remove('open')}
 
-function openCompose(to='',subject='',body=''){
+function openCompose(to='',subject='',body='',title='New Email'){
   document.getElementById('composeTo').value=to;
   document.getElementById('composeSubject').value=subject;
   document.getElementById('composeBody').value=body;
+  document.getElementById('composeTitle').textContent=title;
   document.getElementById('composeStatus').textContent='';
   document.getElementById('composePanel').classList.add('open');
+  // Focus the right field
+  setTimeout(()=>{
+    if(!to)document.getElementById('composeTo').focus();
+    else document.getElementById('composeBody').focus();
+  },200);
 }
 
 function closeCompose(){document.getElementById('composePanel').classList.remove('open')}
 
+let _lastEmailBody='';
 function replyToEmail(sender,subject){
   closeEmailPanel();
   const re=subject.startsWith('Re:')?subject:`Re: ${subject}`;
-  openCompose(sender,re,'');
+  const quote=_lastEmailBody?`\n\n---\nOn ${sender}:\n${_lastEmailBody.substring(0,500)}`:'';
+  openCompose(sender,re,quote,'↩ Reply');
 }
 
 async function forwardEmail(uid){
