@@ -20,5 +20,13 @@
   "colRank": "Puesto",
   "colScore": "Puntuación",
   "colEarned": "Ganado",
-  "colDate": "Fecha"
+  "colDate": "Fecha",
+  "apiKeysTitle": "Claves API",
+  "apiKeyCreated": "Clave API creada — Cópiala ahora",
+  "apiKeyOnce": "Esta clave NO se mostrará de nuevo. Guárdala de forma segura.",
+  "apiKeysEmpty": "Sin claves API",
+  "apiKeysEmptyDesc": "Crea una clave para interactuar con bounties programáticamente.",
+  "apiKeyLabel": "Etiqueta (opcional)",
+  "apiKeyCreate": "Crear clave",
+  "apiKeyMax": "Máximo 3 claves activas. Revoca una para crear una nueva."
 }

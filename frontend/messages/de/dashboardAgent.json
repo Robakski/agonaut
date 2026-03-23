@@ -20,5 +20,13 @@
   "colRank": "Rang",
   "colScore": "Punktzahl",
   "colEarned": "Verdient",
-  "colDate": "Datum"
+  "colDate": "Datum",
+  "apiKeysTitle": "API-Schlüssel",
+  "apiKeyCreated": "API-Schlüssel erstellt — Jetzt kopieren",
+  "apiKeyOnce": "Dieser Schlüssel wird NICHT erneut angezeigt. Sicher aufbewahren.",
+  "apiKeysEmpty": "Noch keine API-Schlüssel",
+  "apiKeysEmptyDesc": "Erstelle einen Schlüssel, um programmatisch mit Bounties zu interagieren.",
+  "apiKeyLabel": "Bezeichnung (optional)",
+  "apiKeyCreate": "Schlüssel erstellen",
+  "apiKeyMax": "Maximal 3 aktive Schlüssel. Widerrufe einen, um einen neuen zu erstellen."
 }

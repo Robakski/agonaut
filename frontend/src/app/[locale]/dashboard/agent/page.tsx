@@ -2,8 +2,9 @@
 
 import { Link } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
-import { useAccount } from "wagmi";
+import { useAccount, useSignMessage } from "wagmi";
 import { ConnectKitButton } from "connectkit";
+import { useState, useCallback } from "react";
 
 /* ═══════════════════════════════════════════════════════════
  * Agent Dashboard
@@ -137,6 +138,11 @@ export default function AgentDashboard() {
         )}
       </section>
 
+      {/* API Keys */}
+      <section className="mb-10">
+        <ApiKeyManager agentId={agent.id} walletAddress={address} />
+      </section>
+
       {/* History */}
       <section>
         <div className="flex items-center justify-between mb-4">
@@ -215,4 +221,261 @@ function StatusTag({ status }: { status: string }) {
     revealed: "text-blue-600",
   };
   return <span className={`text-xs font-semibold ${colors[status] || "text-slate-400"}`}>{status}</span>;
+}
+
+/* ── API Key Manager ───────────────────────────────── */
+
+const API_URL = "https://api.agonaut.io/api/v1";
+
+interface ApiKey {
+  id: number;
+  key_prefix: string;
+  label: string;
+  created_at: number;
+  last_used_at: number | null;
+}
+
+function ApiKeyManager({ agentId, walletAddress }: { agentId: number; walletAddress: string | undefined }) {
+  const t = useTranslations("dashboardAgent");
+  const { signMessageAsync } = useSignMessage();
+
+  const [keys, setKeys] = useState<ApiKey[]>([]);
+  const [newKey, setNewKey] = useState<string | null>(null);
+  const [label, setLabel] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [keysLoaded, setKeysLoaded] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  // Fetch existing keys (requires a valid API key — skip if none stored)
+  const loadKeys = useCallback(async () => {
+    const storedKey = localStorage.getItem(`agonaut_api_key_${agentId}`);
+    if (!storedKey) {
+      setKeysLoaded(true);
+      return;
+    }
+    try {
+      const res = await fetch(`${API_URL}/keys/list`, {
+        headers: { Authorization: `Bearer ${storedKey}` },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setKeys(data.keys || []);
+      }
+    } catch {
+      // Silent — keys list is optional
+    }
+    setKeysLoaded(true);
+  }, [agentId]);
+
+  // Load keys on first render
+  if (!keysLoaded) {
+    loadKeys();
+  }
+
+  const createKey = async () => {
+    if (!walletAddress) return;
+    setLoading(true);
+    setError(null);
+    setNewKey(null);
+
+    try {
+      // 1. Get challenge message
+      const challengeRes = await fetch(`${API_URL}/keys/challenge?agent_id=${agentId}`);
+      if (!challengeRes.ok) throw new Error("Failed to get challenge");
+      const { message } = await challengeRes.json();
+
+      // 2. Sign with wallet
+      const signature = await signMessageAsync({ message });
+
+      // 3. Create key
+      const createRes = await fetch(`${API_URL}/keys/create`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          agent_id: agentId,
+          wallet: walletAddress,
+          signature,
+          label: label || "Dashboard",
+        }),
+      });
+
+      if (!createRes.ok) {
+        const err = await createRes.json();
+        throw new Error(err.detail || "Failed to create key");
+      }
+
+      const data = await createRes.json();
+      setNewKey(data.api_key);
+
+      // Store in localStorage for key listing
+      localStorage.setItem(`agonaut_api_key_${agentId}`, data.api_key);
+
+      // Refresh key list
+      setLabel("");
+      setTimeout(() => loadKeys(), 500);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Failed to create API key";
+      if (message.includes("User rejected")) {
+        setError("Signature rejected — you must sign to verify wallet ownership.");
+      } else {
+        setError(message);
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const revokeKey = async (keyId: number) => {
+    const storedKey = localStorage.getItem(`agonaut_api_key_${agentId}`);
+    if (!storedKey) return;
+
+    try {
+      const res = await fetch(`${API_URL}/keys/revoke`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${storedKey}`,
+        },
+        body: JSON.stringify({ key_id: keyId }),
+      });
+      if (res.ok) {
+        setKeys((prev) => prev.filter((k) => k.id !== keyId));
+      }
+    } catch {
+      // Silent
+    }
+  };
+
+  const copyKey = () => {
+    if (newKey) {
+      navigator.clipboard.writeText(newKey);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
+  const formatDate = (ts: number | null) => {
+    if (!ts) return "Never";
+    return new Date(ts * 1000).toLocaleDateString("en-US", {
+      month: "short", day: "numeric", year: "numeric",
+    });
+  };
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2">
+          <h2 className="text-sm font-bold text-slate-900">{t("apiKeysTitle") || "API Keys"}</h2>
+          <span className="px-2 py-0.5 text-[10px] font-bold bg-slate-100 text-slate-500 rounded-md">
+            {keys.length}/3
+          </span>
+        </div>
+      </div>
+
+      <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden">
+        {/* New key alert */}
+        {newKey && (
+          <div className="bg-amber-50 border-b border-amber-100 px-6 py-4">
+            <div className="flex items-center gap-2 mb-2">
+              <svg className="w-4 h-4 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span className="text-sm font-bold text-amber-800">{t("apiKeyCreated") || "API Key Created — Copy It Now"}</span>
+            </div>
+            <p className="text-xs text-amber-700 mb-3">{t("apiKeyOnce") || "This key will NOT be shown again. Store it securely."}</p>
+            <div className="flex items-center gap-2">
+              <code className="flex-1 bg-white border border-amber-200 rounded-lg px-3 py-2 text-xs font-mono text-slate-900 select-all break-all">
+                {newKey}
+              </code>
+              <button
+                onClick={copyKey}
+                className="shrink-0 px-3 py-2 text-xs font-semibold bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors"
+              >
+                {copied ? "✓ Copied" : "Copy"}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Existing keys */}
+        {keys.length > 0 ? (
+          <div className="divide-y divide-slate-100">
+            {keys.map((k) => (
+              <div key={k.id} className="flex items-center justify-between px-6 py-3.5 hover:bg-slate-50/50 transition-colors">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center">
+                    <svg className="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15.75 5.25a3 3 0 013 3m3 0a6 6 0 01-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1121.75 8.25z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <div className="text-sm font-medium text-slate-900">
+                      <span className="font-mono">{k.key_prefix}...</span>
+                      {k.label && <span className="ml-2 text-slate-400 font-sans">({k.label})</span>}
+                    </div>
+                    <div className="text-[11px] text-slate-400 mt-0.5">
+                      Created {formatDate(k.created_at)} · Last used {formatDate(k.last_used_at)}
+                    </div>
+                  </div>
+                </div>
+                <button
+                  onClick={() => revokeKey(k.id)}
+                  className="text-xs font-semibold text-red-500 hover:text-red-700 hover:bg-red-50 px-2.5 py-1 rounded-lg transition-colors"
+                >
+                  Revoke
+                </button>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="px-6 py-8 text-center">
+            <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center mx-auto mb-3">
+              <svg className="w-5 h-5 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15.75 5.25a3 3 0 013 3m3 0a6 6 0 01-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1121.75 8.25z" />
+              </svg>
+            </div>
+            <p className="text-sm text-slate-400 mb-1">{t("apiKeysEmpty") || "No API keys yet"}</p>
+            <p className="text-xs text-slate-300">{t("apiKeysEmptyDesc") || "Create a key to interact with bounties programmatically."}</p>
+          </div>
+        )}
+
+        {/* Create key form */}
+        <div className="border-t border-slate-100 px-6 py-4 bg-slate-50/50">
+          {error && (
+            <div className="text-xs text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2 mb-3">
+              {error}
+            </div>
+          )}
+          <div className="flex items-center gap-2">
+            <input
+              type="text"
+              value={label}
+              onChange={(e) => setLabel(e.target.value)}
+              placeholder={t("apiKeyLabel") || "Key label (optional)"}
+              maxLength={64}
+              className="flex-1 px-3 py-2 text-sm border border-slate-200 rounded-xl bg-white text-slate-900 placeholder-slate-300 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-400 transition-all"
+            />
+            <button
+              onClick={createKey}
+              disabled={loading || keys.length >= 3}
+              className="shrink-0 px-4 py-2 text-sm font-semibold bg-slate-900 text-white rounded-xl hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+            >
+              {loading ? (
+                <span className="flex items-center gap-1.5">
+                  <svg className="w-3.5 h-3.5 animate-spin" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>
+                  Signing...
+                </span>
+              ) : (
+                t("apiKeyCreate") || "Create Key"
+              )}
+            </button>
+          </div>
+          {keys.length >= 3 && (
+            <p className="text-[11px] text-slate-400 mt-2">{t("apiKeyMax") || "Maximum 3 active keys. Revoke one to create a new key."}</p>
+          )}
+        </div>
+      </div>
+    </div>
+  );
 }

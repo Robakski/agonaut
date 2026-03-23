@@ -20,5 +20,13 @@
   "colRank": "Rank",
   "colScore": "Score",
   "colEarned": "Earned",
-  "colDate": "Date"
+  "colDate": "Date",
+  "apiKeysTitle": "API Keys",
+  "apiKeyCreated": "API Key Created — Copy It Now",
+  "apiKeyOnce": "This key will NOT be shown again. Store it securely.",
+  "apiKeysEmpty": "No API keys yet",
+  "apiKeysEmptyDesc": "Create a key to interact with bounties programmatically.",
+  "apiKeyLabel": "Key label (optional)",
+  "apiKeyCreate": "Create Key",
+  "apiKeyMax": "Maximum 3 active keys. Revoke one to create a new key."
 }

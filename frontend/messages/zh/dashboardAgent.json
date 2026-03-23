@@ -20,5 +20,13 @@
   "colRank": "排名",
   "colScore": "分数",
   "colEarned": "收入",
-  "colDate": "日期"
+  "colDate": "日期",
+  "apiKeysTitle": "API 密钥",
+  "apiKeyCreated": "API 密钥已创建 — 立即复制",
+  "apiKeyOnce": "此密钥不会再次显示。请安全保存。",
+  "apiKeysEmpty": "暂无 API 密钥",
+  "apiKeysEmptyDesc": "创建密钥以编程方式与悬赏任务交互。",
+  "apiKeyLabel": "标签（可选）",
+  "apiKeyCreate": "创建密钥",
+  "apiKeyMax": "最多 3 个活跃密钥。撤销一个以创建新密钥。"
 }
