@@ -6,21 +6,80 @@ Access: https://api.agonaut.io/admin/dashboard → login page → session cookie
 """
 
 import os
-import hashlib
 import secrets
 import time
+import logging
+from collections import defaultdict
 from fastapi import APIRouter, Query, HTTPException, Request, Response
 from fastapi.responses import HTMLResponse, RedirectResponse
 from pydantic import BaseModel
 
+logger = logging.getLogger(__name__)
 router = APIRouter(tags=["admin"])
 
 ADMIN_KEY = os.environ.get("ADMIN_KEY", "")
 ADMIN_PASSWORD = os.environ.get("ADMIN_DASHBOARD_PASSWORD", "")
 
-# Session store — in-memory, survives until restart (fine for single admin)
+# Session store — in-memory (fine for single admin)
 _sessions: dict[str, float] = {}
-SESSION_MAX_AGE = 86400 * 7  # 7 days
+SESSION_MAX_AGE = 86400  # 24 hours
+
+# ── Brute-force protection ──────────────────────────────────
+_login_attempts: dict[str, list[float]] = defaultdict(list)
+MAX_ATTEMPTS = 10
+LOCKOUT_SECONDS = 3600  # 1 hour
+
+# ── CSRF tokens ─────────────────────────────────────────────
+_csrf_tokens: dict[str, float] = {}
+CSRF_MAX_AGE = 600  # 10 minutes
+
+# ── Audit log (in-memory, last 200 entries) ─────────────────
+_audit_log: list[dict] = []
+MAX_AUDIT_ENTRIES = 200
+
+
+def _audit(ip: str, action: str, success: bool, detail: str = ""):
+    """Log an admin action."""
+    entry = {"time": time.time(), "ip": ip, "action": action, "success": success, "detail": detail}
+    _audit_log.append(entry)
+    if len(_audit_log) > MAX_AUDIT_ENTRIES:
+        _audit_log.pop(0)
+    level = logging.INFO if success else logging.WARNING
+    logger.log(level, f"ADMIN AUDIT: {action} from {ip} — {'OK' if success else 'FAILED'} {detail}")
+
+
+def _is_locked_out(ip: str) -> bool:
+    """Check if IP is locked out from login attempts."""
+    now = time.time()
+    # Clean old attempts
+    _login_attempts[ip] = [t for t in _login_attempts[ip] if now - t < LOCKOUT_SECONDS]
+    return len(_login_attempts[ip]) >= MAX_ATTEMPTS
+
+
+def _record_attempt(ip: str):
+    """Record a failed login attempt."""
+    _login_attempts[ip].append(time.time())
+
+
+def _generate_csrf() -> str:
+    """Generate a CSRF token."""
+    token = secrets.token_urlsafe(32)
+    _csrf_tokens[token] = time.time()
+    # Clean expired tokens
+    now = time.time()
+    expired = [k for k, v in _csrf_tokens.items() if now - v > CSRF_MAX_AGE]
+    for k in expired:
+        del _csrf_tokens[k]
+    return token
+
+
+def _verify_csrf(token: str) -> bool:
+    """Verify and consume a CSRF token."""
+    if not token or token not in _csrf_tokens:
+        return False
+    age = time.time() - _csrf_tokens[token]
+    del _csrf_tokens[token]
+    return age < CSRF_MAX_AGE
 
 
 def _check_session(request: Request) -> bool:
@@ -34,19 +93,15 @@ def _check_session(request: Request) -> bool:
     return True
 
 
-def _check_key(key: str):
-    """Legacy API key check for backend API endpoints."""
-    if not ADMIN_KEY or key != ADMIN_KEY:
-        raise HTTPException(status_code=403, detail="Forbidden")
-
-
-def _check_auth(request: Request, key: str = ""):
-    """Check either session cookie or API key."""
+def _check_session_or_key(request: Request) -> bool:
+    """Check session cookie OR ADMIN_KEY header (for dashboard JS API calls)."""
     if _check_session(request):
         return True
+    # Check X-Admin-Key header (used by dashboard JS internally)
+    key = request.headers.get("x-admin-key", "") or request.query_params.get("key", "")
     if key and ADMIN_KEY and key == ADMIN_KEY:
         return True
-    raise HTTPException(status_code=403, detail="Forbidden")
+    return False
 
 
 # ── Login Page ─────────────────────────────────────────────
@@ -76,8 +131,9 @@ LOGIN_HTML = r"""<!DOCTYPE html>
   <h1>Agonaut Admin</h1>
   <div class="sub">Private Dashboard</div>
   <label for="pw">Password</label>
-  <input type="password" id="pw" name="password" placeholder="Enter admin password" autocomplete="current-password" autofocus>
   <input type="hidden" name="username" value="admin" autocomplete="username">
+  <input type="password" id="pw" name="password" placeholder="Enter admin password" autocomplete="current-password" autofocus>
+  <input type="hidden" name="csrf_token" value="__CSRF__">
   <button type="submit">Sign In</button>
   <div class="error" id="err">__ERROR__</div>
 </form>
@@ -89,33 +145,51 @@ class LoginForm(BaseModel):
 
 
 @router.get("/admin/login", response_class=HTMLResponse)
-async def login_page(request: Request, error: str = ""):
-    """Show login page."""
+async def login_page(request: Request):
+    """Show login page with CSRF token."""
     if _check_session(request):
         return RedirectResponse("/admin/dashboard", status_code=302)
-    html = LOGIN_HTML.replace("__ERROR__", error)
-    if error:
-        html = html.replace("display:none", "display:block")
+    csrf = _generate_csrf()
+    html = LOGIN_HTML.replace("__ERROR__", "").replace("__CSRF__", csrf)
     return html
 
 
 @router.post("/admin/login")
 async def login_submit(request: Request):
-    """Handle login form submission."""
+    """Handle login form submission with brute-force protection."""
+    ip = request.client.host if request.client else "unknown"
     form = await request.form()
     password = form.get("password", "")
+    csrf_token = form.get("csrf_token", "")
 
-    if not ADMIN_PASSWORD:
-        # Fallback: use ADMIN_KEY as password if ADMIN_DASHBOARD_PASSWORD not set
-        valid = password == ADMIN_KEY
-    else:
-        valid = password == ADMIN_PASSWORD
+    # Check lockout
+    if _is_locked_out(ip):
+        _audit(ip, "login", False, "locked out")
+        remaining = int(LOCKOUT_SECONDS - (time.time() - min(_login_attempts[ip])))
+        html = LOGIN_HTML.replace("__ERROR__", f"Too many attempts. Try again in {remaining // 60} minutes.").replace("display:none", "display:block").replace("__CSRF__", _generate_csrf())
+        return HTMLResponse(html, status_code=429)
 
-    if not valid:
-        html = LOGIN_HTML.replace("__ERROR__", "Wrong password").replace("display:none", "display:block")
+    # Verify CSRF
+    if not _verify_csrf(csrf_token):
+        _audit(ip, "login", False, "invalid CSRF")
+        html = LOGIN_HTML.replace("__ERROR__", "Session expired. Please try again.").replace("display:none", "display:block").replace("__CSRF__", _generate_csrf())
+        return HTMLResponse(html, status_code=403)
+
+    # Verify password
+    target = ADMIN_PASSWORD if ADMIN_PASSWORD else ADMIN_KEY
+    if not target or password != target:
+        _record_attempt(ip)
+        remaining_attempts = MAX_ATTEMPTS - len(_login_attempts[ip])
+        _audit(ip, "login", False, f"{remaining_attempts} attempts remaining")
+        msg = f"Wrong password. {remaining_attempts} attempts remaining." if remaining_attempts > 0 else "Account locked. Try again in 1 hour."
+        html = LOGIN_HTML.replace("__ERROR__", msg).replace("display:none", "display:block").replace("__CSRF__", _generate_csrf())
         return HTMLResponse(html, status_code=401)
 
-    # Create session
+    # Success — create session
+    _audit(ip, "login", True)
+    # Clear failed attempts on success
+    _login_attempts.pop(ip, None)
+
     token = secrets.token_urlsafe(48)
     _sessions[token] = time.time()
 
