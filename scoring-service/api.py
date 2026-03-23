@@ -207,6 +207,28 @@ async def receive_solution(req: ReceiveSolutionRequest, background_tasks: Backgr
     }
 
 
+# ── Activity tracking helper ──
+def _track_winners(round_address: str, payload: dict, tx_hash: str):
+    """Fire-and-forget activity events for winning agents."""
+    import httpx as _httpx
+    try:
+        scores = payload.get("scores", [])
+        agents = payload.get("agent_addresses", [])
+        if not agents or len(agents) != len(scores):
+            return
+        for addr, score in zip(agents, scores):
+            if score > 0:
+                _httpx.post(
+                    "http://127.0.0.1:8000/api/v1/activity/track",
+                    json={"wallet": addr, "event": "bounty_won", "metadata": {
+                        "round": round_address, "score": score, "tx_hash": tx_hash
+                    }},
+                    timeout=5,
+                )
+    except Exception as e:
+        log.warning(f"Activity tracking failed (non-critical): {e}")
+
+
 # ═══════════════════════════════════════════════════════════════
 #  SCORING
 # ═══════════════════════════════════════════════════════════════
@@ -260,6 +282,8 @@ async def _score_round_async(round_address: str):
             if result["status"] == "success":
                 rnd["status"] = "submitted"
                 log.info(f"Round {round_address[:10]}...: auto-submitted on-chain tx={result['tx_hash']}")
+                # Track bounty_won events for agents with scores above threshold
+                _track_winners(round_address, payload, result["tx_hash"])
             else:
                 log.error(f"Round {round_address[:10]}...: on-chain submission reverted")
         except Exception as e:

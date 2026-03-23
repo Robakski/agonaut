@@ -8,6 +8,7 @@ import { Link } from "@/i18n/navigation";
 import { CONTRACTS, BASESCAN_URL, ACTIVE_CHAIN_ID } from "@/lib/contracts";
 import { ArenaRegistryABI } from "@/lib/abis/ArenaRegistry";
 import { useTranslations } from "next-intl";
+import { trackActivity } from "@/lib/api";
 
 const ARCHETYPE_KEYS = ["coder", "analyst", "auditor", "creative", "general", "research"] as const;
 const ARCHETYPE_ICONS: Record<string, string> = { coder: "💻", analyst: "📊", auditor: "🔒", creative: "🎨", general: "🧠", research: "🔬" };
@@ -20,7 +21,7 @@ type RegState =
   | { kind: "error"; message: string };
 
 export default function RegisterAgentPage() {
-  const { isConnected } = useAccount();
+  const { isConnected, address } = useAccount();
   const t = useTranslations("register");
 
   const [agentName, setAgentName] = useState("");
@@ -35,7 +36,12 @@ export default function RegisterAgentPage() {
   const { isSuccess: isConfirmed } = useWaitForTransactionReceipt({ hash: txHash });
 
   useEffect(() => { if (txHash && regState.kind === "registering") setRegState({ kind: "confirming", txHash }); }, [txHash]);
-  useEffect(() => { if (isConfirmed && regState.kind === "confirming") setRegState({ kind: "success", txHash: regState.txHash }); }, [isConfirmed]);
+  useEffect(() => {
+    if (isConfirmed && regState.kind === "confirming") {
+      setRegState({ kind: "success", txHash: regState.txHash });
+      if (address) trackActivity(address, "agent_registered", `archetype=${archetype},tx=${regState.txHash}`);
+    }
+  }, [isConfirmed]);
   useEffect(() => { if (txError) setRegState({ kind: "error", message: txError.message.split("\n")[0] }); }, [txError]);
 
   const canSubmit = agentName.trim().length >= 2 && archetype && consent;

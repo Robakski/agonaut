@@ -59,6 +59,9 @@ log = logging.getLogger("scorer")
 PHALA_API_KEY = os.environ.get("PHALA_API_KEY", "")
 PHALA_API_URL = os.environ.get("PHALA_API_URL", "https://api.redpill.ai/v1")
 SCORING_MODEL = os.environ.get("SCORING_MODEL", "deepseek/deepseek-chat-v3-0324")
+VERIFICATION_MODEL = os.environ.get("VERIFICATION_MODEL", "qwen/qwen-2.5-72b-instruct")
+DUAL_PASS_ENABLED = os.environ.get("DUAL_PASS_ENABLED", "true").lower() == "true"
+DUAL_PASS_THRESHOLD = int(os.environ.get("DUAL_PASS_THRESHOLD", "1500"))  # BPS diff to flag
 SOLUTION_KEY = os.environ.get("SOLUTION_KEY", "")
 
 MAX_SCORE_BPS = 10000
@@ -401,6 +404,7 @@ class ScoreBreakdown:
     failed_unskippable: list           # IDs of failed unskippable checks
     reasoning: str
     injection_detected: bool
+    notes: str = ""
 
 
 def compute_score(
@@ -605,9 +609,105 @@ class ScoringEngine:
             parsed["reasoning"], parsed["injection_detected"],
         )
 
+        # ── Dual-pass verification ──
+        if DUAL_PASS_ENABLED and breakdown.final_score > 0:
+            verification = self._verification_pass(
+                solution_text, problem_text, all_checks, breakdown.final_score,
+            )
+            if verification["flagged"]:
+                log.warning(
+                    f"Agent {agent_id}: dual-pass flagged — using conservative score "
+                    f"{verification['score']} (was {breakdown.final_score})"
+                )
+                breakdown.final_score = verification["score"]
+                breakdown.notes = (breakdown.notes or "") + f" [DUAL-PASS: primary={verification['primary_score']} verification={verification['verification_score']}]"
+
         return ScoredSolution(
             agent_id=agent_id, commit_hash=commit_hash, breakdown=breakdown,
         )
+
+    def _verification_pass(
+        self,
+        solution_text: str,
+        problem_text: str,
+        all_checks: list[Check],
+        primary_score: int,
+    ) -> dict:
+        """Run a second scoring pass with a different model for verification.
+
+        Returns {"verified": bool, "score": int, "diff": int, "flagged": bool}
+        """
+        if not DUAL_PASS_ENABLED:
+            return {"verified": True, "score": primary_score, "diff": 0, "flagged": False}
+
+        try:
+            verification_client = OpenAI(
+                api_key=PHALA_API_KEY,
+                base_url=PHALA_API_URL,
+            )
+
+            baseline = [c for c in all_checks if c.id.startswith("B")]
+            sponsor = [c for c in all_checks if not c.id.startswith("B")]
+            rubric_text = build_prompt(all_checks)
+            baseline_schema = ",\n    ".join(f'"{c.id}": true' for c in baseline)
+            checks_schema = ",\n    ".join(f'"{c.id}": true' for c in sponsor)
+
+            system = SYSTEM_PROMPT.format(
+                rubric_text=rubric_text,
+                baseline_schema=baseline_schema,
+                checks_schema=checks_schema,
+                num_baseline=len(baseline),
+                num_checks=len(sponsor),
+            )
+            user = USER_PROMPT.format(problem=problem_text, solution=solution_text)
+
+            response = verification_client.chat.completions.create(
+                model=VERIFICATION_MODEL,
+                messages=[
+                    {"role": "system", "content": system},
+                    {"role": "user", "content": user},
+                ],
+                temperature=0,
+                max_tokens=2500,
+                seed=42,
+            )
+            raw_output = response.choices[0].message.content
+            parsed = parse_output(raw_output, all_checks)
+
+            if parsed is None:
+                log.warning("Verification pass: output parse failed — accepting primary score")
+                return {"verified": True, "score": primary_score, "diff": 0, "flagged": False}
+
+            v_breakdown = compute_score(
+                parsed["results"], all_checks, parsed["verdict"],
+                parsed["reasoning"], parsed["injection_detected"],
+            )
+            v_score = v_breakdown.final_score
+            diff = abs(primary_score - v_score)
+            flagged = diff > DUAL_PASS_THRESHOLD
+
+            if flagged:
+                log.warning(
+                    f"DUAL-PASS MISMATCH: primary={primary_score} verification={v_score} "
+                    f"diff={diff} (threshold={DUAL_PASS_THRESHOLD})"
+                )
+                # Use the lower score (conservative) when flagged
+                final = min(primary_score, v_score)
+            else:
+                final = primary_score
+
+            return {
+                "verified": not flagged,
+                "score": final,
+                "primary_score": primary_score,
+                "verification_score": v_score,
+                "diff": diff,
+                "flagged": flagged,
+            }
+
+        except Exception as e:
+            log.warning(f"Verification pass failed (non-critical): {e} — accepting primary score")
+            return {"verified": True, "score": primary_score, "diff": 0, "flagged": False}
 
 
 # ═══════════════════════════════════════════════════════════════
