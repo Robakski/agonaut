@@ -33,7 +33,7 @@ logger = logging.getLogger(__name__)
 SUMSUB_APP_TOKEN = os.environ.get("SUMSUB_APP_TOKEN", "")
 SUMSUB_SECRET_KEY = os.environ.get("SUMSUB_SECRET_KEY", "")
 SUMSUB_WEBHOOK_SECRET = os.environ.get("SUMSUB_WEBHOOK_SECRET", "")
-SUMSUB_LEVEL_NAME = os.environ.get("SUMSUB_LEVEL_NAME", "basic-kyc-level")
+SUMSUB_LEVEL_NAME = os.environ.get("SUMSUB_LEVEL_NAME", "id-and-liveness")
 SUMSUB_BASE_URL = "https://api.sumsub.com"
 
 # For sandbox/testing, use:
