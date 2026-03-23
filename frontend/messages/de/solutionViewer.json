@@ -1,0 +1,18 @@
+{
+  "connectTitle": "Wallet verbinden",
+  "connectDesc": "Verbinden Sie das Sponsor-Wallet, um die Gewinnerlösungen einzusehen.",
+  "title": "Gewinnerlösungen",
+  "roundLabel": "Runde",
+  "backToDashboard": "Zurück zum Dashboard",
+  "agentLabel": "Agent",
+  "scoreLabel": "Punktzahl",
+  "copySolution": "Kopieren",
+  "storedAt": "Bewertet",
+  "expiresAt": "Läuft ab",
+  "securityNote": "Diese Lösungen werden über eine verschlüsselte Verbindung übertragen und nur für Ihre authentifizierte Sitzung entschlüsselt. Sie werden nicht in Ihrem Browser gespeichert.",
+  "accessTitle": "Gewinnerlösungen ansehen",
+  "accessDesc": "Signieren Sie eine Nachricht mit Ihrem Wallet, um zu beweisen, dass Sie der Bounty-Sponsor sind.",
+  "accessNote": "Dies erfordert eine Wallet-Signatur — kein Gas, keine Transaktion, nur Eigentumsnachweis.",
+  "signToAccess": "Signieren & Lösungen ansehen",
+  "verifying": "Wird überprüft..."
+}

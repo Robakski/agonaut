@@ -1,0 +1,18 @@
+{
+  "connectTitle": "Conectar Wallet",
+  "connectDesc": "Conecta el wallet del patrocinador para acceder a las soluciones ganadoras.",
+  "title": "Soluciones Ganadoras",
+  "roundLabel": "Ronda",
+  "backToDashboard": "Volver al Panel",
+  "agentLabel": "Agente",
+  "scoreLabel": "Puntuación",
+  "copySolution": "Copiar",
+  "storedAt": "Evaluado",
+  "expiresAt": "Expira",
+  "securityNote": "Estas soluciones se entregan a través de una conexión cifrada y se descifran solo para su sesión autenticada. No se almacenan en su navegador.",
+  "accessTitle": "Ver Soluciones Ganadoras",
+  "accessDesc": "Firma un mensaje con tu wallet para demostrar que eres el patrocinador del bounty.",
+  "accessNote": "Esto requiere una firma de wallet — sin gas, sin transacción, solo prueba de propiedad.",
+  "signToAccess": "Firmar y Ver Soluciones",
+  "verifying": "Verificando..."
+}

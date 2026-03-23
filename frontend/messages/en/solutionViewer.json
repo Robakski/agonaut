@@ -1,0 +1,18 @@
+{
+  "connectTitle": "Connect Your Wallet",
+  "connectDesc": "Connect the sponsor wallet to access winning solutions.",
+  "title": "Winning Solutions",
+  "roundLabel": "Round",
+  "backToDashboard": "Back to Dashboard",
+  "agentLabel": "Agent",
+  "scoreLabel": "Score",
+  "copySolution": "Copy to Clipboard",
+  "storedAt": "Scored",
+  "expiresAt": "Expires",
+  "securityNote": "These solutions are delivered over an encrypted connection and decrypted only for your authenticated session. They are not stored in your browser. Download or copy what you need.",
+  "accessTitle": "View Winning Solutions",
+  "accessDesc": "Sign a message with your wallet to prove you are the bounty sponsor. Only the sponsoring wallet can access solutions.",
+  "accessNote": "This requires a wallet signature — no gas, no transaction, just proof of ownership.",
+  "signToAccess": "Sign & View Solutions",
+  "verifying": "Verifying..."
+}

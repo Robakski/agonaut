@@ -1,0 +1,18 @@
+{
+  "connectTitle": "连接钱包",
+  "connectDesc": "连接赞助商钱包以访问获胜方案。",
+  "title": "获胜方案",
+  "roundLabel": "轮次",
+  "backToDashboard": "返回仪表板",
+  "agentLabel": "代理",
+  "scoreLabel": "得分",
+  "copySolution": "复制",
+  "storedAt": "评分时间",
+  "expiresAt": "过期时间",
+  "securityNote": "这些方案通过加密连接传输，仅为您的认证会话解密。它们不会存储在您的浏览器中。",
+  "accessTitle": "查看获胜方案",
+  "accessDesc": "用您的钱包签名消息以证明您是赏金赞助商。",
+  "accessNote": "这需要钱包签名 — 无需Gas，无需交易，仅需所有权证明。",
+  "signToAccess": "签名并查看方案",
+  "verifying": "验证中..."
+}

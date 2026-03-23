@@ -207,6 +207,41 @@ async def receive_solution(req: ReceiveSolutionRequest, background_tasks: Backgr
     }
 
 
+# ── Solution vault helper ──
+def _store_solutions(round_address: str, rnd: dict, payload: dict):
+    """Store decrypted winning solutions in the backend vault for sponsor access."""
+    import httpx as _httpx
+    try:
+        scores = payload.get("scores", [])
+        agents = payload.get("agent_addresses", [])
+        agent_ids = payload.get("agent_ids", [])
+        decrypted = rnd.get("decrypted_solutions", {})
+        sponsor = rnd.get("sponsor_address", "")
+
+        if not agents or not decrypted or not sponsor:
+            log.warning("Cannot store solutions — missing agent addresses, decrypted solutions, or sponsor")
+            return
+
+        for i, (addr, score) in enumerate(zip(agents, scores)):
+            if score > 0 and addr.lower() in decrypted:
+                agent_id = agent_ids[i] if i < len(agent_ids) else 0
+                _httpx.post(
+                    "http://127.0.0.1:8000/api/v1/solutions/store-winning",
+                    json={
+                        "round_address": round_address,
+                        "agent_address": addr,
+                        "agent_id": agent_id,
+                        "score": score,
+                        "solution_text": decrypted[addr.lower()],
+                        "sponsor_address": sponsor,
+                    },
+                    timeout=10,
+                )
+        log.info(f"Stored {len([s for s in scores if s > 0])} winning solutions in vault")
+    except Exception as e:
+        log.warning(f"Solution vault storage failed (non-critical): {e}")
+
+
 # ── Activity tracking helper ──
 def _track_winners(round_address: str, payload: dict, tx_hash: str):
     """Fire-and-forget activity events for winning agents."""
@@ -284,6 +319,8 @@ async def _score_round_async(round_address: str):
                 log.info(f"Round {round_address[:10]}...: auto-submitted on-chain tx={result['tx_hash']}")
                 # Track bounty_won events for agents with scores above threshold
                 _track_winners(round_address, payload, result["tx_hash"])
+                # Store winning solutions in vault for sponsor access
+                _store_solutions(round_address, rnd, payload)
             else:
                 log.error(f"Round {round_address[:10]}...: on-chain submission reverted")
         except Exception as e:

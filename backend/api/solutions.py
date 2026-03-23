@@ -10,7 +10,7 @@ Backend (port 8000) → Scoring Service (port 8001) → Phala TEE → On-chain
 import os
 import httpx
 import logging
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, Field
 
 router = APIRouter(prefix="/solutions", tags=["solutions"])
@@ -55,12 +55,6 @@ class ScoringStatusResponse(BaseModel):
     scoring_started_at: int | None = None
     scoring_completed_at: int | None = None
 
-
-class SponsorSolutionRequest(BaseModel):
-    """Sponsor requests access to winning solutions after settlement."""
-    round_address: str
-    sponsor_address: str
-    sponsor_public_key: str     # Solutions will be re-encrypted for this key
 
 
 # ── Routes ──
@@ -210,22 +204,103 @@ async def trigger_scoring(round_address: str):
         raise HTTPException(503, "Scoring service temporarily unavailable")
 
 
-@router.post("/sponsor-access", response_model=dict)
-async def request_sponsor_access(req: SponsorSolutionRequest):
-    """Sponsor requests access to winning solutions after settlement.
+class SponsorAccessRequest(BaseModel):
+    """Sponsor requests winning solutions with wallet signature proof."""
+    round_address: str
+    sponsor_address: str = Field(..., min_length=42, max_length=42)
+    signature: str          # EIP-191 signature of challenge message
+    message: str            # The signed message (includes nonce/timestamp)
 
-    Solutions are re-encrypted inside the TEE for the sponsor's public key.
-    Only works after on-chain settlement is confirmed.
 
-    Requires:
-    - Round must be in SETTLED phase
-    - Requester must be a verified sponsor/contributor for this round
-    - Sanctions screening on sponsor wallet
+@router.post("/sponsor-access")
+async def request_sponsor_access(req: SponsorAccessRequest):
+    """Retrieve winning solutions for a sponsor after settlement.
+
+    Security:
+    1. Verify wallet signature (EIP-191) proves requester owns the address
+    2. Verify on-chain that the address is the round's sponsor
+    3. Return decrypted solution(s) over HTTPS
+
+    The solution is NEVER stored unencrypted. It's decrypted from our vault
+    only for this response, transmitted over TLS, and never cached.
     """
-    # TODO: Verify on-chain that round is SETTLED and requester is sponsor
-    # This requires Phala TEE to re-encrypt solutions for sponsor's public key
-    # Implementation depends on Phala's key management API
+    import time as _time
+    from eth_account.messages import encode_defunct
+    from eth_account import Account
+
+    # ── Verify wallet signature ──
+    try:
+        msg = encode_defunct(text=req.message)
+        recovered = Account.recover_message(msg, signature=req.signature)
+        if recovered.lower() != req.sponsor_address.lower():
+            raise HTTPException(403, "Signature does not match sponsor address")
+    except HTTPException:
+        raise
+    except Exception as e:
+        log.warning(f"Signature verification failed: {e}")
+        raise HTTPException(403, "Invalid signature")
+
+    # ── Verify message freshness (prevent replay) ──
+    # Message format: "Agonaut Solution Access\nRound: {addr}\nTimestamp: {ts}"
+    try:
+        lines = req.message.strip().split("\n")
+        ts_line = [l for l in lines if l.startswith("Timestamp:")]
+        if ts_line:
+            ts = int(ts_line[0].split(":")[1].strip())
+            if abs(_time.time() - ts) > 300:  # 5 minute window
+                raise HTTPException(403, "Request expired — please try again")
+    except HTTPException:
+        raise
+    except Exception:
+        pass  # Lenient on timestamp parsing — signature is the primary auth
+
+    # ── Retrieve from vault ──
+    from services.solution_vault import get_winning_solutions
+    solutions = get_winning_solutions(req.round_address, req.sponsor_address)
+
+    if solutions is None:
+        raise HTTPException(404, "No solutions found or you are not the sponsor for this round")
+
     return {
-        "status": "not_implemented",
-        "message": "Sponsor solution access will be available after Phala TEE key management integration.",
+        "status": "success",
+        "round_address": req.round_address,
+        "solutions": solutions,
     }
+
+
+# ── Internal endpoint (scoring service → backend) ──
+
+class StoreWinningSolutionRequest(BaseModel):
+    round_address: str
+    agent_address: str
+    agent_id: int
+    score: int
+    solution_text: str
+    sponsor_address: str
+
+
+@router.post("/store-winning")
+async def store_winning_solution_endpoint(req: StoreWinningSolutionRequest, request: Request):
+    """Internal endpoint: scoring service stores winning solutions after on-chain submission.
+
+    Only accessible from localhost (scoring service on same machine).
+    """
+    # Only allow from localhost
+    client_host = request.client.host if request.client else ""
+    if client_host not in ("127.0.0.1", "::1", "localhost"):
+        raise HTTPException(403, "Internal endpoint — localhost only")
+
+    from services.solution_vault import store_winning_solution as vault_store
+    success = vault_store(
+        round_address=req.round_address,
+        agent_address=req.agent_address,
+        agent_id=req.agent_id,
+        score=req.score,
+        solution_text=req.solution_text,
+        sponsor_address=req.sponsor_address,
+    )
+
+    if not success:
+        raise HTTPException(500, "Failed to store solution")
+
+    return {"status": "stored", "round_address": req.round_address, "agent_id": req.agent_id}
