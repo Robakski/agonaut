@@ -14,19 +14,8 @@ type KycStatus = "NONE" | "PENDING" | "VERIFIED" | "REJECTED" | "loading";
 /* ─── Sumsub WebSDK Loader ─── */
 declare global {
   interface Window {
-    snsWebSdk: {
-      init: (
-        accessToken: string,
-        onExpiration: () => Promise<string>
-      ) => {
-        withConf: (conf: Record<string, unknown>) => {
-          withOptions: (opts: Record<string, unknown>) => {
-            on: (event: string, cb: (...args: unknown[]) => void) => ReturnType<Window["snsWebSdk"]["init"]>;
-            build: () => { launch: (containerId: string) => void };
-          };
-        };
-      };
-    };
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    snsWebSdk: any;
   }
 }
 

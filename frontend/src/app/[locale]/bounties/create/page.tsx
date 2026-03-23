@@ -9,6 +9,7 @@ import { MIN_BOUNTY_DEPOSIT, ENTRY_FEE, PROTOCOL_FEE_BPS, BPS_DENOMINATOR, BASES
 import { BountyRoundABI } from "@/lib/abis/BountyRound";
 import { createBountyRelay, type CreateBountyRequest } from "@/lib/api";
 import { validateCreateBounty } from "@/lib/validation";
+import { Link } from "@/i18n/navigation";
 
 /* ─── Types ─── */
 interface RubricCheck {
