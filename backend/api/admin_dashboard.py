@@ -1,28 +1,152 @@
 """
 Private Admin Dashboard — Airdrop analytics & user activity.
 
-Protected by ADMIN_KEY query parameter. Single self-contained HTML page.
-Access: https://api.agonaut.io/admin/dashboard?key=<ADMIN_KEY>
+Protected by password login with session cookie.
+Access: https://api.agonaut.io/admin/dashboard → login page → session cookie
 """
 
 import os
-from fastapi import APIRouter, Query, HTTPException
-from fastapi.responses import HTMLResponse
+import hashlib
+import secrets
+import time
+from fastapi import APIRouter, Query, HTTPException, Request, Response
+from fastapi.responses import HTMLResponse, RedirectResponse
+from pydantic import BaseModel
 
 router = APIRouter(tags=["admin"])
 
 ADMIN_KEY = os.environ.get("ADMIN_KEY", "")
+ADMIN_PASSWORD = os.environ.get("ADMIN_DASHBOARD_PASSWORD", "")
+
+# Session store — in-memory, survives until restart (fine for single admin)
+_sessions: dict[str, float] = {}
+SESSION_MAX_AGE = 86400 * 7  # 7 days
+
+
+def _check_session(request: Request) -> bool:
+    """Check if request has a valid session cookie."""
+    token = request.cookies.get("agonaut_admin_session")
+    if not token or token not in _sessions:
+        return False
+    if time.time() - _sessions[token] > SESSION_MAX_AGE:
+        del _sessions[token]
+        return False
+    return True
 
 
 def _check_key(key: str):
+    """Legacy API key check for backend API endpoints."""
     if not ADMIN_KEY or key != ADMIN_KEY:
         raise HTTPException(status_code=403, detail="Forbidden")
 
 
+def _check_auth(request: Request, key: str = ""):
+    """Check either session cookie or API key."""
+    if _check_session(request):
+        return True
+    if key and ADMIN_KEY and key == ADMIN_KEY:
+        return True
+    raise HTTPException(status_code=403, detail="Forbidden")
+
+
+# ── Login Page ─────────────────────────────────────────────
+
+LOGIN_HTML = r"""<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Agonaut Admin — Login</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;background:#f8fafc;display:flex;align-items:center;justify-content:center;min-height:100vh}
+  .login{background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:40px;width:100%;max-width:380px;box-shadow:0 4px 24px rgba(0,0,0,.04)}
+  h1{font-size:20px;font-weight:800;letter-spacing:-0.5px;text-align:center;margin-bottom:4px}
+  .sub{font-size:12px;color:#64748b;text-align:center;margin-bottom:24px}
+  label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:#64748b;display:block;margin-bottom:6px}
+  input[type=password]{width:100%;padding:10px 14px;border:1px solid #e2e8f0;border-radius:10px;font-size:14px;outline:none;transition:border .2s}
+  input[type=password]:focus{border-color:#d97706;box-shadow:0 0 0 3px rgba(217,119,6,.1)}
+  button{width:100%;padding:10px;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;background:#0f172a;color:#fff;margin-top:16px;transition:opacity .2s}
+  button:hover{opacity:.9}
+  .error{color:#dc2626;font-size:12px;text-align:center;margin-top:12px;display:none}
+  .logo{text-align:center;font-size:28px;margin-bottom:12px}
+</style>
+</head><body>
+<form class="login" method="POST" action="/admin/login">
+  <div class="logo">🦁</div>
+  <h1>Agonaut Admin</h1>
+  <div class="sub">Private Dashboard</div>
+  <label for="pw">Password</label>
+  <input type="password" id="pw" name="password" placeholder="Enter admin password" autocomplete="current-password" autofocus>
+  <input type="hidden" name="username" value="admin" autocomplete="username">
+  <button type="submit">Sign In</button>
+  <div class="error" id="err">__ERROR__</div>
+</form>
+</body></html>"""
+
+
+class LoginForm(BaseModel):
+    password: str
+
+
+@router.get("/admin/login", response_class=HTMLResponse)
+async def login_page(request: Request, error: str = ""):
+    """Show login page."""
+    if _check_session(request):
+        return RedirectResponse("/admin/dashboard", status_code=302)
+    html = LOGIN_HTML.replace("__ERROR__", error)
+    if error:
+        html = html.replace("display:none", "display:block")
+    return html
+
+
+@router.post("/admin/login")
+async def login_submit(request: Request):
+    """Handle login form submission."""
+    form = await request.form()
+    password = form.get("password", "")
+
+    if not ADMIN_PASSWORD:
+        # Fallback: use ADMIN_KEY as password if ADMIN_DASHBOARD_PASSWORD not set
+        valid = password == ADMIN_KEY
+    else:
+        valid = password == ADMIN_PASSWORD
+
+    if not valid:
+        html = LOGIN_HTML.replace("__ERROR__", "Wrong password").replace("display:none", "display:block")
+        return HTMLResponse(html, status_code=401)
+
+    # Create session
+    token = secrets.token_urlsafe(48)
+    _sessions[token] = time.time()
+
+    response = RedirectResponse("/admin/dashboard", status_code=302)
+    response.set_cookie(
+        "agonaut_admin_session",
+        token,
+        max_age=SESSION_MAX_AGE,
+        httponly=True,
+        secure=True,
+        samesite="lax",
+    )
+    return response
+
+
+@router.get("/admin/logout")
+async def logout(request: Request):
+    """Clear session and redirect to login."""
+    token = request.cookies.get("agonaut_admin_session")
+    if token and token in _sessions:
+        del _sessions[token]
+    response = RedirectResponse("/admin/login", status_code=302)
+    response.delete_cookie("agonaut_admin_session")
+    return response
+
+
 @router.get("/admin/dashboard", response_class=HTMLResponse)
-async def admin_dashboard(key: str = Query("")):
-    _check_key(key)
-    return DASHBOARD_HTML.replace("__ADMIN_KEY__", key)
+async def admin_dashboard(request: Request, key: str = Query("")):
+    _check_auth(request, key)
+    # Pass ADMIN_KEY for API calls from dashboard JS
+    return DASHBOARD_HTML.replace("__ADMIN_KEY__", ADMIN_KEY)
 
 
 DASHBOARD_HTML = r"""<!DOCTYPE html>
@@ -93,6 +217,7 @@ DASHBOARD_HTML = r"""<!DOCTYPE html>
     <span class="live">Live</span>
     <div class="meta" id="lastUpdate"></div>
     <button class="refresh-btn" onclick="loadAll()">↻ Refresh</button>
+    <a href="/admin/logout" style="font-size:11px;color:var(--muted);text-decoration:none;margin-left:8px">🔒 Logout</a>
   </div>
 </div>
 
