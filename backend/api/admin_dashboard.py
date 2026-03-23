@@ -186,7 +186,7 @@ DASHBOARD_HTML = r"""<!DOCTYPE html>
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
     <h2 style="margin:0">📧 Email — contact@agonaut.io <span id="emailUnread" style="font-size:11px;background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:6px;font-weight:700;margin-left:8px"></span></h2>
     <div style="display:flex;gap:8px">
-      <button onclick="openCompose()" style="padding:4px 12px;border:none;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;background:var(--text);color:#fff">✉ Compose</button>
+      <button onclick="openCompose()" style="padding:4px 12px;border:none;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;background:var(--text);color:#fff">✉ New Email</button>
       <button class="refresh-btn" onclick="loadEmails()">↻ Refresh</button>
     </div>
   </div>
@@ -202,7 +202,7 @@ DASHBOARD_HTML = r"""<!DOCTYPE html>
 <!-- Compose Panel -->
 <div class="detail-panel" id="composePanel" style="width:500px">
   <button class="close" onclick="closeCompose()">✕</button>
-  <h2 style="margin-bottom:16px">Compose Email</h2>
+  <h2 style="margin-bottom:16px">New Email</h2>
   <div style="display:flex;flex-direction:column;gap:12px">
     <input id="composeTo" type="email" placeholder="To" style="padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px">
     <input id="composeSubject" type="text" placeholder="Subject" style="padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px">
