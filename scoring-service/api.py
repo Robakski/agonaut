@@ -207,9 +207,15 @@ async def receive_solution(req: ReceiveSolutionRequest, background_tasks: Backgr
     }
 
 
-# ── Solution vault helper ──
+# ── Solution vault helper (zero-knowledge ECIES) ──
 def _store_solutions(round_address: str, rnd: dict, payload: dict):
-    """Store decrypted winning solutions in the backend vault for sponsor access."""
+    """Encrypt winning solutions with sponsor's public key and store.
+
+    The TEE has access to the decrypted solution in memory. We encrypt it
+    with the sponsor's secp256k1 public key using ECIES before storing.
+    After this function, the plaintext solution is gone — only the sponsor
+    can decrypt it with their wallet's private key.
+    """
     import httpx as _httpx
     try:
         scores = payload.get("scores", [])
@@ -222,9 +228,39 @@ def _store_solutions(round_address: str, rnd: dict, payload: dict):
             log.warning("Cannot store solutions — missing agent addresses, decrypted solutions, or sponsor")
             return
 
+        # Fetch sponsor's public key from backend
+        resp = _httpx.get(
+            f"http://127.0.0.1:8000/api/v1/solutions/sponsor-key/{sponsor}",
+            timeout=5,
+        )
+        if resp.status_code != 200 or not resp.json().get("has_key"):
+            log.warning(f"Sponsor {sponsor[:10]}... has no registered public key — cannot encrypt solutions")
+            return
+
+        # Get full public key
+        key_resp = _httpx.get(
+            f"http://127.0.0.1:8000/api/v1/solutions/sponsor-pubkey-internal/{sponsor}",
+            timeout=5,
+        )
+        if key_resp.status_code != 200:
+            log.warning("Failed to fetch sponsor public key from backend")
+            return
+        sponsor_pubkey = key_resp.json().get("public_key")
+        if not sponsor_pubkey:
+            log.warning("Sponsor public key is empty")
+            return
+
+        # ECIES encrypt each winning solution with sponsor's public key
+        from ecies_encrypt import encrypt_for_wallet
+        stored = 0
         for i, (addr, score) in enumerate(zip(agents, scores)):
             if score > 0 and addr.lower() in decrypted:
                 agent_id = agent_ids[i] if i < len(agent_ids) else 0
+                solution_text = decrypted[addr.lower()]
+
+                # Encrypt — after this, we can't read it anymore
+                encrypted_blob = encrypt_for_wallet(solution_text, sponsor_pubkey)
+
                 _httpx.post(
                     "http://127.0.0.1:8000/api/v1/solutions/store-winning",
                     json={
@@ -232,12 +268,14 @@ def _store_solutions(round_address: str, rnd: dict, payload: dict):
                         "agent_address": addr,
                         "agent_id": agent_id,
                         "score": score,
-                        "solution_text": decrypted[addr.lower()],
+                        "encrypted_solution": encrypted_blob,
                         "sponsor_address": sponsor,
                     },
                     timeout=10,
                 )
-        log.info(f"Stored {len([s for s in scores if s > 0])} winning solutions in vault")
+                stored += 1
+
+        log.info(f"Stored {stored} ECIES-encrypted winning solutions (only sponsor can decrypt)")
     except Exception as e:
         log.warning(f"Solution vault storage failed (non-critical): {e}")
 

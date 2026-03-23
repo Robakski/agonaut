@@ -110,5 +110,12 @@
   "kycRejectedTitle": "需要 KYC 验证",
   "kycRejectedDesc": "您之前的提交已被拒绝。请使用有效文件重新提交。",
   "kycStart": "开始验证",
-  "kycResubmit": "重新提交验证"
+  "kycResubmit": "重新提交验证",
+  "sponsorKeyTitle": "启用零知识解决方案交付",
+  "sponsorKeyDesc": "签署消息以注册您的加密密钥。这确保获胜的解决方案被加密，只有您能读取 — 即使平台也不行。",
+  "sponsorKey1": "解决方案在 TEE 内使用您的公钥加密",
+  "sponsorKey2": "平台无法解密 — 零知识保证",
+  "sponsorKey3": "一次性设置，无需 Gas",
+  "sponsorKeyButton": "🔑 签名并注册加密密钥",
+  "sponsorKeyNote": "此签名不需要 Gas。它只证明您拥有此钱包。"
 }

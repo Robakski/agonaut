@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useTranslations } from "next-intl";
-import { useAccount, useWriteContract, useWaitForTransactionReceipt } from "wagmi";
+import { useAccount, useWriteContract, useWaitForTransactionReceipt, useWalletClient } from "wagmi";
 import { parseEther, type Address } from "viem";
 import { ConnectKitButton } from "connectkit";
 import { MIN_BOUNTY_DEPOSIT, ENTRY_FEE, PROTOCOL_FEE_BPS, BPS_DENOMINATOR, BASESCAN_URL, API_URL } from "@/lib/contracts";
@@ -360,6 +360,9 @@ export default function CreateBountyPage() {
     if (tagVal && !tags.includes(tagVal) && tags.length < 5) { setTags([...tags, tagVal]); setTagInput(""); }
   };
 
+  /* ─── Wallet client for signing ─── */
+  const { data: walletClient } = useWalletClient();
+
   /* ─── KYC check: bounty creation requires verified identity ─── */
   const [kycStatus, setKycStatus] = useState<string | null>(null);
   useEffect(() => {
@@ -369,6 +372,40 @@ export default function CreateBountyPage() {
       .then(data => setKycStatus(data.status || "NONE"))
       .catch(() => setKycStatus("NONE")); // fail closed — require KYC even if API unreachable
   }, [address]);
+
+  /* ─── Sponsor public key: needed for zero-knowledge solution delivery ─── */
+  const [hasSponsorKey, setHasSponsorKey] = useState<boolean | null>(null);
+  const [keyRegistering, setKeyRegistering] = useState(false);
+  const [keyError, setKeyError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!address) return;
+    fetch(`${API_URL}/solutions/sponsor-key/${address}`)
+      .then(r => r.json())
+      .then(d => setHasSponsorKey(d.has_key))
+      .catch(() => setHasSponsorKey(null));
+  }, [address]);
+
+  const registerSponsorKey = async () => {
+    if (!address || !walletClient) return;
+    setKeyRegistering(true);
+    setKeyError(null);
+    try {
+      const message = `Agonaut Sponsor Key Registration\nAddress: ${address}\nTimestamp: ${Math.floor(Date.now() / 1000)}`;
+      const signature = await walletClient.signMessage({ account: address, message });
+      const res = await fetch(`${API_URL}/solutions/register-sponsor-key`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message, signature }),
+      });
+      if (!res.ok) throw new Error((await res.json()).detail || "Registration failed");
+      setHasSponsorKey(true);
+    } catch (err: unknown) {
+      setKeyError(err instanceof Error ? err.message : "Failed to register key");
+    } finally {
+      setKeyRegistering(false);
+    }
+  };
 
   /* ─── Not connected ─── */
   if (!isConnected) {
@@ -482,6 +519,52 @@ export default function CreateBountyPage() {
               {t("successBaseScan")}
             </a>
           </div>
+        </div>
+      </div>
+    );
+  }
+
+  /* ─── Sponsor key registration (zero-knowledge solution delivery) ─── */
+  if (hasSponsorKey === false) {
+    return (
+      <div className="mx-auto max-w-2xl px-4 sm:px-6 lg:px-8 py-20">
+        <div className="text-center py-12 bg-white border border-slate-200 rounded-2xl shadow-sm px-8">
+          <div className="w-16 h-16 rounded-2xl bg-blue-50 flex items-center justify-center mx-auto mb-6">
+            <span className="text-3xl">🔐</span>
+          </div>
+          <h3 className="text-xl font-semibold text-slate-900 mb-2">
+            {t("sponsorKeyTitle") || "Enable Zero-Knowledge Solution Delivery"}
+          </h3>
+          <p className="text-slate-500 text-sm mb-6 max-w-md mx-auto">
+            {t("sponsorKeyDesc") || "Sign a message to register your encryption key. This ensures winning solutions are encrypted so only you can read them — not even the platform."}
+          </p>
+          <div className="bg-slate-50 rounded-xl p-4 mb-6 text-left space-y-2">
+            <div className="flex items-start gap-2">
+              <span className="text-emerald-500">✓</span>
+              <p className="text-xs text-slate-600">{t("sponsorKey1") || "Solutions encrypted with your public key inside TEE"}</p>
+            </div>
+            <div className="flex items-start gap-2">
+              <span className="text-emerald-500">✓</span>
+              <p className="text-xs text-slate-600">{t("sponsorKey2") || "Platform cannot decrypt — zero-knowledge guarantee"}</p>
+            </div>
+            <div className="flex items-start gap-2">
+              <span className="text-emerald-500">✓</span>
+              <p className="text-xs text-slate-600">{t("sponsorKey3") || "One-time setup, no gas required"}</p>
+            </div>
+          </div>
+          {keyError && (
+            <div className="bg-red-50 border border-red-100 rounded-xl px-4 py-2 mb-4">
+              <p className="text-xs text-red-700">{keyError}</p>
+            </div>
+          )}
+          <button
+            onClick={registerSponsorKey}
+            disabled={keyRegistering}
+            className="w-full py-3 text-sm font-semibold bg-slate-900 text-white rounded-xl hover:bg-slate-800 disabled:opacity-50 transition-all"
+          >
+            {keyRegistering ? "Signing..." : (t("sponsorKeyButton") || "🔑 Sign & Register Encryption Key")}
+          </button>
+          <p className="text-xs text-slate-400 mt-3">{t("sponsorKeyNote") || "This signature costs no gas. It only proves you own this wallet."}</p>
         </div>
       </div>
     );

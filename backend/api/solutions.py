@@ -204,6 +204,52 @@ async def trigger_scoring(round_address: str):
         raise HTTPException(503, "Scoring service temporarily unavailable")
 
 
+# ── Sponsor Public Key Registration ──
+
+class RegisterSponsorKeyRequest(BaseModel):
+    """Sponsor registers their public key by signing a message."""
+    message: str
+    signature: str
+
+
+@router.post("/register-sponsor-key")
+async def register_sponsor_key(req: RegisterSponsorKeyRequest):
+    """Register a sponsor's secp256k1 public key for zero-knowledge solution delivery.
+
+    The sponsor signs a message with their wallet. We recover the full
+    public key from the signature and store it. This key is later given
+    to the Phala TEE to re-encrypt winning solutions so that ONLY the
+    sponsor can decrypt them — not even us.
+
+    Should be called during bounty creation flow (before deposit).
+    """
+    try:
+        from services.sponsor_keys import register_from_signature
+        result = register_from_signature(req.message, req.signature)
+        return {
+            "status": "registered",
+            "address": result["address"],
+            "public_key_preview": result["public_key"][:20] + "...",
+        }
+    except ValueError as e:
+        raise HTTPException(400, f"Invalid signature: {e}")
+    except Exception as e:
+        log.error(f"Sponsor key registration failed: {e}")
+        raise HTTPException(500, "Failed to register public key")
+
+
+@router.get("/sponsor-key/{wallet}")
+async def get_sponsor_key(wallet: str):
+    """Check if a sponsor has a registered public key (public endpoint, no secrets)."""
+    if not wallet.startswith("0x") or len(wallet) != 42:
+        raise HTTPException(400, "Invalid wallet address")
+    from services.sponsor_keys import get_public_key
+    pubkey = get_public_key(wallet)
+    return {"wallet": wallet, "has_key": pubkey is not None}
+
+
+# ── Sponsor Solution Access ──
+
 class SponsorAccessRequest(BaseModel):
     """Sponsor requests winning solutions with wallet signature proof."""
     round_address: str
@@ -275,17 +321,19 @@ class StoreWinningSolutionRequest(BaseModel):
     agent_address: str
     agent_id: int
     score: int
-    solution_text: str
+    encrypted_solution: dict   # ECIES blob: {ephemeral_pubkey, iv, ciphertext, mac}
     sponsor_address: str
 
 
 @router.post("/store-winning")
 async def store_winning_solution_endpoint(req: StoreWinningSolutionRequest, request: Request):
-    """Internal endpoint: scoring service stores winning solutions after on-chain submission.
+    """Internal endpoint: scoring service stores ECIES-encrypted winning solutions.
+
+    The solution is already encrypted with the sponsor's public key by the TEE.
+    We store the opaque blob — we CANNOT decrypt it. Only the sponsor can.
 
     Only accessible from localhost (scoring service on same machine).
     """
-    # Only allow from localhost
     client_host = request.client.host if request.client else ""
     if client_host not in ("127.0.0.1", "::1", "localhost"):
         raise HTTPException(403, "Internal endpoint — localhost only")
@@ -296,7 +344,7 @@ async def store_winning_solution_endpoint(req: StoreWinningSolutionRequest, requ
         agent_address=req.agent_address,
         agent_id=req.agent_id,
         score=req.score,
-        solution_text=req.solution_text,
+        encrypted_solution=req.encrypted_solution,
         sponsor_address=req.sponsor_address,
     )
 
@@ -304,3 +352,22 @@ async def store_winning_solution_endpoint(req: StoreWinningSolutionRequest, requ
         raise HTTPException(500, "Failed to store solution")
 
     return {"status": "stored", "round_address": req.round_address, "agent_id": req.agent_id}
+
+
+@router.get("/sponsor-pubkey-internal/{wallet}")
+async def get_sponsor_pubkey_internal(wallet: str, request: Request):
+    """Internal endpoint: scoring service fetches sponsor public key for ECIES encryption.
+
+    Localhost only — the public key itself is not secret, but this endpoint
+    returns the full key (needed for encryption).
+    """
+    client_host = request.client.host if request.client else ""
+    if client_host not in ("127.0.0.1", "::1", "localhost"):
+        raise HTTPException(403, "Internal endpoint — localhost only")
+
+    from services.sponsor_keys import get_public_key
+    pubkey = get_public_key(wallet)
+    if not pubkey:
+        raise HTTPException(404, "No public key registered for this wallet")
+
+    return {"wallet": wallet, "public_key": pubkey}

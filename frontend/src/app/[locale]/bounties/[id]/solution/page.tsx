@@ -1,81 +1,95 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { useTranslations } from "next-intl";
-import { useAccount, useSignMessage } from "wagmi";
-import { ConnectKitButton } from "connectkit";
-import { Link } from "@/i18n/navigation";
-import { API_URL } from "@/lib/contracts";
 import { useParams } from "next/navigation";
+import { useAccount, useWalletClient } from "wagmi";
+import { ConnectKitButton } from "connectkit";
+import { useTranslations } from "next-intl";
+import { API_URL } from "@/lib/contracts";
+import { Link } from "@/i18n/navigation";
+import type { EncryptedSolution } from "@/lib/ecies";
 
-/* ─── Types ─── */
-interface WinningSolution {
+type ViewState =
+  | { kind: "idle" }
+  | { kind: "signing" }
+  | { kind: "fetching" }
+  | { kind: "decrypting" }
+  | { kind: "success"; solutions: DecryptedSolution[] }
+  | { kind: "error"; message: string };
+
+interface DecryptedSolution {
   agent_address: string;
   agent_id: number;
   score: number;
   solution: string;
-  stored_at: number;
-  expires_at: number;
 }
 
 export default function SolutionViewerPage() {
   const t = useTranslations("solutionViewer");
-  const { isConnected, address } = useAccount();
-  const { signMessageAsync } = useSignMessage();
   const params = useParams();
   const roundAddress = params.id as string;
+  const { isConnected, address } = useAccount();
+  const { data: walletClient } = useWalletClient();
+  const [state, setState] = useState<ViewState>({ kind: "idle" });
+  const [copied, setCopied] = useState(false);
 
-  const [solutions, setSolutions] = useState<WinningSolution[] | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const requestAccess = useCallback(async () => {
-    if (!address || !roundAddress) return;
-    setLoading(true);
-    setError(null);
+  const handleDecrypt = useCallback(async () => {
+    if (!address || !walletClient) return;
 
     try {
+      setState({ kind: "signing" });
       const timestamp = Math.floor(Date.now() / 1000);
       const message = `Agonaut Solution Access\nRound: ${roundAddress}\nTimestamp: ${timestamp}`;
+      const signature = await walletClient.signMessage({ account: address, message });
 
-      // Sign with wallet
-      const signature = await signMessageAsync({ message });
-
-      // Request solutions from backend
+      setState({ kind: "fetching" });
       const res = await fetch(`${API_URL}/solutions/sponsor-access`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          round_address: roundAddress,
-          sponsor_address: address,
-          signature,
-          message,
-        }),
+        body: JSON.stringify({ round_address: roundAddress, sponsor_address: address, signature, message }),
       });
 
       if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.detail || "Access denied");
+        const err = await res.json().catch(() => ({ detail: "Request failed" }));
+        throw new Error(err.detail || `HTTP ${res.status}`);
       }
 
       const data = await res.json();
-      setSolutions(data.solutions);
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Failed to retrieve solutions";
-      setError(msg);
-    } finally {
-      setLoading(false);
-    }
-  }, [address, roundAddress, signMessageAsync]);
+      const encryptedSolutions = data.solutions as Array<{
+        agent_address: string; agent_id: number; score: number;
+        encrypted_solution: EncryptedSolution;
+      }>;
 
-  /* ─── Not connected ─── */
+      setState({ kind: "decrypting" });
+      const { decryptSolution } = await import("@/lib/ecies");
+
+      const decrypted: DecryptedSolution[] = [];
+      for (const sol of encryptedSolutions) {
+        try {
+          const plaintext = await decryptSolution(sol.encrypted_solution, walletClient, address);
+          decrypted.push({ agent_address: sol.agent_address, agent_id: sol.agent_id, score: sol.score, solution: plaintext });
+        } catch {
+          decrypted.push({ agent_address: sol.agent_address, agent_id: sol.agent_id, score: sol.score, solution: "[Decryption failed]" });
+        }
+      }
+
+      setState({ kind: "success", solutions: decrypted });
+    } catch (err: unknown) {
+      setState({ kind: "error", message: err instanceof Error ? err.message : "Failed to access solutions" });
+    }
+  }, [address, walletClient, roundAddress]);
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
   if (!isConnected) {
     return (
       <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8 py-20">
         <div className="text-center py-16 bg-white border border-slate-200 rounded-2xl shadow-sm">
-          <div className="w-16 h-16 rounded-2xl bg-amber-50 flex items-center justify-center mx-auto mb-6">
-            <span className="text-3xl">🔐</span>
-          </div>
+          <div className="w-16 h-16 rounded-2xl bg-amber-50 flex items-center justify-center mx-auto mb-6"><span className="text-3xl">🔐</span></div>
           <h3 className="text-xl font-semibold text-slate-900 mb-2">{t("connectTitle")}</h3>
           <p className="text-slate-500 mb-6">{t("connectDesc")}</p>
           <ConnectKitButton />
@@ -84,112 +98,74 @@ export default function SolutionViewerPage() {
     );
   }
 
-  /* ─── Solutions loaded ─── */
-  if (solutions) {
+  if (state.kind === "success") {
     return (
       <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 py-12">
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-2xl font-bold text-slate-900">{t("title")}</h1>
-            <p className="text-sm text-slate-500 mt-1">
-              {t("roundLabel")}: <code className="text-xs bg-slate-100 px-2 py-0.5 rounded">{roundAddress}</code>
-            </p>
-          </div>
-          <Link href="/dashboard/sponsor" className="text-sm text-slate-500 hover:text-slate-700">
-            ← {t("backToDashboard")}
-          </Link>
+        <div className="mb-8">
+          <Link href="/dashboard/sponsor" className="text-sm text-slate-400 hover:text-slate-600 transition-colors">← {t("backToDashboard")}</Link>
+          <h1 className="text-2xl font-bold text-slate-900 mt-4">{t("title")}</h1>
+          <p className="text-sm text-slate-500 mt-1 font-mono">{roundAddress.slice(0, 10)}...{roundAddress.slice(-8)}</p>
         </div>
-
         <div className="space-y-6">
-          {solutions.map((sol, i) => (
+          {state.solutions.map((sol, i) => (
             <div key={i} className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
-              {/* Header */}
               <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center text-sm font-bold text-amber-700">
-                    #{i + 1}
-                  </div>
+                  <div className="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center text-sm font-bold text-amber-700">#{i + 1}</div>
                   <div>
-                    <p className="text-sm font-semibold text-slate-900">
-                      {t("agentLabel")}: <code className="text-xs">{sol.agent_address.slice(0, 6)}...{sol.agent_address.slice(-4)}</code>
-                    </p>
-                    <p className="text-xs text-slate-400">
-                      {t("scoreLabel")}: {sol.score} BPS ({(sol.score / 100).toFixed(1)}%)
-                    </p>
+                    <p className="text-sm font-semibold text-slate-900">{t("agentLabel")} {sol.agent_id}</p>
+                    <p className="text-xs text-slate-400 font-mono">{sol.agent_address.slice(0, 8)}...{sol.agent_address.slice(-6)}</p>
                   </div>
                 </div>
-                <button
-                  onClick={() => {
-                    navigator.clipboard.writeText(sol.solution);
-                  }}
-                  className="px-3 py-1.5 text-xs font-medium text-slate-600 bg-slate-50 border border-slate-200 rounded-lg hover:bg-slate-100 transition-all"
-                >
-                  {t("copySolution")}
-                </button>
+                <div className="flex items-center gap-3">
+                  <span className="px-2.5 py-1 text-xs font-semibold bg-emerald-50 text-emerald-700 rounded-lg">{t("scoreLabel")}: {sol.score} BPS</span>
+                  <button onClick={() => copyToClipboard(sol.solution)} className="px-3 py-1.5 text-xs font-medium text-slate-500 hover:text-slate-700 border border-slate-200 rounded-lg hover:bg-slate-50 transition-all">
+                    {copied ? "✓ Copied" : t("copyButton")}
+                  </button>
+                </div>
               </div>
-
-              {/* Solution content */}
               <div className="p-6">
-                <pre className="bg-slate-50 border border-slate-100 rounded-xl p-4 text-sm text-slate-800 overflow-x-auto whitespace-pre-wrap font-mono leading-relaxed max-h-[600px] overflow-y-auto">
-                  {sol.solution}
-                </pre>
-              </div>
-
-              {/* Footer */}
-              <div className="px-6 py-3 bg-slate-50 border-t border-slate-100 flex items-center justify-between text-xs text-slate-400">
-                <span>{t("storedAt")}: {new Date(sol.stored_at * 1000).toLocaleString()}</span>
-                <span>{t("expiresAt")}: {new Date(sol.expires_at * 1000).toLocaleString()}</span>
+                <pre className="text-sm text-slate-700 whitespace-pre-wrap break-words font-mono bg-slate-50 rounded-xl p-4 max-h-[600px] overflow-y-auto">{sol.solution}</pre>
               </div>
             </div>
           ))}
         </div>
-
-        {/* Security note */}
-        <div className="mt-8 text-center">
-          <p className="text-xs text-slate-400 max-w-lg mx-auto">
-            {t("securityNote")}
-          </p>
-        </div>
+        <p className="text-xs text-slate-400 mt-8 text-center">{t("privacyNote")}</p>
       </div>
     );
   }
 
-  /* ─── Request access state ─── */
+  const isLoading = state.kind === "signing" || state.kind === "fetching" || state.kind === "decrypting";
+
   return (
     <div className="mx-auto max-w-2xl px-4 sm:px-6 lg:px-8 py-20">
-      <div className="text-center py-16 bg-white border border-slate-200 rounded-2xl shadow-sm">
-        <div className="w-16 h-16 rounded-2xl bg-blue-50 flex items-center justify-center mx-auto mb-6">
-          <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
-          </svg>
-        </div>
-        <h3 className="text-xl font-semibold text-slate-900 mb-2">{t("accessTitle")}</h3>
-        <p className="text-slate-500 mb-2 max-w-md mx-auto">{t("accessDesc")}</p>
-        <p className="text-xs text-slate-400 mb-6">{t("accessNote")}</p>
-
-        {error && (
-          <div className="text-xs text-red-600 bg-red-50 border border-red-100 rounded-lg px-4 py-2 mb-4 max-w-sm mx-auto">
-            {error}
+      <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+        <div className="p-8 text-center">
+          <div className="w-20 h-20 rounded-2xl bg-blue-50 flex items-center justify-center mx-auto mb-6"><span className="text-4xl">🔐</span></div>
+          <h1 className="text-2xl font-bold text-slate-900 mb-2">{t("title")}</h1>
+          <p className="text-slate-500 text-sm mb-2">{t("desc")}</p>
+          <p className="text-xs text-slate-400 font-mono mb-8">{roundAddress}</p>
+          <div className="bg-slate-50 rounded-xl p-4 mb-6 text-left">
+            <h3 className="text-xs font-bold text-slate-900 mb-2">{t("securityTitle")}</h3>
+            <div className="space-y-2">
+              {[t("security1"), t("security2"), t("security3")].map((text, i) => (
+                <div key={i} className="flex items-start gap-2">
+                  <span className="text-emerald-500 mt-0.5">✓</span>
+                  <p className="text-xs text-slate-600">{text}</p>
+                </div>
+              ))}
+            </div>
           </div>
-        )}
-
-        <button
-          onClick={requestAccess}
-          disabled={loading}
-          className="px-8 py-3 text-sm font-semibold bg-slate-900 text-white rounded-xl hover:bg-slate-800 disabled:opacity-40 transition-all"
-        >
-          {loading ? (
-            <span className="flex items-center gap-2">
-              <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-              </svg>
-              {t("verifying")}
-            </span>
-          ) : (
-            t("signToAccess")
+          {state.kind === "error" && (
+            <div className="bg-red-50 border border-red-100 rounded-xl px-4 py-3 mb-6">
+              <p className="text-xs text-red-700">{state.message}</p>
+            </div>
           )}
-        </button>
+          <button onClick={handleDecrypt} disabled={isLoading} className="w-full py-3.5 text-sm font-semibold bg-slate-900 text-white rounded-xl hover:bg-slate-800 disabled:opacity-50 transition-all">
+            {state.kind === "signing" ? t("stateSigning") : state.kind === "fetching" ? t("stateFetching") : state.kind === "decrypting" ? t("stateDecrypting") : t("decryptButton")}
+          </button>
+          <p className="text-xs text-slate-400 mt-4">{t("walletNote")}</p>
+        </div>
       </div>
     </div>
   );

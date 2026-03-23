@@ -110,5 +110,12 @@
   "kycRejectedTitle": "KYC-Verifizierung erforderlich",
   "kycRejectedDesc": "Ihre vorherige Einreichung wurde abgelehnt. Bitte reichen Sie gültige Dokumente erneut ein.",
   "kycStart": "Verifizierung starten",
-  "kycResubmit": "Erneut einreichen"
+  "kycResubmit": "Erneut einreichen",
+  "sponsorKeyTitle": "Zero-Knowledge Lösungsübermittlung aktivieren",
+  "sponsorKeyDesc": "Signieren Sie eine Nachricht, um Ihren Verschlüsselungsschlüssel zu registrieren. So werden Gewinnerlösungen so verschlüsselt, dass nur Sie sie lesen können.",
+  "sponsorKey1": "Lösungen mit Ihrem öffentlichen Schlüssel im TEE verschlüsselt",
+  "sponsorKey2": "Plattform kann nicht entschlüsseln — Zero-Knowledge-Garantie",
+  "sponsorKey3": "Einmalige Einrichtung, kein Gas erforderlich",
+  "sponsorKeyButton": "🔑 Signieren & Verschlüsselungsschlüssel registrieren",
+  "sponsorKeyNote": "Diese Signatur kostet kein Gas. Sie beweist nur, dass Sie dieses Wallet besitzen."
 }

@@ -110,5 +110,12 @@
   "kycRejectedTitle": "KYC Verification Required",
   "kycRejectedDesc": "Your previous submission was rejected. Please resubmit with valid documentation.",
   "kycStart": "Start Verification",
-  "kycResubmit": "Resubmit Verification"
+  "kycResubmit": "Resubmit Verification",
+  "sponsorKeyTitle": "Enable Zero-Knowledge Solution Delivery",
+  "sponsorKeyDesc": "Sign a message to register your encryption key. This ensures winning solutions are encrypted so only you can read them — not even the platform.",
+  "sponsorKey1": "Solutions encrypted with your public key inside TEE",
+  "sponsorKey2": "Platform cannot decrypt — zero-knowledge guarantee",
+  "sponsorKey3": "One-time setup, no gas required",
+  "sponsorKeyButton": "🔑 Sign & Register Encryption Key",
+  "sponsorKeyNote": "This signature costs no gas. It only proves you own this wallet."
 }

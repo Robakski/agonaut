@@ -1,56 +1,27 @@
 """
-Solution Vault — Secure storage for winning solutions after scoring.
+Solution Vault — Zero-knowledge storage for winning solutions.
 
-After TEE scoring completes and scores are submitted on-chain, the winning
-solution(s) are stored here encrypted at rest. Only the verified sponsor
-(via wallet signature) can retrieve them.
+After TEE scoring, winning solutions are ECIES-encrypted with the sponsor's
+secp256k1 public key. We store the encrypted blob. We CANNOT decrypt it —
+only the sponsor's wallet private key can.
 
-Security model:
-- Solutions encrypted with Fernet (AES-256) at rest in SQLite
-- Access requires wallet signature verification (EIP-191)
-- On-chain verification that requester is the round's sponsor
-- Solutions only stored after SETTLED phase
-- Auto-expire after 90 days (matching on-chain claim window)
+This is the core trust guarantee of Agonaut:
+"Not even the platform can see your solution after scoring."
+
+Storage format: JSON blob containing {ephemeral_pubkey, iv, ciphertext, mac}
+All hex-encoded. The sponsor's browser decrypts using ECDH + AES-256-GCM.
 """
 
 import sqlite3
+import json
 import time
-import os
 import logging
 from pathlib import Path
 from typing import Optional
-from cryptography.fernet import Fernet
 
 logger = logging.getLogger(__name__)
 
 DB_PATH = Path("/opt/agonaut-api/data/solution_vault.db")
-
-_fernet: Optional[Fernet] = None
-
-
-def _get_fernet() -> Fernet:
-    global _fernet
-    if _fernet is None:
-        key = os.environ.get("SOLUTION_VAULT_KEY", "")
-        if not key:
-            # Use KYC encryption key as fallback (same security domain)
-            key = os.environ.get("KYC_ENCRYPTION_KEY", "")
-        if not key:
-            raise RuntimeError("SOLUTION_VAULT_KEY not set — cannot store solutions securely")
-        _fernet = Fernet(key.encode())
-    return _fernet
-
-
-def _encrypt(plaintext: str) -> str:
-    if not plaintext:
-        return ""
-    return _get_fernet().encrypt(plaintext.encode()).decode()
-
-
-def _decrypt(ciphertext: str) -> str:
-    if not ciphertext:
-        return ""
-    return _get_fernet().decrypt(ciphertext.encode()).decode()
 
 
 def _get_db() -> sqlite3.Connection:
@@ -66,7 +37,7 @@ def _get_db() -> sqlite3.Connection:
             agent_address TEXT NOT NULL,
             agent_id INTEGER NOT NULL,
             score INTEGER NOT NULL,
-            solution_enc TEXT NOT NULL,
+            encrypted_blob TEXT NOT NULL,
             sponsor_address TEXT NOT NULL,
             stored_at REAL NOT NULL,
             expires_at REAL NOT NULL,
@@ -98,13 +69,12 @@ def store_winning_solution(
     agent_address: str,
     agent_id: int,
     score: int,
-    solution_text: str,
+    encrypted_solution: dict,
     sponsor_address: str,
 ) -> bool:
-    """Store a winning solution after scoring settles. Encrypted at rest."""
+    """Store an ECIES-encrypted winning solution. We CANNOT decrypt this."""
     conn = _get_db()
     try:
-        # Check if already stored
         existing = conn.execute(
             "SELECT id FROM winning_solutions WHERE round_address = ? AND agent_id = ?",
             (round_address.lower(), agent_id)
@@ -116,7 +86,7 @@ def store_winning_solution(
         now = time.time()
         conn.execute(
             """INSERT INTO winning_solutions
-               (round_address, agent_address, agent_id, score, solution_enc,
+               (round_address, agent_address, agent_id, score, encrypted_blob,
                 sponsor_address, stored_at, expires_at)
                VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
             (
@@ -124,14 +94,14 @@ def store_winning_solution(
                 agent_address.lower(),
                 agent_id,
                 score,
-                _encrypt(solution_text),
+                json.dumps(encrypted_solution),
                 sponsor_address.lower(),
                 now,
                 now + (EXPIRY_DAYS * 86400),
             )
         )
         conn.commit()
-        logger.info(f"Stored winning solution: round={round_address[:10]}... agent={agent_id} score={score}")
+        logger.info(f"Stored ECIES-encrypted solution: round={round_address[:10]}... agent={agent_id} score={score}")
         return True
     except Exception as e:
         logger.error(f"Failed to store solution: {e}")
@@ -144,12 +114,16 @@ def get_winning_solutions(
     round_address: str,
     requester_address: str,
 ) -> Optional[list[dict]]:
-    """Retrieve winning solutions for a round. Only returns if requester is the sponsor."""
+    """Retrieve encrypted winning solutions. Only returns if requester is the sponsor.
+
+    The returned blobs are ECIES-encrypted — the requester must decrypt
+    them client-side using their wallet's private key.
+    """
     conn = _get_db()
     try:
         now = time.time()
         rows = conn.execute(
-            """SELECT agent_address, agent_id, score, solution_enc, sponsor_address,
+            """SELECT agent_address, agent_id, score, encrypted_blob, sponsor_address,
                       stored_at, expires_at
                FROM winning_solutions
                WHERE round_address = ? AND expires_at > ?
@@ -167,10 +141,9 @@ def get_winning_solutions(
             _log_access(conn, round_address, requester_address, False, "not sponsor")
             return None
 
-        # Grant access
+        # Grant access — return encrypted blobs (we can't read them)
         _log_access(conn, round_address, requester_address, True, "sponsor verified")
 
-        # Update access tracking
         conn.execute(
             "UPDATE winning_solutions SET accessed_at = ?, access_count = access_count + 1 WHERE round_address = ?",
             (now, round_address.lower())
@@ -183,7 +156,7 @@ def get_winning_solutions(
                 "agent_address": row["agent_address"],
                 "agent_id": row["agent_id"],
                 "score": row["score"],
-                "solution": _decrypt(row["solution_enc"]),
+                "encrypted_solution": json.loads(row["encrypted_blob"]),
                 "stored_at": row["stored_at"],
                 "expires_at": row["expires_at"],
             })

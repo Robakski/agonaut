@@ -110,5 +110,12 @@
   "kycRejectedTitle": "Verificación KYC requerida",
   "kycRejectedDesc": "Tu envío anterior fue rechazado. Por favor, reenvía con documentación válida.",
   "kycStart": "Iniciar verificación",
-  "kycResubmit": "Reenviar verificación"
+  "kycResubmit": "Reenviar verificación",
+  "sponsorKeyTitle": "Habilitar Entrega Zero-Knowledge de Soluciones",
+  "sponsorKeyDesc": "Firma un mensaje para registrar tu clave de cifrado. Esto asegura que las soluciones ganadoras se cifren para que solo tú puedas leerlas.",
+  "sponsorKey1": "Soluciones cifradas con tu clave pública dentro del TEE",
+  "sponsorKey2": "La plataforma no puede descifrar — garantía zero-knowledge",
+  "sponsorKey3": "Configuración única, sin gas",
+  "sponsorKeyButton": "🔑 Firmar & Registrar Clave de Cifrado",
+  "sponsorKeyNote": "Esta firma no cuesta gas. Solo demuestra que eres dueño de este wallet."
 }
