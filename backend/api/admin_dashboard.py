@@ -143,8 +143,9 @@ async def logout(request: Request):
 
 
 @router.get("/admin/dashboard", response_class=HTMLResponse)
-async def admin_dashboard(request: Request, key: str = Query("")):
-    _check_auth(request, key)
+async def admin_dashboard(request: Request):
+    if not _check_session(request):
+        return RedirectResponse("/admin/login", status_code=302)
     # Pass ADMIN_KEY for API calls from dashboard JS
     return DASHBOARD_HTML.replace("__ADMIN_KEY__", ADMIN_KEY)
 
