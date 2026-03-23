@@ -64,6 +64,7 @@ ADMIN_ENDPOINTS = {
     "/api/v1/kyc/detail/",
     "/api/v1/kyc/review",
     "/api/v1/kyc/audit/",
+    "/admin/email/",
 }
 
 # Max request body size (bytes)

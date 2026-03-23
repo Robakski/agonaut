@@ -181,6 +181,40 @@ DASHBOARD_HTML = r"""<!DOCTYPE html>
   <div id="walletCount" style="margin-top:8px;font-size:11px;color:var(--muted)"></div>
 </div>
 
+<!-- Email Inbox -->
+<div class="card">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+    <h2 style="margin:0">📧 Email — contact@agonaut.io <span id="emailUnread" style="font-size:11px;background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:6px;font-weight:700;margin-left:8px"></span></h2>
+    <div style="display:flex;gap:8px">
+      <button onclick="openCompose()" style="padding:4px 12px;border:none;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;background:var(--text);color:#fff">✉ Compose</button>
+      <button class="refresh-btn" onclick="loadEmails()">↻ Refresh</button>
+    </div>
+  </div>
+  <div id="emailList" style="max-height:500px;overflow-y:auto"></div>
+</div>
+
+<!-- Email Read Panel -->
+<div class="detail-panel" id="emailPanel" style="width:560px">
+  <button class="close" onclick="closeEmailPanel()">✕</button>
+  <div id="emailContent"></div>
+</div>
+
+<!-- Compose Panel -->
+<div class="detail-panel" id="composePanel" style="width:500px">
+  <button class="close" onclick="closeCompose()">✕</button>
+  <h2 style="margin-bottom:16px">Compose Email</h2>
+  <div style="display:flex;flex-direction:column;gap:12px">
+    <input id="composeTo" type="email" placeholder="To" style="padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px">
+    <input id="composeSubject" type="text" placeholder="Subject" style="padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px">
+    <textarea id="composeBody" rows="12" placeholder="Message..." style="padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;resize:vertical"></textarea>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button onclick="closeCompose()" style="padding:6px 16px;border:1px solid var(--border);border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;background:var(--card)">Cancel</button>
+      <button onclick="sendComposedEmail()" id="sendBtn" style="padding:6px 16px;border:none;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;background:var(--accent);color:#fff">Send</button>
+    </div>
+    <div id="composeStatus" style="font-size:11px"></div>
+  </div>
+</div>
+
 </div>
 
 <!-- Detail Panel -->
@@ -424,13 +458,129 @@ async function updateFeedbackStatus(id,status){
   loadFeedback();
 }
 
+// ── Email Functions ──────────────────────────────────────
+
+async function loadEmails(){
+  try{
+    const r=await fetch(`${location.origin}/admin/email/inbox?key=__ADMIN_KEY__&limit=30`);
+    if(!r.ok)throw new Error('Email fetch failed');
+    const d=await r.json();
+    const el=document.getElementById('emailList');
+    const unreadEl=document.getElementById('emailUnread');
+    unreadEl.textContent=d.unread>0?`${d.unread} unread`:'';
+    if(!d.messages||d.messages.length===0){
+      el.innerHTML='<div style="text-align:center;padding:24px;color:var(--muted);font-size:13px">No emails yet</div>';
+      return;
+    }
+    el.innerHTML=d.messages.map(m=>{
+      const dt=m.timestamp?new Date(m.timestamp*1000).toLocaleString('de-DE',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}):'';
+      const readStyle=m.is_read?'color:var(--muted);font-weight:400':'color:var(--text);font-weight:600';
+      return `<div onclick="readEmail('${m.uid}')" style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-bottom:1px solid #f1f5f9;cursor:pointer;transition:background .1s" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='transparent'">
+        <div style="flex:1;min-width:0">
+          <div style="display:flex;gap:8px;align-items:center">
+            ${!m.is_read?'<span style="width:6px;height:6px;border-radius:50%;background:var(--accent);flex-shrink:0"></span>':''}
+            <span style="font-size:12px;font-weight:600;color:var(--text)">${escHtml(m.sender_name)}</span>
+            <span style="font-size:11px;color:var(--muted)">&lt;${escHtml(m.sender)}&gt;</span>
+          </div>
+          <div style="font-size:13px;${readStyle};margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(m.subject)}</div>
+        </div>
+        <div style="font-size:11px;color:var(--muted);flex-shrink:0;margin-left:12px">${dt}</div>
+      </div>`;
+    }).join('');
+  }catch(e){
+    document.getElementById('emailList').innerHTML='<div style="padding:16px;color:var(--red);font-size:12px">Email not configured — add GMAIL_APP_PASSWORD to .env</div>';
+  }
+}
+
+async function readEmail(uid){
+  const panel=document.getElementById('emailPanel');
+  const content=document.getElementById('emailContent');
+  content.innerHTML='<div style="padding:24px;color:var(--muted)">Loading...</div>';
+  panel.classList.add('open');
+  try{
+    const r=await fetch(`${location.origin}/admin/email/read/${uid}?key=__ADMIN_KEY__`);
+    const m=await r.json();
+    const dt=m.timestamp?new Date(m.timestamp*1000).toLocaleString('de-DE',{dateStyle:'full',timeStyle:'short'}):'';
+    content.innerHTML=`
+      <div style="margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid var(--border)">
+        <h2 style="font-size:16px;margin-bottom:8px">${escHtml(m.subject)}</h2>
+        <div style="font-size:12px;color:var(--muted)">
+          <div><strong>From:</strong> ${escHtml(m.sender_name)} &lt;${escHtml(m.sender)}&gt;</div>
+          <div><strong>To:</strong> ${escHtml(m.to)}</div>
+          <div><strong>Date:</strong> ${dt}</div>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:12px">
+          <button onclick="replyToEmail('${escHtml(m.sender)}','${escHtml(m.subject).replace(/'/g,"\\'")}')" style="padding:4px 12px;border:1px solid var(--border);border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;background:var(--card)">↩ Reply</button>
+          <button onclick="forwardEmail('${uid}')" style="padding:4px 12px;border:1px solid var(--border);border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;background:var(--card)">↗ Forward</button>
+        </div>
+      </div>
+      <div style="font-size:13px;line-height:1.7;white-space:pre-wrap">${m.body_html?m.body_html:escHtml(m.body_text||'(No content)')}</div>
+    `;
+    loadEmails(); // refresh unread count
+  }catch(e){
+    content.innerHTML='<div style="padding:24px;color:var(--red)">Failed to load email</div>';
+  }
+}
+
+function closeEmailPanel(){document.getElementById('emailPanel').classList.remove('open')}
+
+function openCompose(to='',subject='',body=''){
+  document.getElementById('composeTo').value=to;
+  document.getElementById('composeSubject').value=subject;
+  document.getElementById('composeBody').value=body;
+  document.getElementById('composeStatus').textContent='';
+  document.getElementById('composePanel').classList.add('open');
+}
+
+function closeCompose(){document.getElementById('composePanel').classList.remove('open')}
+
+function replyToEmail(sender,subject){
+  closeEmailPanel();
+  const re=subject.startsWith('Re:')?subject:`Re: ${subject}`;
+  openCompose(sender,re,'');
+}
+
+async function forwardEmail(uid){
+  const to=prompt('Forward to email address:');
+  if(!to)return;
+  const comment=prompt('Add a comment (optional):','');
+  try{
+    const r=await fetch(`${location.origin}/admin/email/forward?key=__ADMIN_KEY__`,{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({uid,to,comment:comment||''})
+    });
+    if(r.ok)alert('Email forwarded!');
+    else alert('Forward failed');
+  }catch(e){alert('Forward failed: '+e)}
+}
+
+async function sendComposedEmail(){
+  const to=document.getElementById('composeTo').value;
+  const subject=document.getElementById('composeSubject').value;
+  const body=document.getElementById('composeBody').value;
+  const status=document.getElementById('composeStatus');
+  const btn=document.getElementById('sendBtn');
+  if(!to||!subject||!body){status.textContent='Please fill all fields';status.style.color='var(--red)';return}
+  btn.disabled=true;btn.textContent='Sending...';
+  try{
+    const r=await fetch(`${location.origin}/admin/email/send?key=__ADMIN_KEY__`,{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({to,subject,body})
+    });
+    if(r.ok){status.textContent='✅ Sent!';status.style.color='var(--green)';setTimeout(closeCompose,1500);loadEmails()}
+    else{const e=await r.json();status.textContent='Failed: '+(e.detail||'Unknown error');status.style.color='var(--red)'}
+  }catch(e){status.textContent='Failed: '+e;status.style.color='var(--red)'}
+  btn.disabled=false;btn.textContent='Send';
+}
+
 // Auto-refresh every 60 seconds
 loadAll();
 loadFeedback();
-setInterval(()=>{loadAll();loadFeedback()},60000);
+loadEmails();
+setInterval(()=>{loadAll();loadFeedback();loadEmails()},60000);
 
-// Keyboard: Escape closes detail
-document.addEventListener('keydown',e=>{if(e.key==='Escape')closeDetail()});
+// Keyboard: Escape closes panels
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeDetail();closeEmailPanel();closeCompose()}});
 </script>
 </body>
 </html>"""
