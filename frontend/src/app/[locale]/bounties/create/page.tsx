@@ -359,15 +359,14 @@ export default function CreateBountyPage() {
     if (tagVal && !tags.includes(tagVal) && tags.length < 5) { setTags([...tags, tagVal]); setTagInput(""); }
   };
 
-  /* ─── Role check: block registered agents ─── */
-  const [isAgent, setIsAgent] = useState<boolean | null>(null);
+  /* ─── KYC check: bounty creation requires verified identity ─── */
+  const [kycStatus, setKycStatus] = useState<string | null>(null);
   useEffect(() => {
     if (!address) return;
-    // Check if this wallet is a registered agent — agents cannot create bounties
-    fetch(`${API_URL}/agents/check-role?wallet=${address}`)
+    fetch(`${API_URL}/kyc/status?wallet=${address}`)
       .then(r => r.json())
-      .then(data => setIsAgent(data.is_agent === true))
-      .catch(() => setIsAgent(false)); // fail open — backend enforces anyway
+      .then(data => setKycStatus(data.status || "NONE"))
+      .catch(() => setKycStatus(null)); // fail open — backend enforces anyway
   }, [address]);
 
   /* ─── Not connected ─── */
@@ -388,26 +387,53 @@ export default function CreateBountyPage() {
     );
   }
 
-  /* ─── Agent wallet blocked ─── */
-  if (isAgent === true) {
+  /* ─── KYC not verified — redirect to verification ─── */
+  if (kycStatus && kycStatus !== "VERIFIED") {
+    const isPending = kycStatus === "PENDING";
+    const isRejected = kycStatus === "REJECTED";
     return (
       <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 py-20">
-        <div className="text-center py-20 bg-white border border-red-200 rounded-2xl shadow-sm">
-          <div className="w-16 h-16 rounded-2xl bg-red-50 flex items-center justify-center mx-auto mb-6">
-            <svg className="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
-            </svg>
+        <div className="text-center py-16 bg-white border border-slate-200 rounded-2xl shadow-sm">
+          <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-6 ${isPending ? "bg-amber-50" : isRejected ? "bg-red-50" : "bg-blue-50"}`}>
+            {isPending ? (
+              <svg className="w-8 h-8 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            ) : isRejected ? (
+              <svg className="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+              </svg>
+            ) : (
+              <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
+              </svg>
+            )}
           </div>
-          <h3 className="text-xl font-semibold text-slate-900 mb-2">{t("agentBlockedTitle") || "Agent Wallet Detected"}</h3>
-          <p className="text-slate-500 mb-4 max-w-md mx-auto">
-            {t("agentBlockedDesc") || "This wallet is registered as an AI Agent. Agents cannot create bounties — sponsors and agents must use separate wallets to maintain role separation and compliance."}
+          <h3 className="text-xl font-semibold text-slate-900 mb-2">
+            {isPending
+              ? (t("kycPendingTitle") || "KYC Under Review")
+              : isRejected
+              ? (t("kycRejectedTitle") || "KYC Verification Required")
+              : (t("kycRequiredTitle") || "Identity Verification Required")}
+          </h3>
+          <p className="text-slate-500 mb-6 max-w-md mx-auto">
+            {isPending
+              ? (t("kycPendingDesc") || "Your identity verification is being reviewed. You'll be able to create bounties once approved.")
+              : isRejected
+              ? (t("kycRejectedDesc") || "Your previous submission was rejected. Please resubmit with valid documentation.")
+              : (t("kycRequiredDesc") || "To create bounties on Agonaut, you must first verify your identity. This is required for compliance and to protect all participants.")}
           </p>
-          <p className="text-xs text-slate-400">
-            {t("agentBlockedHint") || "Connect a different wallet to create bounties as a sponsor."}
-          </p>
-          <div className="mt-6">
-            <ConnectKitButton />
-          </div>
+          {!isPending && (
+            <Link
+              href="/kyc"
+              className="inline-flex items-center gap-2 px-6 py-3 text-sm font-semibold bg-slate-900 text-white rounded-xl hover:bg-slate-800 transition-all"
+            >
+              {isRejected ? (t("kycResubmit") || "Resubmit Verification") : (t("kycStart") || "Start Verification")}
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+              </svg>
+            </Link>
+          )}
         </div>
       </div>
     );

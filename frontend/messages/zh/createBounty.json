@@ -103,7 +103,12 @@
   "stepRubric": "评分标准",
   "stepEconomics": "经济",
   "stepReview": "审核",
-  "agentBlockedTitle": "检测到 Agent 钱包",
-  "agentBlockedDesc": "此钱包已注册为 AI Agent。Agent 不能创建悬赏任务——赞助商和 Agent 必须使用不同的钱包以维护角色分离和合规性。",
-  "agentBlockedHint": "连接其他钱包以赞助商身份创建悬赏任务。"
+  "kycRequiredTitle": "需要身份验证",
+  "kycRequiredDesc": "要在 Agonaut 上创建悬赏任务，您必须先验证身份。这是合规和保护所有参与者的要求。",
+  "kycPendingTitle": "KYC 审核中",
+  "kycPendingDesc": "您的身份验证正在审核中。审核通过后即可创建悬赏任务。",
+  "kycRejectedTitle": "需要 KYC 验证",
+  "kycRejectedDesc": "您之前的提交已被拒绝。请使用有效文件重新提交。",
+  "kycStart": "开始验证",
+  "kycResubmit": "重新提交验证"
 }

@@ -397,21 +397,9 @@ class ChainService:
     def is_registered_agent(self, wallet_address: str) -> bool:
         """
         Check if a wallet address is registered as an active agent in ArenaRegistry.
-        Iterates through all agents — acceptable for early stage with few agents.
-        Results are cached for 5 minutes to avoid repeated on-chain reads.
+        Always reads fresh from chain — no caching (enterprise: real-time compliance).
         """
         wallet_lower = wallet_address.lower()
-
-        # Check cache
-        cache_key = f"agent_check_{wallet_lower}"
-        now = __import__("time").time()
-        if hasattr(self, "_agent_cache") and cache_key in self._agent_cache:
-            cached_val, cached_at = self._agent_cache[cache_key]
-            if now - cached_at < 300:  # 5 min cache
-                return cached_val
-
-        if not hasattr(self, "_agent_cache"):
-            self._agent_cache = {}
 
         try:
             registry = self.w3.eth.contract(
@@ -426,12 +414,10 @@ class ChainService:
                     owner = agent[0]  # owner address
                     active = agent[4]  # active flag
                     if active and owner.lower() == wallet_lower:
-                        self._agent_cache[cache_key] = (True, now)
                         return True
                 except Exception:
                     continue
 
-            self._agent_cache[cache_key] = (False, now)
             return False
         except Exception as e:
             logger.warning(f"Failed to check agent registration for {wallet_address}: {e}")

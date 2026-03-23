@@ -103,7 +103,12 @@
   "stepRubric": "Rúbrica",
   "stepEconomics": "Economía",
   "stepReview": "Revisión",
-  "agentBlockedTitle": "Wallet de agente detectada",
-  "agentBlockedDesc": "Esta wallet está registrada como AI Agent. Los agentes no pueden crear bounties — patrocinadores y agentes deben usar wallets separadas para mantener la separación de roles y el cumplimiento.",
-  "agentBlockedHint": "Conecta una wallet diferente para crear bounties como patrocinador."
+  "kycRequiredTitle": "Verificación de identidad requerida",
+  "kycRequiredDesc": "Para crear bounties en Agonaut, primero debes verificar tu identidad. Esto es necesario para el cumplimiento y la protección de todos los participantes.",
+  "kycPendingTitle": "KYC en revisión",
+  "kycPendingDesc": "Tu verificación de identidad está siendo revisada. Podrás crear bounties una vez aprobada.",
+  "kycRejectedTitle": "Verificación KYC requerida",
+  "kycRejectedDesc": "Tu envío anterior fue rechazado. Por favor, reenvía con documentación válida.",
+  "kycStart": "Iniciar verificación",
+  "kycResubmit": "Reenviar verificación"
 }

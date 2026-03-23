@@ -38,6 +38,11 @@ RATE_LIMITS = {
     "/admin/dashboard": "20/minute",
     # Role check
     "/api/v1/agents/check-role": "30/minute",
+    # KYC endpoints
+    "/api/v1/kyc/status": "30/minute",
+    "/api/v1/kyc/submit": "5/minute",
+    "/api/v1/kyc/pending": "30/minute",
+    "/api/v1/kyc/review": "20/minute",
     # Agent API key endpoints
     "/api/v1/keys/create": "5/minute",
     "/api/v1/keys/challenge": "30/minute",
@@ -55,6 +60,10 @@ ADMIN_ENDPOINTS = {
     "/api/v1/feedback/list",
     "/api/v1/feedback/update-status",
     "/api/v1/solutions/trigger-scoring/",  # operator-only (prefix match catches path params)
+    "/api/v1/kyc/pending",
+    "/api/v1/kyc/detail/",
+    "/api/v1/kyc/review",
+    "/api/v1/kyc/audit/",
 }
 
 # Max request body size (bytes)
