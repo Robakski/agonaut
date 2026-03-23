@@ -143,3 +143,24 @@ async def search_agents(
     """Search agents by name."""
     # TODO: Implement search
     return []
+
+
+@router.get("/check-role")
+async def check_wallet_role(wallet: str = Query(..., min_length=42, max_length=42)):
+    """
+    Check if a wallet is registered as an AI Agent.
+    Used by the frontend to enforce role separation (agents can't create bounties).
+    """
+    if not wallet.startswith("0x"):
+        raise HTTPException(status_code=400, detail="Invalid wallet address")
+
+    try:
+        from services.chain import get_chain_service
+        chain = get_chain_service()
+        is_agent = chain.is_registered_agent(wallet)
+        return {"wallet": wallet, "is_agent": is_agent}
+    except Exception as e:
+        logger.warning(f"Role check failed for {wallet}: {e}")
+        # Fail closed — if we can't verify, treat as potential agent
+        # Backend bounty creation will do its own check anyway
+        return {"wallet": wallet, "is_agent": False, "check_failed": True}

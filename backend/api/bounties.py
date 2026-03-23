@@ -109,6 +109,25 @@ async def create_bounty_relay(req: CreateBountyRequest):
     if not req.sponsorAddress or len(req.sponsorAddress) != 42:
         raise HTTPException(status_code=400, detail="Invalid sponsor address")
 
+    # ── Role Enforcement: Sponsors must NOT be registered agents ──
+    # Prevents KYC circumvention by agents creating bounties as sponsors.
+    # Agents interact via the agent flow (register, enter, submit, earn).
+    # Sponsors interact via the sponsor flow (create bounty, deposit, review).
+    try:
+        chain = get_chain_service()
+        if chain.is_registered_agent(req.sponsorAddress):
+            raise HTTPException(
+                status_code=403,
+                detail="This wallet is registered as an AI Agent and cannot create bounties. "
+                       "Sponsors and agents must use separate wallets to maintain role separation."
+            )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.warning(f"Agent check failed (non-blocking): {e}")
+        # If the on-chain check fails, still allow creation but log it.
+        # We don't want infra issues to block legitimate sponsors.
+
     # Compute problem CID from content
     problem_data = {
         "title": req.title,

@@ -102,5 +102,8 @@
   "stepDetails": "详情",
   "stepRubric": "评分标准",
   "stepEconomics": "经济",
-  "stepReview": "审核"
+  "stepReview": "审核",
+  "agentBlockedTitle": "检测到 Agent 钱包",
+  "agentBlockedDesc": "此钱包已注册为 AI Agent。Agent 不能创建悬赏任务——赞助商和 Agent 必须使用不同的钱包以维护角色分离和合规性。",
+  "agentBlockedHint": "连接其他钱包以赞助商身份创建悬赏任务。"
 }

@@ -359,6 +359,17 @@ export default function CreateBountyPage() {
     if (tagVal && !tags.includes(tagVal) && tags.length < 5) { setTags([...tags, tagVal]); setTagInput(""); }
   };
 
+  /* ─── Role check: block registered agents ─── */
+  const [isAgent, setIsAgent] = useState<boolean | null>(null);
+  useEffect(() => {
+    if (!address) return;
+    // Check if this wallet is a registered agent — agents cannot create bounties
+    fetch(`${API_URL}/agents/check-role?wallet=${address}`)
+      .then(r => r.json())
+      .then(data => setIsAgent(data.is_agent === true))
+      .catch(() => setIsAgent(false)); // fail open — backend enforces anyway
+  }, [address]);
+
   /* ─── Not connected ─── */
   if (!isConnected) {
     return (
@@ -372,6 +383,31 @@ export default function CreateBountyPage() {
           <h3 className="text-xl font-semibold text-slate-900 mb-2">{t("connectTitle")}</h3>
           <p className="text-slate-500 mb-6">{t("connectDesc")}</p>
           <ConnectKitButton />
+        </div>
+      </div>
+    );
+  }
+
+  /* ─── Agent wallet blocked ─── */
+  if (isAgent === true) {
+    return (
+      <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 py-20">
+        <div className="text-center py-20 bg-white border border-red-200 rounded-2xl shadow-sm">
+          <div className="w-16 h-16 rounded-2xl bg-red-50 flex items-center justify-center mx-auto mb-6">
+            <svg className="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+            </svg>
+          </div>
+          <h3 className="text-xl font-semibold text-slate-900 mb-2">{t("agentBlockedTitle") || "Agent Wallet Detected"}</h3>
+          <p className="text-slate-500 mb-4 max-w-md mx-auto">
+            {t("agentBlockedDesc") || "This wallet is registered as an AI Agent. Agents cannot create bounties — sponsors and agents must use separate wallets to maintain role separation and compliance."}
+          </p>
+          <p className="text-xs text-slate-400">
+            {t("agentBlockedHint") || "Connect a different wallet to create bounties as a sponsor."}
+          </p>
+          <div className="mt-6">
+            <ConnectKitButton />
+          </div>
         </div>
       </div>
     );

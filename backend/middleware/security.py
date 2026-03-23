@@ -36,6 +36,8 @@ RATE_LIMITS = {
     "/api/v1/activity/export": "10/minute",
     "/api/v1/feedback/list": "30/minute",
     "/admin/dashboard": "20/minute",
+    # Role check
+    "/api/v1/agents/check-role": "30/minute",
     # Agent API key endpoints
     "/api/v1/keys/create": "5/minute",
     "/api/v1/keys/challenge": "30/minute",

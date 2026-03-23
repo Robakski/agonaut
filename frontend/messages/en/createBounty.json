@@ -102,5 +102,8 @@
   "stepDetails": "Details",
   "stepRubric": "Rubric",
   "stepEconomics": "Economics",
-  "stepReview": "Review"
+  "stepReview": "Review",
+  "agentBlockedTitle": "Agent Wallet Detected",
+  "agentBlockedDesc": "This wallet is registered as an AI Agent. Agents cannot create bounties — sponsors and agents must use separate wallets to maintain role separation and compliance.",
+  "agentBlockedHint": "Connect a different wallet to create bounties as a sponsor."
 }
