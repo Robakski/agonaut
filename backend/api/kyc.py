@@ -19,12 +19,14 @@ from typing import Optional
 
 from services.kyc import (
     get_kyc_status,
+    is_kyc_verified,
     submit_kyc,
     review_kyc,
     list_pending,
     get_submission_detail,
     get_audit_log,
 )
+from services import sumsub as sumsub_service
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/kyc", tags=["KYC"])
@@ -136,3 +138,103 @@ async def kyc_audit(wallet: str):
     if not wallet.startswith("0x") or len(wallet) != 42:
         raise HTTPException(status_code=400, detail="Invalid wallet address")
     return {"wallet": wallet, "audit_log": get_audit_log(wallet)}
+
+
+# ── Sumsub Integration ─────────────────────────────────────────────
+
+@router.get("/sumsub/configured")
+async def sumsub_check():
+    """Check if Sumsub is configured (public — no secrets exposed)."""
+    return {"configured": sumsub_service.is_configured()}
+
+
+@router.post("/sumsub/token")
+async def sumsub_access_token(request: Request):
+    """
+    Generate a Sumsub WebSDK access token for a wallet.
+    The frontend uses this to render the embedded verification widget.
+    """
+    body = await request.json()
+    wallet = body.get("wallet", "")
+
+    if not wallet or not wallet.startswith("0x") or len(wallet) != 42:
+        raise HTTPException(status_code=400, detail="Invalid wallet address")
+
+    if not sumsub_service.is_configured():
+        raise HTTPException(status_code=503, detail="KYC service not configured yet")
+
+    # Check if already verified
+    if is_kyc_verified(wallet):
+        raise HTTPException(status_code=409, detail="Wallet already KYC verified")
+
+    result = sumsub_service.generate_access_token(wallet)
+    if not result:
+        raise HTTPException(status_code=500, detail="Failed to generate verification token")
+
+    return result
+
+
+@router.post("/sumsub/webhook")
+async def sumsub_webhook(request: Request):
+    """
+    Receive verification result webhooks from Sumsub.
+    Automatically updates KYC status in our database.
+    """
+    body = await request.body()
+    signature = request.headers.get("x-payload-digest", "")
+
+    # Verify webhook signature
+    if not sumsub_service.verify_webhook_signature(body, signature):
+        logger.warning(f"Sumsub webhook signature verification failed")
+        raise HTTPException(status_code=401, detail="Invalid signature")
+
+    payload = await request.json()
+    logger.info(f"Sumsub webhook received: type={payload.get('type')}")
+
+    result = sumsub_service.parse_webhook(payload)
+    if not result:
+        return {"ok": True, "action": "ignored"}
+
+    wallet = result["wallet"]
+    status = result["status"]
+    reason = result["reason"]
+
+    # Update our KYC database
+    from services.kyc import _get_db
+    import time as _time
+
+    conn = _get_db()
+    try:
+        # Check if we have an existing submission
+        existing = conn.execute(
+            "SELECT id FROM kyc_submissions WHERE wallet = ? ORDER BY submitted_at DESC LIMIT 1",
+            (wallet.lower(),)
+        ).fetchone()
+
+        if existing:
+            # Update existing submission
+            conn.execute(
+                "UPDATE kyc_submissions SET status = ?, reviewed_at = ?, reviewed_by = ?, rejection_reason = ? WHERE id = ?",
+                (status, _time.time(), "sumsub_auto", reason, existing["id"])
+            )
+        else:
+            # Create a new submission record from Sumsub data
+            conn.execute(
+                """INSERT INTO kyc_submissions
+                   (wallet, status, full_name_enc, country, document_type,
+                    document_id_enc, email_enc, submitted_at, reviewed_at, reviewed_by, rejection_reason)
+                   VALUES (?, ?, '', '', 'sumsub', '', '', ?, ?, 'sumsub_auto', ?)""",
+                (wallet.lower(), status, _time.time(), _time.time(), reason)
+            )
+
+        # Audit log
+        conn.execute(
+            "INSERT INTO kyc_audit_log (wallet, action, detail, performed_by, performed_at) VALUES (?, ?, ?, ?, ?)",
+            (wallet.lower(), f"SUMSUB_{status}", reason or "automated", "sumsub_webhook", _time.time())
+        )
+        conn.commit()
+
+        logger.info(f"KYC status updated via Sumsub webhook: {wallet} → {status}")
+        return {"ok": True, "wallet": wallet, "status": status}
+    finally:
+        conn.close()
