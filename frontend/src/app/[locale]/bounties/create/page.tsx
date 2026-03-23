@@ -366,7 +366,7 @@ export default function CreateBountyPage() {
     fetch(`${API_URL}/kyc/status?wallet=${address}`)
       .then(r => r.json())
       .then(data => setKycStatus(data.status || "NONE"))
-      .catch(() => setKycStatus(null)); // fail open — backend enforces anyway
+      .catch(() => setKycStatus("NONE")); // fail closed — require KYC even if API unreachable
   }, [address]);
 
   /* ─── Not connected ─── */
