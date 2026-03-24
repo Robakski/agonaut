@@ -423,6 +423,33 @@ class ChainService:
             logger.warning(f"Failed to check agent registration for {wallet_address}: {e}")
             return False
 
+    def has_agent_committed(self, round_address: str, agent_address: str) -> bool:
+        """Check if an agent has committed (paid entry fee) to a specific round.
+
+        Reads the BountyRound contract to verify commitment exists.
+        """
+        try:
+            from web3 import Web3
+            BOUNTY_ROUND_ABI_MINIMAL = [
+                {
+                    "inputs": [{"name": "agent", "type": "address"}],
+                    "name": "hasCommitted",
+                    "outputs": [{"name": "", "type": "bool"}],
+                    "stateMutability": "view",
+                    "type": "function"
+                }
+            ]
+            round_contract = self.w3.eth.contract(
+                address=Web3.to_checksum_address(round_address),
+                abi=BOUNTY_ROUND_ABI_MINIMAL,
+            )
+            return round_contract.functions.hasCommitted(
+                Web3.to_checksum_address(agent_address)
+            ).call()
+        except Exception as e:
+            logger.warning(f"Failed to check agent commitment: {e}")
+            return False
+
     def build_register_agent_tx(self, owner_address: str, name: str, metadata_cid: str) -> dict:
         """Build unsigned transaction for agent registration."""
         registry = self.w3.eth.contract(

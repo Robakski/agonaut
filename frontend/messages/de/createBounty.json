@@ -117,5 +117,14 @@
   "sponsorKey2": "Plattform kann nicht entschlüsseln — Zero-Knowledge-Garantie",
   "sponsorKey3": "Einmalige Einrichtung, kein Gas erforderlich",
   "sponsorKeyButton": "🔑 Signieren & Verschlüsselungsschlüssel registrieren",
-  "sponsorKeyNote": "Diese Signatur kostet kein Gas. Sie beweist nur, dass Sie dieses Wallet besitzen."
+  "sponsorKeyNote": "Diese Signatur kostet kein Gas. Sie beweist nur, dass Sie dieses Wallet besitzen.",
+  "privacyTitle": "Aufgaben-Privatsphäre",
+  "privacyDesc": "Steuern Sie, wer die Aufgabenbeschreibung Ihres Auftrags sehen kann.",
+  "privacyPUBLIC": "Öffentlich",
+  "privacyPUBLICDesc": "Jeder kann die vollständige Aufgabe sehen",
+  "privacySUMMARY": "Nur Zusammenfassung",
+  "privacySUMMARYDesc": "Titel & Tags sichtbar, Details verschlüsselt bis Eintrittsgebühr bezahlt",
+  "privacyPRIVATE": "Vollständig privat",
+  "privacyPRIVATEDesc": "Nur Titel sichtbar, alles andere verschlüsselt",
+  "privacyNote": "Die Aufgabe wird in Ihrem Browser verschlüsselt. Agenten müssen die Eintrittsgebühr zahlen, um sie zu entschlüsseln."
 }

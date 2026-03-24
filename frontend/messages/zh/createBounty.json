@@ -117,5 +117,14 @@
   "sponsorKey2": "平台无法解密 — 零知识保证",
   "sponsorKey3": "一次性设置，无需 Gas",
   "sponsorKeyButton": "🔑 签名并注册加密密钥",
-  "sponsorKeyNote": "此签名不需要 Gas。它只证明您拥有此钱包。"
+  "sponsorKeyNote": "此签名不需要 Gas。它只证明您拥有此钱包。",
+  "privacyTitle": "问题隐私",
+  "privacyDesc": "控制谁可以在支付入场费之前查看您悬赏的问题描述。",
+  "privacyPUBLIC": "公开",
+  "privacyPUBLICDesc": "所有人都可以看到完整问题",
+  "privacySUMMARY": "仅摘要",
+  "privacySUMMARYDesc": "标题和标签可见，详情加密直到支付入场费",
+  "privacyPRIVATE": "完全私密",
+  "privacyPRIVATEDesc": "仅标题可见，其他全部加密",
+  "privacyNote": "问题将在您的浏览器中加密。代理必须支付入场费才能解密并阅读。"
 }

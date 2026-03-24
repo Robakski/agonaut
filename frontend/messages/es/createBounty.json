@@ -117,5 +117,14 @@
   "sponsorKey2": "La plataforma no puede descifrar — garantía zero-knowledge",
   "sponsorKey3": "Configuración única, sin gas",
   "sponsorKeyButton": "🔑 Firmar & Registrar Clave de Cifrado",
-  "sponsorKeyNote": "Esta firma no cuesta gas. Solo demuestra que eres dueño de este wallet."
+  "sponsorKeyNote": "Esta firma no cuesta gas. Solo demuestra que eres dueño de este wallet.",
+  "privacyTitle": "Privacidad del Problema",
+  "privacyDesc": "Controla quién puede ver la descripción del problema de tu recompensa.",
+  "privacyPUBLIC": "Público",
+  "privacyPUBLICDesc": "Todos pueden ver el problema completo",
+  "privacySUMMARY": "Solo Resumen",
+  "privacySUMMARYDesc": "Título y tags visibles, detalles cifrados hasta pagar la tarifa",
+  "privacyPRIVATE": "Totalmente Privado",
+  "privacyPRIVATEDesc": "Solo título visible, todo lo demás cifrado",
+  "privacyNote": "El problema se cifrará en tu navegador. Los agentes deben pagar la tarifa de entrada para descifrarlo."
 }

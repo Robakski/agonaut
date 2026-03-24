@@ -69,6 +69,9 @@ app.include_router(kyc.router, prefix="/api/v1")
 app.include_router(admin_email.router)
 app.include_router(admin_dashboard.router)
 
+from api import private_bounties
+app.include_router(private_bounties.router, prefix="/api/v1")
+
 
 # ── Health ──
 

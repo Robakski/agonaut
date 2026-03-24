@@ -50,6 +50,11 @@ RATE_LIMITS = {
     # Agent data endpoints (authenticated)
     "/api/v1/agent/bounties": "120/minute",
     "/api/v1/agent/me": "60/minute",
+    # Private bounty endpoints
+    "/api/v1/private-bounties/store": "5/minute",
+    "/api/v1/private-bounties/request-key": "10/minute",
+    "/api/v1/solutions/register-sponsor-key": "10/minute",
+    "/api/v1/solutions/sponsor-access": "10/minute",
 }
 
 # Endpoints that require ADMIN_KEY

@@ -187,6 +187,9 @@ export default function CreateBountyPage() {
   const [graduated, setGraduated] = useState(true);
   const [withdrawalConsent, setWithdrawalConsent] = useState(false);
 
+  // Privacy
+  const [visibility, setVisibility] = useState<"PUBLIC" | "SUMMARY" | "PRIVATE">("PUBLIC");
+
   // Preview
   const [showPreview, setShowPreview] = useState(false);
 
@@ -284,6 +287,30 @@ export default function CreateBountyPage() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ wallet: address.toLowerCase(), event: "bounty_created", detail: String(result.bountyId) }),
         }).catch(() => {});
+      }
+
+      // Step 1b: If private bounty, encrypt problem and store
+      if (visibility !== "PUBLIC" && result.roundAddress) {
+        try {
+          const { encryptProblem } = await import("@/lib/problem-encrypt");
+          const encrypted = await encryptProblem(description);
+          await fetch(`${API_URL}/private-bounties/store`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              round_address: result.roundAddress,
+              visibility,
+              title,
+              summary: description.slice(0, 200) + (description.length > 200 ? "..." : ""),
+              tags,
+              encrypted_problem: encrypted.encrypted,
+              problem_key: encrypted.key,
+              sponsor_address: address,
+            }),
+          });
+        } catch (encErr) {
+          console.warn("Failed to store encrypted problem (non-blocking):", encErr);
+        }
       }
 
       // Step 2: Deposit ETH to the round contract
@@ -843,6 +870,44 @@ export default function CreateBountyPage() {
                 </div>
               </label>
             </div>
+          </Card>
+          {/* Privacy / Visibility */}
+          <Card title={t("privacyTitle") || "Problem Privacy"}>
+            <p className="text-sm text-slate-500 mb-4">{t("privacyDesc") || "Control who can see your bounty's problem description."}</p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              {(["PUBLIC", "SUMMARY", "PRIVATE"] as const).map((v) => (
+                <button
+                  key={v}
+                  onClick={() => setVisibility(v)}
+                  className={`p-4 rounded-xl border-2 text-left transition-all ${
+                    visibility === v
+                      ? "border-slate-900 bg-slate-50"
+                      : "border-slate-200 hover:border-slate-300"
+                  }`}
+                >
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-lg">{v === "PUBLIC" ? "🌐" : v === "SUMMARY" ? "🔒" : "🔐"}</span>
+                    <span className="text-sm font-semibold text-slate-900">
+                      {t(`privacy${v}`) || v}
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-500">
+                    {t(`privacy${v}Desc`) || (
+                      v === "PUBLIC" ? "Everyone can see the full problem" :
+                      v === "SUMMARY" ? "Title & tags visible, full spec after entry fee" :
+                      "Only title visible, everything encrypted"
+                    )}
+                  </p>
+                </button>
+              ))}
+            </div>
+            {visibility !== "PUBLIC" && (
+              <div className="mt-4 bg-blue-50 border border-blue-100 rounded-xl p-3">
+                <p className="text-xs text-blue-700">
+                  {t("privacyNote") || "The problem will be encrypted in your browser. Agents must pay the entry fee before they can decrypt and read it. The platform cannot access the encrypted content."}
+                </p>
+              </div>
+            )}
           </Card>
           <Card title={t("feeSummary")}>
             <div className="space-y-3">

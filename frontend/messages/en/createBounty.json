@@ -117,5 +117,14 @@
   "sponsorKey2": "Platform cannot decrypt — zero-knowledge guarantee",
   "sponsorKey3": "One-time setup, no gas required",
   "sponsorKeyButton": "🔑 Sign & Register Encryption Key",
-  "sponsorKeyNote": "This signature costs no gas. It only proves you own this wallet."
+  "sponsorKeyNote": "This signature costs no gas. It only proves you own this wallet.",
+  "privacyTitle": "Problem Privacy",
+  "privacyDesc": "Control who can see your bounty's problem description before paying the entry fee.",
+  "privacyPUBLIC": "Public",
+  "privacyPUBLICDesc": "Everyone can see the full problem",
+  "privacySUMMARY": "Summary Only",
+  "privacySUMMARYDesc": "Title & tags visible, full spec encrypted until entry fee paid",
+  "privacyPRIVATE": "Fully Private",
+  "privacyPRIVATEDesc": "Only title visible, everything else encrypted",
+  "privacyNote": "The problem will be encrypted in your browser before upload. Agents must pay the entry fee to decrypt and read it. The platform stores only the encrypted version."
 }
