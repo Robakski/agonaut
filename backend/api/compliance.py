@@ -29,12 +29,8 @@ ADMIN_KEY = os.environ.get("ADMIN_KEY", "")
 
 def _require_admin(request: Request):
     """Check admin auth — session cookie or API key."""
-    from api.admin_dashboard import _sessions, SESSION_MAX_AGE
-    sid = request.cookies.get("admin_session")
-    if sid and sid in _sessions and (time.time() - _sessions[sid]) < SESSION_MAX_AGE:
-        return True
-    key = request.headers.get("X-Admin-Key", "")
-    if key and key == ADMIN_KEY:
+    from api.admin_dashboard import _check_session_or_key
+    if _check_session_or_key(request):
         return True
     raise HTTPException(status_code=401, detail="Unauthorized")
 
@@ -224,6 +220,18 @@ async def record_tx(req: RecordTxRequest, request: Request):
     if req.amount_eth < 0 or req.amount_eth > 1000:
         raise HTTPException(status_code=400, detail="Invalid amount")
 
+    # SECURITY (B2): Mark records without tx_hash as unverified.
+    # Future enhancement: verify tx_hash on-chain before recording.
+    verified = False
+    meta = dict(req.metadata) if req.metadata else {}
+    if req.tx_hash and len(req.tx_hash) == 66 and req.tx_hash.startswith("0x"):
+        meta["has_tx_hash"] = True
+        # TODO: On-chain verification — call chain service to confirm tx exists,
+        # matches wallet, and amount. Until then, tx_hash presence is a soft signal.
+    else:
+        meta["unverified"] = True
+        meta["warning"] = "No tx_hash provided — record is unverified"
+
     from services.compliance_monitor import record_transaction
     result = record_transaction(
         wallet=req.wallet,
@@ -232,6 +240,6 @@ async def record_tx(req: RecordTxRequest, request: Request):
         tx_hash=req.tx_hash,
         chain_id=84532,  # TODO: make configurable for mainnet
         round_address=req.round_address,
-        metadata=req.metadata,
+        metadata=meta,
     )
-    return {"ok": True, "risk_flags": result.get("risk_flags", [])}
+    return {"ok": True, "risk_flags": result.get("risk_flags", []), "verified": verified}

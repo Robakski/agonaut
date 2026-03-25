@@ -9,7 +9,7 @@ import os
 import secrets
 import time
 import logging
-from collections import defaultdict
+
 from fastapi import APIRouter, Query, HTTPException, Request, Response
 from fastapi.responses import HTMLResponse, RedirectResponse
 from pydantic import BaseModel
@@ -20,66 +20,203 @@ router = APIRouter(tags=["admin"])
 ADMIN_KEY = os.environ.get("ADMIN_KEY", "")
 ADMIN_PASSWORD = os.environ.get("ADMIN_DASHBOARD_PASSWORD", "")
 
-# Session store — in-memory (fine for single admin)
-_sessions: dict[str, float] = {}
 SESSION_MAX_AGE = 86400  # 24 hours
-
-# ── Brute-force protection ──────────────────────────────────
-_login_attempts: dict[str, list[float]] = defaultdict(list)
 MAX_ATTEMPTS = 10
 LOCKOUT_SECONDS = 3600  # 1 hour
-
-# ── CSRF tokens ─────────────────────────────────────────────
-_csrf_tokens: dict[str, float] = {}
 CSRF_MAX_AGE = 600  # 10 minutes
 
-# ── Audit log (in-memory, last 200 entries) ─────────────────
-_audit_log: list[dict] = []
+# ═══════════════════════════════════════════════════════════════
+# Persistent admin state — SQLite-backed (survives restarts)
+# Fixes B4/B7/B10: sessions, brute-force counters, audit log
+# ═══════════════════════════════════════════════════════════════
+import sqlite3
+from pathlib import Path
+
+_ADMIN_DB = Path("/opt/agonaut-api/data/admin.db")
+
+def _get_admin_db():
+    _ADMIN_DB.parent.mkdir(parents=True, exist_ok=True)
+    conn = sqlite3.connect(str(_ADMIN_DB), timeout=10)
+    conn.row_factory = sqlite3.Row
+    conn.execute("PRAGMA journal_mode=WAL")
+    conn.execute("PRAGMA busy_timeout=5000")
+    return conn
+
+def _init_admin_db():
+    conn = _get_admin_db()
+    try:
+        conn.executescript("""
+        CREATE TABLE IF NOT EXISTS sessions (
+            token TEXT PRIMARY KEY,
+            created_at REAL NOT NULL
+        );
+        CREATE TABLE IF NOT EXISTS login_attempts (
+            ip TEXT NOT NULL,
+            attempted_at REAL NOT NULL
+        );
+        CREATE INDEX IF NOT EXISTS idx_attempts_ip ON login_attempts(ip);
+        CREATE TABLE IF NOT EXISTS csrf_tokens (
+            token TEXT PRIMARY KEY,
+            created_at REAL NOT NULL
+        );
+        CREATE TABLE IF NOT EXISTS admin_audit (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            ip TEXT NOT NULL,
+            action TEXT NOT NULL,
+            success INTEGER NOT NULL,
+            detail TEXT DEFAULT '',
+            created_at REAL NOT NULL
+        );
+        CREATE INDEX IF NOT EXISTS idx_audit_created ON admin_audit(created_at);
+        """)
+        conn.commit()
+    finally:
+        conn.close()
+
+_init_admin_db()
+
+# ── Persistent session management ────────────────────────────
+# Keep in-memory dicts as fast cache, backed by SQLite for persistence
+
+_sessions: dict[str, float] = {}
+_csrf_tokens: dict[str, float] = {}
+
+def _load_sessions():
+    """Load valid sessions from DB on startup."""
+    conn = _get_admin_db()
+    try:
+        cutoff = time.time() - SESSION_MAX_AGE
+        conn.execute("DELETE FROM sessions WHERE created_at < ?", (cutoff,))
+        conn.commit()
+        for row in conn.execute("SELECT token, created_at FROM sessions"):
+            _sessions[row["token"]] = row["created_at"]
+    finally:
+        conn.close()
+
+_load_sessions()
+
+def _save_session(token: str, created_at: float):
+    _sessions[token] = created_at
+    conn = _get_admin_db()
+    try:
+        conn.execute("INSERT OR REPLACE INTO sessions (token, created_at) VALUES (?, ?)", (token, created_at))
+        conn.commit()
+    finally:
+        conn.close()
+
+def _delete_session(token: str):
+    _sessions.pop(token, None)
+    conn = _get_admin_db()
+    try:
+        conn.execute("DELETE FROM sessions WHERE token = ?", (token,))
+        conn.commit()
+    finally:
+        conn.close()
+
+# ── Persistent brute-force protection ────────────────────────
+
+def _record_login_attempt(ip: str):
+    conn = _get_admin_db()
+    try:
+        conn.execute("INSERT INTO login_attempts (ip, attempted_at) VALUES (?, ?)", (ip, time.time()))
+        # Clean old attempts
+        cutoff = time.time() - LOCKOUT_SECONDS
+        conn.execute("DELETE FROM login_attempts WHERE attempted_at < ?", (cutoff,))
+        conn.commit()
+    finally:
+        conn.close()
+
+def _get_attempt_count(ip: str) -> int:
+    conn = _get_admin_db()
+    try:
+        cutoff = time.time() - LOCKOUT_SECONDS
+        row = conn.execute(
+            "SELECT COUNT(*) as cnt FROM login_attempts WHERE ip = ? AND attempted_at > ?",
+            (ip, cutoff)
+        ).fetchone()
+        return row["cnt"]
+    finally:
+        conn.close()
+
+def _is_locked_out(ip: str) -> bool:
+    return _get_attempt_count(ip) >= MAX_ATTEMPTS
+
+# ── Persistent CSRF tokens ──────────────────────────────────
+
+def _save_csrf(token: str):
+    _csrf_tokens[token] = time.time()
+    conn = _get_admin_db()
+    try:
+        conn.execute("INSERT OR REPLACE INTO csrf_tokens (token, created_at) VALUES (?, ?)", (token, time.time()))
+        # Clean expired
+        cutoff = time.time() - CSRF_MAX_AGE
+        conn.execute("DELETE FROM csrf_tokens WHERE created_at < ?", (cutoff,))
+        conn.commit()
+    finally:
+        conn.close()
+
+def _verify_csrf(token: str) -> bool:
+    # Check memory first
+    if token in _csrf_tokens and (time.time() - _csrf_tokens[token]) < CSRF_MAX_AGE:
+        del _csrf_tokens[token]
+        conn = _get_admin_db()
+        try:
+            conn.execute("DELETE FROM csrf_tokens WHERE token = ?", (token,))
+            conn.commit()
+        finally:
+            conn.close()
+        return True
+    # Check DB (in case of restart)
+    conn = _get_admin_db()
+    try:
+        row = conn.execute("SELECT created_at FROM csrf_tokens WHERE token = ?", (token,)).fetchone()
+        if row and (time.time() - row["created_at"]) < CSRF_MAX_AGE:
+            conn.execute("DELETE FROM csrf_tokens WHERE token = ?", (token,))
+            conn.commit()
+            return True
+    finally:
+        conn.close()
+    return False
+
+# ── Persistent audit log ────────────────────────────────────
+_audit_log: list[dict] = []  # Keep in-memory for fast dashboard access
 MAX_AUDIT_ENTRIES = 200
 
 
 def _audit(ip: str, action: str, success: bool, detail: str = ""):
-    """Log an admin action."""
-    entry = {"time": time.time(), "ip": ip, "action": action, "success": success, "detail": detail}
+    """Log an admin action to both memory and persistent DB."""
+    now = time.time()
+    entry = {"time": now, "ip": ip, "action": action, "success": success, "detail": detail}
     _audit_log.append(entry)
     if len(_audit_log) > MAX_AUDIT_ENTRIES:
         _audit_log.pop(0)
+    # Persist to SQLite
+    try:
+        conn = _get_admin_db()
+        try:
+            conn.execute(
+                "INSERT INTO admin_audit (ip, action, success, detail, created_at) VALUES (?, ?, ?, ?, ?)",
+                (ip, action, 1 if success else 0, detail, now)
+            )
+            conn.commit()
+        finally:
+            conn.close()
+    except Exception:
+        pass  # Don't let audit logging break admin operations
     level = logging.INFO if success else logging.WARNING
     logger.log(level, f"ADMIN AUDIT: {action} from {ip} — {'OK' if success else 'FAILED'} {detail}")
 
 
-def _is_locked_out(ip: str) -> bool:
-    """Check if IP is locked out from login attempts."""
-    now = time.time()
-    # Clean old attempts
-    _login_attempts[ip] = [t for t in _login_attempts[ip] if now - t < LOCKOUT_SECONDS]
-    return len(_login_attempts[ip]) >= MAX_ATTEMPTS
-
-
 def _record_attempt(ip: str):
-    """Record a failed login attempt."""
-    _login_attempts[ip].append(time.time())
+    """Record a failed login attempt (persistent)."""
+    _record_login_attempt(ip)
 
 
 def _generate_csrf() -> str:
-    """Generate a CSRF token."""
+    """Generate a CSRF token (persistent)."""
     token = secrets.token_urlsafe(32)
-    _csrf_tokens[token] = time.time()
-    # Clean expired tokens
-    now = time.time()
-    expired = [k for k, v in _csrf_tokens.items() if now - v > CSRF_MAX_AGE]
-    for k in expired:
-        del _csrf_tokens[k]
+    _save_csrf(token)
     return token
-
-
-def _verify_csrf(token: str) -> bool:
-    """Verify and consume a CSRF token."""
-    if not token or token not in _csrf_tokens:
-        return False
-    age = time.time() - _csrf_tokens[token]
-    del _csrf_tokens[token]
-    return age < CSRF_MAX_AGE
 
 
 def _check_session(request: Request) -> bool:
@@ -165,8 +302,7 @@ async def login_submit(request: Request):
     # Check lockout
     if _is_locked_out(ip):
         _audit(ip, "login", False, "locked out")
-        remaining = int(LOCKOUT_SECONDS - (time.time() - min(_login_attempts[ip])))
-        html = LOGIN_HTML.replace("__ERROR__", f"Too many attempts. Try again in {remaining // 60} minutes.").replace("display:none", "display:block").replace("__CSRF__", _generate_csrf())
+        html = LOGIN_HTML.replace("__ERROR__", f"Too many attempts. Try again in {LOCKOUT_SECONDS // 60} minutes.").replace("display:none", "display:block").replace("__CSRF__", _generate_csrf())
         return HTMLResponse(html, status_code=429)
 
     # Verify CSRF
@@ -179,7 +315,7 @@ async def login_submit(request: Request):
     target = ADMIN_PASSWORD if ADMIN_PASSWORD else ADMIN_KEY
     if not target or password != target:
         _record_attempt(ip)
-        remaining_attempts = MAX_ATTEMPTS - len(_login_attempts[ip])
+        remaining_attempts = MAX_ATTEMPTS - _get_attempt_count(ip)
         _audit(ip, "login", False, f"{remaining_attempts} attempts remaining")
         msg = f"Wrong password. {remaining_attempts} attempts remaining." if remaining_attempts > 0 else "Account locked. Try again in 1 hour."
         html = LOGIN_HTML.replace("__ERROR__", msg).replace("display:none", "display:block").replace("__CSRF__", _generate_csrf())
@@ -188,10 +324,16 @@ async def login_submit(request: Request):
     # Success — create session
     _audit(ip, "login", True)
     # Clear failed attempts on success
-    _login_attempts.pop(ip, None)
+    try:
+        conn = _get_admin_db()
+        conn.execute("DELETE FROM login_attempts WHERE ip = ?", (ip,))
+        conn.commit()
+        conn.close()
+    except Exception:
+        pass
 
     token = secrets.token_urlsafe(48)
-    _sessions[token] = time.time()
+    _save_session(token, time.time())
 
     response = RedirectResponse("/admin/dashboard", status_code=302)
     response.set_cookie(
@@ -209,8 +351,8 @@ async def login_submit(request: Request):
 async def logout(request: Request):
     """Clear session and redirect to login."""
     token = request.cookies.get("agonaut_admin_session")
-    if token and token in _sessions:
-        del _sessions[token]
+    if token:
+        _delete_session(token)
     response = RedirectResponse("/admin/login", status_code=302)
     response.delete_cookie("agonaut_admin_session")
     return response
@@ -559,8 +701,8 @@ function _renderTable(wallets){
   const badge=(r)=>`<span class="badge badge-${r}">${r}</span>`;
   const short=(a)=>a?a.slice(0,6)+'…'+a.slice(-4):'';
 
-  document.getElementById('walletTable').innerHTML=wallets.map(w=>`<tr onclick="showDetail('${w.address}')" style="cursor:pointer">
-    <td class="mono">${short(w.address)}${w.ens_name?' <span style="color:var(--accent)">'+w.ens_name+'</span>':''}</td>
+  document.getElementById('walletTable').innerHTML=wallets.map(w=>`<tr onclick="showDetail('${escH(w.address)}')" style="cursor:pointer">
+    <td class="mono">${short(escH(w.address))}${w.ens_name?' <span style="color:var(--accent)">'+escH(w.ens_name)+'</span>':''}</td>
     <td>${badge(w.role)}</td>
     <td style="font-size:11px;color:var(--muted)">${fmt(w.first_seen)}</td>
     <td style="font-weight:600">${w.total_sessions}</td>
@@ -583,8 +725,8 @@ async function showDetail(addr){
 
   let html=`
     <h2 style="margin-bottom:16px">Wallet Detail</h2>
-    <div class="mono" style="font-size:13px;margin-bottom:16px;word-break:break-all">${w.address}</div>
-    ${w.ens_name?'<div style="color:var(--accent);font-weight:600;margin-bottom:16px">'+w.ens_name+'</div>':''}
+    <div class="mono" style="font-size:13px;margin-bottom:16px;word-break:break-all">${escH(w.address)}</div>
+    ${w.ens_name?'<div style="color:var(--accent);font-weight:600;margin-bottom:16px">'+escH(w.ens_name)+'</div>':''}
     <div class="stats" style="grid-template-columns:1fr 1fr;margin-bottom:20px">
       <div class="stat"><div class="val">${w.role}</div><div class="label">Role</div></div>
       <div class="stat"><div class="val">${w.total_sessions}</div><div class="label">Sessions</div></div>

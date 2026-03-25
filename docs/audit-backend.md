@@ -67,3 +67,38 @@ Generated: 2026-03-25 by Brose (manual audit)
 - **File:** `api/admin_dashboard.py:45`
 - **Description:** The admin audit log (last 200 entries) is in-memory. Lost on restart. The compliance audit log in SQLite is separate and persistent, but admin actions (login, logout) only go to the in-memory log.
 - **Fix:** Route all admin audit events to the persistent compliance_audit_log table.
+
+## Fixes Applied (2026-03-25)
+
+### B1 ✅ FIXED — Fail closed on chain verification error
+- `api/private_bounties.py:141` — now raises 503 instead of continuing
+
+### B2 ⚠️ MITIGATED — Unverified records flagged
+- Records without valid tx_hash marked as `unverified` in metadata
+- Rate limited to 30/min
+- TODO: On-chain tx verification before mainnet
+
+### B3 ✅ FIXED — Timestamp required in signed messages
+- Missing/invalid timestamp now raises 403
+
+### B4 ✅ FIXED — Sessions persisted to SQLite
+- `admin.db` stores sessions, login attempts, CSRF tokens, audit log
+- Survives service restarts
+
+### B5 ✅ FIXED — Compliance auth uses _check_session_or_key
+- Also fixed cookie name bug (was `admin_session`, should be `agonaut_admin_session`)
+
+### B6 ✅ SAFE — Sponsor key can't be forged (ECDSA recovery)
+
+### B7 ✅ FIXED — Login attempt counters persisted to SQLite
+- Brute-force protection survives restarts
+
+### B8 ⚠️ DOCUMENTED — KYC key requires secure backup
+- Key loss = permanent data loss. Must backup outside .env.
+- TODO: Envelope encryption before mainnet
+
+### B9 ✅ FIXED — XSS escaping on wallet addresses in dashboard
+- All wallet address + ENS name rendering now uses escH()
+
+### B10 ✅ FIXED — Admin audit log persisted to SQLite
+- `admin_audit` table in admin.db
