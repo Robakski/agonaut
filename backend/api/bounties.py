@@ -201,6 +201,21 @@ async def create_bounty_relay(req: CreateBountyRequest):
             rubric_cid=ipfs_cid,
         )
 
+        # ── Compliance monitoring ──
+        try:
+            from services.compliance_monitor import record_transaction
+            record_transaction(
+                wallet=req.sponsorAddress,
+                tx_type="bounty_deposit",
+                amount_eth=float(req.bountyEth),
+                tx_hash=result.create_tx_hash,
+                chain_id=84532,  # Base Sepolia; update for mainnet
+                round_address=result.round_address,
+                metadata={"bounty_id": result.bounty_id, "title": req.title},
+            )
+        except Exception as e:
+            logger.warning(f"Compliance recording failed (non-blocking): {e}")
+
         logger.info(
             f"Bounty created: id={result.bounty_id}, "
             f"round={result.round_address}, "

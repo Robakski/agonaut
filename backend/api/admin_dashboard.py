@@ -381,6 +381,31 @@ DASHBOARD_HTML = r"""<!DOCTYPE html>
   <div id="walletCount" style="margin-top:8px;font-size:11px;color:var(--muted)"></div>
 </div>
 
+<!-- Compliance Monitoring -->
+<div class="card">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+    <h2 style="margin:0">🛡️ Compliance Monitor <span id="alertBadge" style="font-size:11px;background:#fef2f2;color:#dc2626;padding:2px 8px;border-radius:6px;font-weight:700;margin-left:8px;display:none"></span></h2>
+    <button class="refresh-btn" onclick="loadCompliance()">↻ Refresh</button>
+  </div>
+  <!-- Stats Row -->
+  <div id="complianceStats" style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px"></div>
+  <!-- Alerts -->
+  <div style="margin-bottom:12px">
+    <h3 style="font-size:13px;font-weight:600;margin-bottom:8px">⚠️ Open Alerts</h3>
+    <div id="complianceAlerts" style="max-height:200px;overflow-y:auto"></div>
+  </div>
+  <!-- Pending Reviews -->
+  <div style="margin-bottom:12px">
+    <h3 style="font-size:13px;font-weight:600;margin-bottom:8px">🔍 Pending Reviews (Enhanced Due Diligence)</h3>
+    <div id="complianceReviews" style="max-height:200px;overflow-y:auto"></div>
+  </div>
+  <!-- High Risk -->
+  <div>
+    <h3 style="font-size:13px;font-weight:600;margin-bottom:8px">🚨 High Risk Wallets</h3>
+    <div id="complianceHighRisk" style="max-height:200px;overflow-y:auto"></div>
+  </div>
+</div>
+
 <!-- Email Inbox -->
 <div class="card">
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
@@ -795,7 +820,118 @@ async function sendComposedEmail(){
 loadAll();
 loadFeedback();
 loadEmails();
-setInterval(()=>{loadAll();loadFeedback();loadEmails()},60000);
+loadCompliance();
+setInterval(()=>{loadAll();loadFeedback();loadEmails();loadCompliance()},60000);
+
+// ── Compliance Functions ──────────────────────────────────
+async function loadCompliance(){
+  try{
+    const [stats,alerts,reviews,highRisk]=await Promise.all([
+      fetch('/api/v1/compliance/monitor/stats',{credentials:'include'}).then(r=>r.json()),
+      fetch('/api/v1/compliance/monitor/alerts?acknowledged=false&limit=20',{credentials:'include'}).then(r=>r.json()),
+      fetch('/api/v1/compliance/monitor/reviews?limit=20',{credentials:'include'}).then(r=>r.json()),
+      fetch('/api/v1/compliance/monitor/high-risk?limit=20',{credentials:'include'}).then(r=>r.json()),
+    ]);
+    renderComplianceStats(stats);
+    renderAlerts(alerts);
+    renderReviews(reviews);
+    renderHighRisk(highRisk);
+  }catch(e){
+    document.getElementById('complianceStats').innerHTML='<div style="grid-column:span 4;padding:12px;color:var(--muted);font-size:12px">Compliance data unavailable</div>';
+  }
+}
+
+function renderComplianceStats(s){
+  const badge=document.getElementById('alertBadge');
+  if(s.open_alerts>0){badge.textContent=s.open_alerts+' alert'+(s.open_alerts>1?'s':'');badge.style.display='inline'}
+  else badge.style.display='none';
+  const risk=s.risk_distribution||{};
+  document.getElementById('complianceStats').innerHTML=`
+    <div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center">
+      <div style="font-size:11px;color:var(--muted)">Total Volume</div>
+      <div style="font-size:18px;font-weight:700">${s.total_volume_eth.toFixed(4)} ETH</div>
+    </div>
+    <div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center">
+      <div style="font-size:11px;color:var(--muted)">24h Volume</div>
+      <div style="font-size:18px;font-weight:700">${s.volume_24h_eth.toFixed(4)} ETH</div>
+    </div>
+    <div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center">
+      <div style="font-size:11px;color:var(--muted)">Transactions</div>
+      <div style="font-size:18px;font-weight:700">${s.total_transactions}</div>
+      <div style="font-size:10px;color:var(--muted)">${s.transactions_24h} in 24h</div>
+    </div>
+    <div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center">
+      <div style="font-size:11px;color:var(--muted)">Risk Distribution</div>
+      <div style="font-size:10px;margin-top:4px">
+        <span style="color:#16a34a">● LOW ${risk.LOW||0}</span>
+        <span style="color:#d97706;margin-left:6px">● MED ${risk.MEDIUM||0}</span>
+        <span style="color:#dc2626;margin-left:6px">● HIGH ${risk.HIGH||0}</span>
+        ${(risk.CRITICAL||0)>0?`<span style="color:#7c2d12;margin-left:6px">● CRIT ${risk.CRITICAL}</span>`:''}
+      </div>
+    </div>`;
+}
+
+function riskBadge(level){
+  const colors={LOW:'#16a34a',MEDIUM:'#d97706',HIGH:'#dc2626',CRITICAL:'#7c2d12'};
+  return `<span style="color:${colors[level]||'#64748b'};font-weight:600;font-size:11px">${level}</span>`;
+}
+
+function renderAlerts(alerts){
+  const el=document.getElementById('complianceAlerts');
+  if(!alerts||!alerts.length){el.innerHTML='<div style="padding:8px;color:var(--muted);font-size:12px">No open alerts ✅</div>';return}
+  el.innerHTML=alerts.map(a=>`
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:8px;border-bottom:1px solid #f1f5f9;font-size:12px">
+      <div>
+        ${riskBadge(a.severity)} <span style="font-weight:500">${escH(a.alert_type)}</span>
+        <span style="color:var(--muted);margin-left:6px">${escH(a.wallet?.slice(0,10)+'...')}</span>
+        <div style="color:var(--muted);font-size:11px;margin-top:2px">${escH(a.description)}</div>
+      </div>
+      <button onclick="ackAlert(${a.id})" style="font-size:10px;padding:2px 8px;border:1px solid var(--border);border-radius:4px;cursor:pointer;background:var(--card);white-space:nowrap">✓ Ack</button>
+    </div>
+  `).join('');
+}
+
+function renderReviews(reviews){
+  const el=document.getElementById('complianceReviews');
+  if(!reviews||!reviews.length){el.innerHTML='<div style="padding:8px;color:var(--muted);font-size:12px">No pending reviews ✅</div>';return}
+  el.innerHTML=reviews.map(r=>`
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:8px;border-bottom:1px solid #f1f5f9;font-size:12px">
+      <div>
+        ${riskBadge(r.risk_level)} <code style="font-size:11px">${escH(r.wallet)}</code>
+        <div style="color:var(--muted);font-size:11px">Vol: ${r.total_volume_eth.toFixed(4)} ETH · ${r.total_tx_count} txs · KYC: ${r.kyc_status||'NONE'}</div>
+        <div style="color:var(--muted);font-size:10px">Flags: ${(r.flags||[]).join(', ')||'none'}</div>
+      </div>
+      <button onclick="completeReview('${r.wallet}')" style="font-size:10px;padding:2px 8px;border:1px solid var(--border);border-radius:4px;cursor:pointer;background:var(--card);white-space:nowrap">✓ Reviewed</button>
+    </div>
+  `).join('');
+}
+
+function renderHighRisk(wallets){
+  const el=document.getElementById('complianceHighRisk');
+  if(!wallets||!wallets.length){el.innerHTML='<div style="padding:8px;color:var(--muted);font-size:12px">No high-risk wallets ✅</div>';return}
+  el.innerHTML=wallets.map(w=>`
+    <div style="padding:8px;border-bottom:1px solid #f1f5f9;font-size:12px">
+      ${riskBadge(w.risk_level)} <code style="font-size:11px">${escH(w.wallet)}</code>
+      <span style="color:var(--muted);margin-left:8px">${w.total_volume_eth.toFixed(4)} ETH · ${w.total_tx_count} txs</span>
+      <span style="color:var(--muted);margin-left:8px">KYC: ${w.kyc_status||'NONE'}</span>
+      ${w.reviewed_at?'<span style="color:#16a34a;margin-left:8px;font-size:10px">✓ Reviewed</span>':''}
+    </div>
+  `).join('');
+}
+
+function escH(s){return s?String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'):''}
+
+async function ackAlert(id){
+  await fetch('/api/v1/compliance/monitor/alerts/acknowledge',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({alert_id:id})});
+  loadCompliance();
+}
+
+async function completeReview(wallet){
+  const notes=prompt('Review notes (optional):','');
+  if(notes===null)return;
+  await fetch('/api/v1/compliance/monitor/reviews/complete',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({wallet,notes})});
+  loadCompliance();
+}
 
 // Keyboard: Escape closes panels
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeDetail();closeEmailPanel();closeCompose()}});

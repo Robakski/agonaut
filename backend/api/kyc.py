@@ -234,6 +234,13 @@ async def sumsub_webhook(request: Request):
         )
         conn.commit()
 
+        # Update compliance monitor with KYC status
+        try:
+            from services.compliance_monitor import update_kyc_link
+            update_kyc_link(wallet.lower(), status, sumsub_id=payload.get("applicantId", ""))
+        except Exception as e:
+            logger.warning(f"Compliance KYC link failed (non-blocking): {e}")
+
         logger.info(f"KYC status updated via Sumsub webhook: {wallet} → {status}")
         return {"ok": True, "wallet": wallet, "status": status}
     finally:

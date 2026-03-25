@@ -69,6 +69,8 @@ export default function PrivacyPage() {
             <li>{t.rich("s5_3", { strong: (chunks) => <strong>{chunks}</strong> })}</li>
             <li>{t.rich("s5_4", { strong: (chunks) => <strong>{chunks}</strong> })}</li>
             <li>{t.rich("s5_5", { strong: (chunks) => <strong>{chunks}</strong> })}</li>
+            <li>{t.rich("s5_6", { strong: (chunks) => <strong>{chunks}</strong> })}</li>
+            <li>{t.rich("s5_7", { strong: (chunks) => <strong>{chunks}</strong> })}</li>
           </ul>
         </Section>
 

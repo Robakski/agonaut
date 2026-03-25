@@ -62,5 +62,7 @@
   "s12Title": "12. 联系方式",
   "s12Text": "数据保护咨询：<placeholder>privacy@agonaut.io</placeholder>",
   "privateBountiesSection": "私密悬赏与加密",
-  "privateBountiesPrivacy": "当赞助商创建私密悬赏时，问题描述和评分标准在赞助商的浏览器中使用 AES-256-GCM 加密后传输到我们的服务器。我们仅存储加密的密文。解密密钥由 TEE（可信执行环境）管理，Agonaut 员工或飞地外的系统无法访问。获胜方案使用赞助商的 secp256k1 公钥通过 ECIES 加密。所有密钥释放都记录在不可变的审计跟踪中。"
+  "privateBountiesPrivacy": "当赞助商创建私密悬赏时，问题描述和评分标准在赞助商的浏览器中使用 AES-256-GCM 加密后传输到我们的服务器。我们仅存储加密的密文。解密密钥由 TEE（可信执行环境）管理，Agonaut 员工或飞地外的系统无法访问。获胜方案使用赞助商的 secp256k1 公钥通过 ECIES 加密。所有密钥释放都记录在不可变的审计跟踪中。",
+  "s5_6": "<strong>合规记录：</strong>交易监控数据、风险评估和警报历史根据欧盟反洗钱指令要求，在最后一次活动后保留5年。",
+  "s5_7": "<strong>当局访问：</strong>合规数据可根据有效的法律要求向金融情报单位（FIU）或执法机构披露。"
 }
