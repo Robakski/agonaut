@@ -18,13 +18,31 @@ log = logging.getLogger("solutions")
 
 SCORING_SERVICE_URL = "http://127.0.0.1:8001"
 SCORING_API_KEY = os.environ.get("SCORING_API_KEY", "")
+SCORING_HMAC_SECRET = os.environ.get("SCORING_HMAC_SECRET", "")
 
 
-def _scoring_headers() -> dict:
-    """Auth headers for scoring service communication."""
+def _scoring_headers(body: bytes = b"") -> dict:
+    """Auth headers for scoring service communication.
+
+    Uses HMAC-SHA256 signing (preferred) with API key fallback.
+    HMAC includes timestamp for replay protection.
+    """
+    import hmac
+    import hashlib
+    import time
+
     headers = {}
-    if SCORING_API_KEY:
+
+    # Prefer HMAC signing (replay-resistant)
+    if SCORING_HMAC_SECRET:
+        timestamp = str(int(time.time()))
+        msg = timestamp.encode() + body
+        signature = hmac.new(SCORING_HMAC_SECRET.encode(), msg, hashlib.sha256).hexdigest()
+        headers["X-Scoring-Timestamp"] = timestamp
+        headers["X-Scoring-Signature"] = signature
+    elif SCORING_API_KEY:
         headers["X-Scoring-Key"] = SCORING_API_KEY
+
     return headers
 
 
@@ -107,17 +125,19 @@ async def submit_solution(req: SubmitSolutionRequest):
 
     # Forward to scoring service for storage
     try:
+        import json as _json
         async with httpx.AsyncClient() as client:
+            body = _json.dumps({
+                "round_address": req.round_address,
+                "agent_id": req.agent_id,
+                "encrypted_solution": req.encrypted_solution,
+                "commit_hash": req.commit_hash,
+            }).encode()
             resp = await client.post(
                 f"{SCORING_SERVICE_URL}/score/receive-solution",
-                json={
-                    "round_address": req.round_address,
-                    "agent_id": req.agent_id,
-                    "encrypted_solution": req.encrypted_solution,
-                    "commit_hash": req.commit_hash,
-                },
+                content=body,
                 timeout=10.0,
-                headers=_scoring_headers(),
+                headers={**_scoring_headers(body), "Content-Type": "application/json"},
             )
             if resp.status_code >= 400:
                 detail = resp.json().get("detail", resp.text)
@@ -220,15 +240,17 @@ async def trigger_scoring(round_address: str):
                     pass
 
             # Solutions already stored in scoring service via receive-solution endpoint
+            import json as _json
+            trigger_body = _json.dumps({
+                "round_address": round_address,
+                "problem_text": problem_text,
+                "solutions": [],
+            }).encode()
             resp = await client.post(
                 f"{SCORING_SERVICE_URL}/score/round",
-                json={
-                    "round_address": round_address,
-                    "problem_text": problem_text,
-                    "solutions": [],  # scoring service has them from receive-solution
-                },
+                content=trigger_body,
                 timeout=10.0,
-                headers=_scoring_headers(),
+                headers={**_scoring_headers(trigger_body), "Content-Type": "application/json"},
             )
             return resp.json()
     except httpx.ConnectError:

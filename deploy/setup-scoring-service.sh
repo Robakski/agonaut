@@ -54,7 +54,10 @@ CHAIN_ID=84532
 SCORING_ORACLE=0xb7597d71e00cd1c45c51dd093ce0d3dbd5b86e91
 
 # Scorer wallet (has SCORER_ROLE on ScoringOracle)
-# SECURITY: Never commit private keys. Set manually during deployment:
+# ⚠️  CRITICAL: The testnet scorer key (0x5c7d...) was committed in git history (f3104a8).
+#     That key is BURNED — DO NOT use it on mainnet. Generate a fresh wallet:
+#       cast wallet new
+#     Then grant SCORER_ROLE on the new ScoringOracle deployment.
 #   read -sp "Scorer private key: " SCORER_PRIVATE_KEY
 SCORER_PRIVATE_KEY=
 SCORER_ADDRESS=
@@ -68,6 +71,11 @@ SCORING_MODEL=deepseek/deepseek-chat-v3-0324
 
 # Solution decryption key (generated per round, passed dynamically)
 SOLUTION_KEY=
+
+# HMAC authentication between backend (port 8000) and scoring service (port 8001)
+# Generate: python3 -c "import secrets; print(secrets.token_hex(32))"
+# Must match SCORING_HMAC_SECRET in /opt/agonaut-api/.env
+SCORING_HMAC_SECRET=
 ENVEOF
     chmod 600 "$SERVICE_DIR/.env"
     chown "$USER:$GROUP" "$SERVICE_DIR/.env"

@@ -54,24 +54,69 @@ app = FastAPI(
 
 SCORING_API_KEY = os.environ.get("SCORING_API_KEY", "")
 
+# ── Request signing (HMAC-SHA256) ──
+# The backend signs requests with a shared secret. This prevents:
+# 1. Unauthorized scoring requests even from localhost
+# 2. Request tampering in transit
+# 3. Replay attacks (timestamp in signature)
+import hmac as _hmac
+import time as _time
+
+SCORING_HMAC_SECRET = os.environ.get("SCORING_HMAC_SECRET", "")
+HMAC_MAX_AGE_SECONDS = 300  # 5-minute replay window
+
+
+def _verify_hmac(request_body: bytes, timestamp: str, signature: str) -> bool:
+    """Verify HMAC-SHA256 signature: HMAC(secret, timestamp + body)."""
+    if not SCORING_HMAC_SECRET:
+        return False
+    try:
+        ts = int(timestamp)
+        if abs(_time.time() - ts) > HMAC_MAX_AGE_SECONDS:
+            return False  # Expired — replay protection
+    except (ValueError, TypeError):
+        return False
+    msg = f"{timestamp}".encode() + request_body
+    expected = _hmac.new(SCORING_HMAC_SECRET.encode(), msg, hashlib.sha256).hexdigest()
+    return _hmac.compare_digest(expected, signature)
+
 
 class ScoringAuthMiddleware(BaseHTTPMiddleware):
-    """Require API key for all endpoints except /health."""
+    """Require HMAC signature OR API key for all endpoints except /health.
+
+    Priority:
+    1. HMAC signature (X-Scoring-Timestamp + X-Scoring-Signature) — preferred
+    2. API key (X-Scoring-Key) — fallback
+    3. Reject
+    """
 
     async def dispatch(self, request: Request, call_next):
         if request.url.path == "/health":
             return await call_next(request)
 
-        if not SCORING_API_KEY:
-            log.warning("SCORING_API_KEY not set — scoring service is UNPROTECTED")
+        # Require at least one auth method configured
+        if not SCORING_API_KEY and not SCORING_HMAC_SECRET:
+            log.error("CRITICAL: Neither SCORING_API_KEY nor SCORING_HMAC_SECRET set — rejecting ALL requests")
+            return JSONResponse(status_code=503, content={"detail": "Scoring service not configured"})
+
+        # Try HMAC first (preferred — replay-resistant)
+        timestamp = request.headers.get("X-Scoring-Timestamp", "")
+        signature = request.headers.get("X-Scoring-Signature", "")
+        if timestamp and signature and SCORING_HMAC_SECRET:
+            body = await request.body()
+            if _verify_hmac(body, timestamp, signature):
+                return await call_next(request)
+            else:
+                log.warning(f"Invalid HMAC from {request.client.host}: {request.url.path}")
+                return JSONResponse(status_code=403, content={"detail": "Invalid signature"})
+
+        # Fallback to API key
+        auth = request.headers.get("X-Scoring-Key", "")
+        if SCORING_API_KEY and _hmac.compare_digest(auth, SCORING_API_KEY):
             return await call_next(request)
 
-        auth = request.headers.get("X-Scoring-Key", "")
-        if auth != SCORING_API_KEY:
-            log.warning(f"Unauthorized scoring request from {request.client.host}: {request.url.path}")
-            return JSONResponse(status_code=403, content={"detail": "Forbidden"})
-
-        return await call_next(request)
+        log.warning(f"Unauthorized scoring request from {request.client.host}: {request.url.path}")
+        return JSONResponse(status_code=403, content={"detail": "Forbidden"})
 
 
 app.add_middleware(ScoringAuthMiddleware)
@@ -86,10 +131,16 @@ _rounds: dict[str, dict] = {}
 #  MODELS
 # ═══════════════════════════════════════════════════════════════
 
+# ── Input limits (DoS prevention) ──
+MAX_SOLUTION_SIZE = 1_000_000   # 1MB hex = 500KB plaintext — generous for any solution
+MAX_SOLUTIONS_PER_ROUND = 50    # Matches MAX_AGENTS_PER_ROUND in Constants.sol
+MAX_PROBLEM_TEXT_SIZE = 100_000  # 100KB problem description
+
+
 class SolutionInput(BaseModel):
     agent_id: int
-    encrypted_solution: str  # Hex-encoded AES-256-GCM
-    commit_hash: str         # SHA256 of plaintext (for verification)
+    encrypted_solution: str = Field(..., max_length=MAX_SOLUTION_SIZE)
+    commit_hash: str = Field(..., min_length=64, max_length=64)
 
 
 class ScoreRoundRequest(BaseModel):
@@ -544,4 +595,4 @@ async def health():
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("api:app", host="0.0.0.0", port=8001, reload=True)
+    uvicorn.run("api:app", host="127.0.0.1", port=8001, reload=True)

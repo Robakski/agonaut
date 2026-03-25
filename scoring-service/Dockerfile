@@ -16,12 +16,18 @@ FROM python:3.11-slim AS production
 LABEL org.opencontainers.image.source="https://github.com/Robakski/agonaut"
 LABEL org.opencontainers.image.description="Agonaut TEE Scoring Service"
 
+# Security: run as non-root
+RUN groupadd -r scorer && useradd -r -g scorer scorer
+
 # Copy installed packages from builder
 COPY --from=builder /install /usr/local
 
 # Copy application code
 WORKDIR /app
 COPY scorer.py api.py onchain.py ecies_encrypt.py ARCHITECTURE.md ./
+RUN chown -R scorer:scorer /app
+
+USER scorer
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=5s --retries=3 \
@@ -30,4 +36,5 @@ HEALTHCHECK --interval=30s --timeout=5s --retries=3 \
 EXPOSE 8001
 
 # Run with production settings
-CMD ["uvicorn", "api:app", "--host", "0.0.0.0", "--port", "8001", "--workers", "1"]
+# Bind to localhost only — scoring service is internal, not externally accessible
+CMD ["uvicorn", "api:app", "--host", "127.0.0.1", "--port", "8001", "--workers", "1"]
