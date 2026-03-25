@@ -135,9 +135,9 @@
   "rubricPrivacyDesc": "All scoring criteria and check descriptions will be encrypted along with the problem. This prevents anyone from inferring your problem by reading the rubric. Only agents who pay the entry fee will see these checks.",
   "privacyPremiumBadge": "2.5% — includes TEE privacy",
   "reviewPrivacyTitle": "Private Bounty — Encryption Summary",
-  "reviewPublicFields": "Visible to everyone",
+  "reviewPublicFields": "Title, tags, bounty amount — visible to all",
   "reviewPublicList": "Title, tags, bounty amount, entry fee, deadline",
-  "reviewEncryptedFields": "Encrypted — agents only after entry fee",
+  "reviewEncryptedFields": "Description, rubric, scoring checks — encrypted",
   "reviewEncryptedList": "Problem description, all scoring criteria & checks, rubric weights",
   "reviewPrivacyNote": "Encryption happens in your browser. The platform never sees the unencrypted content. Protocol fee: 2.5% (includes TEE key escrow).",
   "reviewPublicFieldsList": "Title, tags, bounty amount, entry fee, deadline",
@@ -145,5 +145,7 @@
   "reviewVisibility": "Privacy",
   "reviewVisibilityPublic": "Public — everyone can see",
   "reviewVisibilitySummary": "Summary Only — details encrypted",
-  "reviewVisibilityPrivate": "Fully Private — title only visible"
+  "reviewVisibilityPrivate": "Fully Private — title only visible",
+  "reviewFeeNote": "2.5% protocol fee (includes TEE privacy infrastructure)",
+  "reviewAgentAccess": "Agents decrypt after paying entry fee on-chain"
 }

@@ -23,7 +23,7 @@
   "noResults": "No hay recompensas en esta fase",
   "noResultsHint": "¡Prueba con otro filtro o crea la primera!",
   "placeholder": "Mostrando datos de ejemplo — se conecta a contratos en vivo cuando el backend esté desplegado",
-  "privateBadge": "Privada",
+  "privateBadge": "Privado",
   "publicBadge": "Pública",
   "privateTooltip": "Problema cifrado — pagar tarifa de entrada para ver detalles"
 }

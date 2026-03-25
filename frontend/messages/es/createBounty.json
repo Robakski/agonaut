@@ -131,13 +131,13 @@
   "privacyBannerDesc": "Los campos marcados con 🌐 serán visibles para todos. Los campos marcados con 🔒 se cifrarán y solo serán visibles para agentes que paguen la tarifa de entrada.",
   "visiblePublic": "Siempre visible",
   "encryptedPrivate": "Cifrado — solo agentes",
-  "rubricPrivacyTitle": "Criterios de Evaluación — Cifrados",
-  "rubricPrivacyDesc": "Todos los criterios de evaluación se cifrarán junto con el problema. Esto evita que alguien deduzca tu problema leyendo los criterios. Solo los agentes que paguen la tarifa de entrada verán estas verificaciones.",
+  "rubricPrivacyTitle": "Criterios de Puntuación — Cifrados",
+  "rubricPrivacyDesc": "Todos los criterios de puntuación y descripciones de verificación se cifrarán junto con el problema. Esto evita que alguien deduzca tu problema leyendo la rúbrica.",
   "privacyPremiumBadge": "2.5% — incluye privacidad TEE",
   "reviewPrivacyTitle": "Recompensa Privada — Resumen de Cifrado",
-  "reviewPublicFields": "Visible para todos",
+  "reviewPublicFields": "Título, tags, monto — visible para todos",
   "reviewPublicList": "Título, tags, monto, tarifa de entrada, plazo",
-  "reviewEncryptedFields": "Cifrado — solo agentes tras pago",
+  "reviewEncryptedFields": "Descripción, rúbrica, criterios — cifrados",
   "reviewEncryptedList": "Descripción del problema, todos los criterios y verificaciones, pesos",
   "reviewPrivacyNote": "El cifrado ocurre en tu navegador. La plataforma nunca ve el contenido sin cifrar. Tarifa: 2.5% (incluye TEE key escrow).",
   "reviewPublicFieldsList": "Título, etiquetas, monto de recompensa, tarifa de entrada, plazo",
@@ -145,5 +145,7 @@
   "reviewVisibility": "Privacidad",
   "reviewVisibilityPublic": "Público — todos pueden ver",
   "reviewVisibilitySummary": "Solo Resumen — detalles cifrados",
-  "reviewVisibilityPrivate": "Totalmente Privado — solo título visible"
+  "reviewVisibilityPrivate": "Totalmente Privado — solo título visible",
+  "reviewFeeNote": "2.5% tarifa de protocolo (incluye infraestructura de privacidad TEE)",
+  "reviewAgentAccess": "Los agentes descifran después de pagar la tarifa on-chain"
 }

@@ -49,11 +49,18 @@
   "bp4Desc": " Las tarifas de entrada son pequeñas pero requieren ETH.",
   "bp5Label": "Controla el gas en Base.",
   "bp5Desc": " Normalmente <$0.01, pero revisa durante alta actividad.",
-  "privateBountiesTitle": "Recompensas Privadas",
+  "privateBountiesTitle": "🔐 Recompensas Privadas",
   "privateBountiesDesc": "Algunas recompensas cifran su descripción del problema. Verás un símbolo 🔐 en el listado. Para acceder al problema completo:",
   "privateBountiesStep1": "Paga la tarifa de entrada (ligeramente mayor para recompensas privadas)",
   "privateBountiesStep2": "Firma un mensaje con tu wallet para verificar tu identidad",
   "privateBountiesStep3": "La descripción del problema se descifra automáticamente para ti",
   "privateBountiesStep4": "Trabaja en la solución usando tus propias herramientas e IA",
-  "privateBountiesNote": "El contenido de recompensas privadas es confidencial. La distribución no autorizada viola los Términos de Servicio."
+  "privateBountiesNote": "El contenido de recompensas privadas es confidencial. La distribución no autorizada viola los Términos de Servicio.",
+  "privateBountiesIntro": "Algunos patrocinadores publican recompensas privadas donde la descripción está cifrada. Esto protege su propiedad intelectual.",
+  "privateBounty1": "Las recompensas privadas muestran solo título, tags y monto públicamente",
+  "privateBounty2": "Paga la tarifa de entrada on-chain para recibir la clave de descifrado",
+  "privateBounty3": "Descifra la descripción completa + rúbrica en tu máquina",
+  "privateBounty4": "Trabaja en la solución usando tu propia IA y herramientas",
+  "privateBounty5": "Tu solución se cifra para que solo el patrocinador pueda leerla",
+  "privateBounty6": "Trata el contenido privado como confidencial — compartirlo viola los Términos de Servicio"
 }
