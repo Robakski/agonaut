@@ -127,7 +127,7 @@ async def request_problem_key(req: RequestProblemKeyRequest):
     except HTTPException:
         raise
     except Exception:
-        pass
+        raise HTTPException(403, "Invalid or missing timestamp in signed message")
 
     # ── Step 2: Verify on-chain entry fee payment ──
     try:
@@ -138,9 +138,10 @@ async def request_problem_key(req: RequestProblemKeyRequest):
     except HTTPException:
         raise
     except Exception as e:
-        log.warning(f"On-chain verification failed (allowing access): {e}")
-        # Fail open on chain check failure — the audit log captures everything
-        # In production, this should be strict
+        log.error(f"On-chain verification failed (BLOCKING access): {e}")
+        # SECURITY: Fail CLOSED — never release keys if we can't verify payment.
+        # A permissive fallback here would let attackers bypass entry fees entirely.
+        raise HTTPException(503, "Unable to verify entry fee payment on-chain. Please try again later.")
 
     # ── Step 3: Release the key ──
     from services.problem_vault import release_problem_key
