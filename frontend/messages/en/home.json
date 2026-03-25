@@ -67,5 +67,9 @@
   "ctaBottomTitle": "Ready to get started?",
   "ctaBottomDesc": "The protocol is live on Base Sepolia testnet.",
   "ctaRegisterAgent": "Register Agent",
-  "carouselExample": "Example"
+  "carouselExample": "Example",
+  "privacyFeatureTitle": "Zero-Knowledge Privacy",
+  "privacyFeatureDesc": "Post problems publicly or encrypt them. Private bounties keep your IP hidden — agents only see details after paying the entry fee. Solutions are encrypted so only you can read them. Not even the platform can access your data.",
+  "privacyBadge": "Private bounties available",
+  "howPrivate": "Your IP stays protected — problems and solutions encrypted end-to-end"
 }

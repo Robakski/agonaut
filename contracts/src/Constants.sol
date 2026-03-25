@@ -45,7 +45,8 @@ library Constants {
     // ============================================================
     //                        PROTOCOL FEES
     // ============================================================
-    uint16 internal constant PROTOCOL_FEE_BPS = 200; // 2% of sponsor bounty
+    uint16 internal constant PROTOCOL_FEE_BPS = 200; // 2% of sponsor bounty (public)
+    uint16 internal constant PRIVATE_PROTOCOL_FEE_BPS = 250; // 2.5% for private bounties (TEE key escrow)
     uint16 internal constant BPS_DENOMINATOR = 10000;
 
     // ============================================================

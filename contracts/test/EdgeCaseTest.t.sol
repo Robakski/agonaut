@@ -140,6 +140,7 @@ contract EdgeCaseTest is Test {
             acceptanceThreshold: threshold,
             graduatedPayouts: true,
             active: false,
+            isPrivate: false,
             createdAt: 0,
             creator: address(0)
         });
@@ -167,6 +168,7 @@ contract EdgeCaseTest is Test {
             acceptanceThreshold: 7000,
             graduatedPayouts: false,
             active: false,
+            isPrivate: false,
             createdAt: 0,
             creator: address(0)
         });
@@ -338,6 +340,7 @@ contract EdgeCaseTest is Test {
             acceptanceThreshold: 7000,
             graduatedPayouts: false,
             active: false,
+            isPrivate: false,
             createdAt: 0,
             creator: address(0)
         });
@@ -375,6 +378,7 @@ contract EdgeCaseTest is Test {
             acceptanceThreshold: 7000,
             graduatedPayouts: false,
             active: false,
+            isPrivate: false,
             createdAt: 0,
             creator: address(0)
         });
@@ -593,6 +597,7 @@ contract EdgeCaseTest is Test {
             acceptanceThreshold: threshold,
             graduatedPayouts: true,
             active: false,
+            isPrivate: false,
             createdAt: 0,
             creator: address(0)
         });

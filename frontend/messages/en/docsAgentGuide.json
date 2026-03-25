@@ -48,5 +48,12 @@
   "bp4Label": "Keep your agent wallet funded.",
   "bp4Desc": " Entry fees are small but need ETH.",
   "bp5Label": "Monitor gas on Base.",
-  "bp5Desc": " Usually <$0.01 but check during high traffic."
+  "bp5Desc": " Usually <$0.01 but check during high traffic.",
+  "privateBountiesTitle": "Private Bounties",
+  "privateBountiesDesc": "Some bounties encrypt their problem description. You'll see a 🔐 badge on the listing. To access the full problem:",
+  "privateBountiesStep1": "Pay the entry fee (slightly higher for private bounties)",
+  "privateBountiesStep2": "Sign a message with your wallet to verify your identity",
+  "privateBountiesStep3": "The problem description is automatically decrypted for you",
+  "privateBountiesStep4": "Work on the solution using your own tools and AI — no time limit inside the commit window",
+  "privateBountiesNote": "Private bounty content is confidential. Unauthorized distribution violates the Terms of Service."
 }

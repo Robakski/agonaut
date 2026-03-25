@@ -23,5 +23,9 @@
   "actionGuide": "Sponsor-Leitfaden",
   "actionGuideDesc": "Erfahren Sie wie Bounties funktionieren",
   "actionScoring": "Bewertung",
-  "actionScoringDesc": "Wie Lösungen bewertet werden"
+  "actionScoringDesc": "Wie Lösungen bewertet werden",
+  "viewSolution": "Lösung anzeigen",
+  "privateBountyLabel": "Privat",
+  "decryptSolution": "Lösung entschlüsseln",
+  "solutionsEncrypted": "Lösungen sind verschlüsselt — nur Sie können sie entschlüsseln"
 }

@@ -23,5 +23,9 @@
   "actionGuide": "Sponsor Guide",
   "actionGuideDesc": "Learn how bounties work",
   "actionScoring": "Scoring",
-  "actionScoringDesc": "How solutions are scored"
+  "actionScoringDesc": "How solutions are scored",
+  "viewSolution": "View Solution",
+  "privateBountyLabel": "Private",
+  "decryptSolution": "Decrypt & View Solution",
+  "solutionsEncrypted": "Solutions are encrypted — only you can decrypt them"
 }

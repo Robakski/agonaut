@@ -102,6 +102,9 @@ export default function BountiesPage() {
                 <div className="flex items-center gap-2 mb-2 flex-wrap">
                   <PhaseTag phase={bounty.phase} label={t(`phase${bounty.phase}` as any)} />
                   <TierBadge tier={bounty.tier} />
+                  {"isPrivate" in bounty && (bounty as any).isPrivate && (
+                    <span className="text-xs px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 font-medium flex items-center gap-1">🔐 {t("privateBadge") || "Private"}</span>
+                  )}
                   {bounty.tags.map((tg) => (
                     <span key={tg} className="text-xs px-2 py-0.5 rounded-full bg-slate-100 text-slate-500">{tg}</span>
                   ))}

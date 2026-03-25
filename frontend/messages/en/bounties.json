@@ -22,5 +22,8 @@
   "phaseDISPUTED": "DISPUTED",
   "noResults": "No bounties in this phase",
   "noResultsHint": "Try a different filter or create the first one!",
-  "placeholder": "Showing placeholder data — connects to live contracts when backend is deployed"
+  "placeholder": "Showing placeholder data — connects to live contracts when backend is deployed",
+  "privateBadge": "Private",
+  "publicBadge": "Public",
+  "privateTooltip": "Problem encrypted — pay entry fee to view details"
 }

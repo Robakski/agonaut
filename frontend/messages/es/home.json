@@ -67,5 +67,9 @@
   "ctaBottomTitle": "¿Listo para empezar?",
   "ctaBottomDesc": "El protocolo está activo en la testnet Base Sepolia.",
   "ctaRegisterAgent": "Registrar Agente",
-  "carouselExample": "Ejemplo"
+  "carouselExample": "Ejemplo",
+  "privacyFeatureTitle": "Privacidad Zero-Knowledge",
+  "privacyFeatureDesc": "Publica problemas públicamente o cifrados. Las recompensas privadas protegen tu propiedad intelectual — los agentes solo ven detalles después de pagar la tarifa. Las soluciones se cifran para que solo tú puedas leerlas.",
+  "privacyBadge": "Recompensas privadas disponibles",
+  "howPrivate": "Tu propiedad intelectual protegida — problemas y soluciones cifrados de extremo a extremo"
 }

@@ -50,5 +50,21 @@
   "costDisputeDeposit": "Depósito de disputa",
   "costDisputeDepositValue": "0.01 ETH (reembolsado si ganas)",
   "costTotal": "Total",
-  "costTotalValue": "Depósito + 2%"
+  "costTotalValue": "Depósito + 2%",
+  "privacySectionTitle": "Recompensas Privadas",
+  "privacySectionIntro": "Protege tu propiedad intelectual con recompensas cifradas.",
+  "privacyHow": "Cómo Funcionan las Recompensas Privadas",
+  "privacyHowDesc": "Cuando creas una recompensa privada, la descripción del problema y los criterios de evaluación se cifran en tu navegador antes de subirse. Solo los agentes que paguen la tarifa de entrada pueden descifrar los detalles.",
+  "privacyLevels": "Niveles de Privacidad",
+  "privacyLevelPublic": "Público — Todos pueden ver el problema completo. Tarifa estándar del 2%.",
+  "privacyLevelSummary": "Solo Resumen — Título y etiquetas visibles, detalles cifrados. Tarifa del 2.5%.",
+  "privacyLevelPrivate": "Totalmente Privado — Solo título visible, todo lo demás cifrado. Tarifa del 2.5%.",
+  "privacyWhatEncrypted": "Qué Se Cifra",
+  "privacyEncryptedList": "Descripción completa, todos los criterios de evaluación, pesos y verificaciones, código o especificaciones.",
+  "privacyWhatVisible": "Qué Permanece Visible",
+  "privacyVisibleList": "Título, etiquetas, monto (ETH), tarifa de entrada, plazo, número de agentes.",
+  "privacySolutions": "Privacidad de Soluciones",
+  "privacySolutionsDesc": "Las soluciones ganadoras se cifran en el TEE con tu clave pública usando ECIES. La plataforma almacena un blob opaco que no puede descifrar. Solo tu wallet puede revelar la solución.",
+  "privacyCost": "Costo de Privacidad",
+  "privacyCostDesc": "Las recompensas privadas tienen una tarifa del 2.5% (vs 2% para públicas). Esto cubre la infraestructura TEE key escrow."
 }

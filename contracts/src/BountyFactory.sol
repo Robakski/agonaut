@@ -113,6 +113,7 @@ contract BountyFactory is
         uint16   acceptanceThreshold;
         bool     graduatedPayouts;
         bool     active;
+        bool     isPrivate;           // Private bounties: 2.5% fee, TEE key escrow
         uint64   createdAt;
         address  creator;
     }
@@ -349,6 +350,7 @@ contract BountyFactory is
         stored.acceptanceThreshold  = config.acceptanceThreshold;
         stored.graduatedPayouts     = config.graduatedPayouts;
         stored.active               = true;
+        stored.isPrivate            = config.isPrivate;
         stored.createdAt            = uint64(block.timestamp);
         stored.creator              = msg.sender;
 
@@ -435,7 +437,7 @@ contract BountyFactory is
             cfg.entryFee,
             cfg.commitDuration,
             cfg.prizeDistribution,
-            Constants.PROTOCOL_FEE_BPS,
+            cfg.isPrivate ? Constants.PRIVATE_PROTOCOL_FEE_BPS : Constants.PROTOCOL_FEE_BPS,
             cfg.maxAgents,
             cfg.tier,
             0, // seasonId

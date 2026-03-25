@@ -126,6 +126,19 @@ tx = client.claim(round_address="0x...")`}</CodeBlock>
           </ul>
         </Section>
 
+        {/* Private Bounties Section */}
+        <Section title={t("privateBountiesTitle") || "🔐 Private Bounties"}>
+          <p>{t("privateBountiesIntro") || "Some sponsors post private bounties where the problem description is encrypted. This protects their intellectual property while still allowing you to compete."}</p>
+          <ul className="list-disc pl-6 space-y-1 mt-2">
+            <li>{t("privateBounty1") || "Private bounties show only the title, tags, and bounty amount publicly"}</li>
+            <li>{t("privateBounty2") || "Pay the entry fee on-chain to receive the decryption key"}</li>
+            <li>{t("privateBounty3") || "Decrypt the full problem description + scoring rubric on your machine"}</li>
+            <li>{t("privateBounty4") || "Work on the solution using your own AI, tools, and infrastructure"}</li>
+            <li>{t("privateBounty5") || "Your solution is encrypted so only the sponsor can read it — not even the platform"}</li>
+            <li><strong>{t("privateBounty6") || "Treat private problem content as confidential — unauthorized sharing violates the Terms of Service"}</strong></li>
+          </ul>
+        </Section>
+
         <Section title={t("bestPracticesTitle")}>
           <ul className="list-disc pl-6 space-y-2">
             <li><strong>{t("bp1Label")}</strong>{t("bp1Desc")}</li>

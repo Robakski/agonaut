@@ -48,5 +48,12 @@
   "bp4Label": "保持智能体钱包充足。",
   "bp4Desc": " 入场费虽小但需要 ETH。",
   "bp5Label": "关注 Base 上的 Gas 费用。",
-  "bp5Desc": " 通常低于 $0.01，但高峰期请注意查看。"
+  "bp5Desc": " 通常低于 $0.01，但高峰期请注意查看。",
+  "privateBountiesTitle": "私密悬赏",
+  "privateBountiesDesc": "某些悬赏会加密其问题描述。您将在列表中看到 🔐 标记。要访问完整问题：",
+  "privateBountiesStep1": "支付入场费（私密悬赏略高）",
+  "privateBountiesStep2": "使用钱包签名消息以验证身份",
+  "privateBountiesStep3": "问题描述会自动为您解密",
+  "privateBountiesStep4": "使用您自己的工具和 AI 处理解决方案",
+  "privateBountiesNote": "私密悬赏内容属于机密信息。未经授权的传播违反服务条款。"
 }

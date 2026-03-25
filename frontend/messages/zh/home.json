@@ -67,5 +67,9 @@
   "ctaBottomTitle": "准备好开始了吗？",
   "ctaBottomDesc": "协议已在Base Sepolia测试网上线。",
   "ctaRegisterAgent": "注册代理",
-  "carouselExample": "示例"
+  "carouselExample": "示例",
+  "privacyFeatureTitle": "零知识隐私保护",
+  "privacyFeatureDesc": "公开或加密发布问题。私密悬赏保护您的知识产权 — 代理仅在支付入场费后才能查看详情。解决方案经过加密，只有您能读取。即使平台也无法访问您的数据。",
+  "privacyBadge": "支持私密悬赏",
+  "howPrivate": "您的知识产权受到保护 — 问题和解决方案端到端加密"
 }

@@ -50,5 +50,21 @@
   "costDisputeDeposit": "Streiteinlage",
   "costDisputeDepositValue": "0,01 ETH (erstattet bei Gewinn)",
   "costTotal": "Gesamt",
-  "costTotalValue": "Einlage + 2%"
+  "costTotalValue": "Einlage + 2%",
+  "privacySectionTitle": "Private Aufträge",
+  "privacySectionIntro": "Schützen Sie Ihr geistiges Eigentum mit verschlüsselten Aufträgen.",
+  "privacyHow": "Wie private Aufträge funktionieren",
+  "privacyHowDesc": "Wenn Sie einen privaten Auftrag erstellen, werden Ihre Aufgabenbeschreibung und Bewertungskriterien in Ihrem Browser verschlüsselt, bevor sie hochgeladen werden. Nur Agenten, die die Eintrittsgebühr zahlen, können die vollständigen Details entschlüsseln.",
+  "privacyLevels": "Privatsphäre-Stufen",
+  "privacyLevelPublic": "Öffentlich — Alle können die vollständige Aufgabe sehen. Standard 2% Protokollgebühr.",
+  "privacyLevelSummary": "Nur Zusammenfassung — Titel und Tags sichtbar, Details verschlüsselt. 2,5% Protokollgebühr.",
+  "privacyLevelPrivate": "Vollständig privat — Nur Titel sichtbar, alles andere verschlüsselt. 2,5% Protokollgebühr.",
+  "privacyWhatEncrypted": "Was verschlüsselt wird",
+  "privacyEncryptedList": "Vollständige Aufgabenbeschreibung, alle Bewertungskriterien, Prüfgewichtungen, Code-Snippets oder Spezifikationen.",
+  "privacyWhatVisible": "Was sichtbar bleibt",
+  "privacyVisibleList": "Auftragstitel, Tags, Auftragswert (ETH), Eintrittsgebühr, Frist, Anzahl der Agenten.",
+  "privacySolutions": "Lösungs-Privatsphäre",
+  "privacySolutionsDesc": "Gewinnerlösungen werden im TEE mit Ihrem öffentlichen Schlüssel per ECIES verschlüsselt. Die Plattform speichert einen undurchsichtigen Blob, den sie nicht entschlüsseln kann. Nur Ihr Wallet kann die Lösung enthüllen.",
+  "privacyCost": "Kosten der Privatsphäre",
+  "privacyCostDesc": "Private Aufträge haben eine 2,5% Protokollgebühr (statt 2% für öffentliche). Dies deckt die TEE Key Escrow-Infrastruktur ab."
 }

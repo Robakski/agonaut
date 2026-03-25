@@ -149,6 +149,7 @@ contract AdversarialTest is Test {
             acceptanceThreshold: threshold,
             graduatedPayouts: true,
             active: false,
+            isPrivate: false,
             createdAt: 0,
             creator: address(0)
         });
@@ -560,7 +561,7 @@ contract AdversarialTest is Test {
             problemCid: keccak256("test"), entryFee: Constants.ENTRY_FEE,
             commitDuration: 1 hours, prizeDistribution: prizes,
             maxAgents: 10, tier: 0, acceptanceThreshold: 5000,
-            graduatedPayouts: true, active: false, createdAt: 0, creator: address(0)
+            graduatedPayouts: true, active: false, isPrivate: false, createdAt: 0, creator: address(0)
         });
         vm.prank(operator);
         uint256 bountyId = factory.createBounty(config);
@@ -644,7 +645,7 @@ contract AdversarialTest is Test {
             problemCid: keccak256("test"), entryFee: 0, // zero entry fee
             commitDuration: 1 hours, prizeDistribution: prizes,
             maxAgents: 10, tier: 0, acceptanceThreshold: 5000,
-            graduatedPayouts: true, active: false, createdAt: 0, creator: address(0)
+            graduatedPayouts: true, active: false, isPrivate: false, createdAt: 0, creator: address(0)
         });
         vm.prank(operator);
         vm.expectRevert();
@@ -697,7 +698,7 @@ contract AdversarialTest is Test {
             problemCid: keccak256("test"), entryFee: Constants.ENTRY_FEE,
             commitDuration: 1 hours, prizeDistribution: prizes,
             maxAgents: 10, tier: 0, acceptanceThreshold: 5000,
-            graduatedPayouts: true, active: false, createdAt: 0, creator: address(0)
+            graduatedPayouts: true, active: false, isPrivate: false, createdAt: 0, creator: address(0)
         });
         vm.prank(operator);
         uint256 bountyId = factory.createBounty(config);

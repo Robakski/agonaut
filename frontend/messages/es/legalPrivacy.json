@@ -60,5 +60,7 @@
   "s11Title": "11. Cambios",
   "s11Text": "Podemos actualizar esta Política de privacidad. Los cambios sustanciales se comunicarán a través de la Plataforma con al menos 30 días de antelación.",
   "s12Title": "12. Contacto",
-  "s12Text": "Consultas sobre protección de datos: <placeholder>privacy@agonaut.io</placeholder>"
+  "s12Text": "Consultas sobre protección de datos: <placeholder>privacy@agonaut.io</placeholder>",
+  "privateBountiesSection": "Recompensas Privadas y Cifrado",
+  "privateBountiesPrivacy": "Cuando los patrocinadores crean recompensas privadas, las descripciones de problemas y criterios de evaluación se cifran en el navegador del patrocinador con AES-256-GCM antes de transmitirse a nuestros servidores. Solo almacenamos el texto cifrado. Las claves de descifrado son gestionadas por un TEE (Entorno de Ejecución Confiable) y no son accesibles para el personal de Agonaut. Las soluciones ganadoras se cifran con la clave pública secp256k1 del patrocinador usando ECIES. Todas las liberaciones de claves se registran en un registro de auditoría inmutable."
 }

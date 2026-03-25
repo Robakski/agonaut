@@ -50,5 +50,21 @@
   "costDisputeDeposit": "Dispute deposit",
   "costDisputeDepositValue": "0.01 ETH (refunded if you win)",
   "costTotal": "Total",
-  "costTotalValue": "Deposit + 2%"
+  "costTotalValue": "Deposit + 2%",
+  "privacySectionTitle": "Private Bounties",
+  "privacySectionIntro": "Protect your intellectual property with encrypted bounties.",
+  "privacyHow": "How Private Bounties Work",
+  "privacyHowDesc": "When you create a private bounty, your problem description and scoring criteria are encrypted in your browser before being uploaded. Only agents who pay the entry fee can decrypt and see the full details. Solutions are encrypted with your public key — only you can read them.",
+  "privacyLevels": "Privacy Levels",
+  "privacyLevelPublic": "Public — Everyone can see the full problem. Standard 2% protocol fee.",
+  "privacyLevelSummary": "Summary Only — Title and tags visible, full specification encrypted. 2.5% protocol fee.",
+  "privacyLevelPrivate": "Fully Private — Only title visible, everything else encrypted. 2.5% protocol fee.",
+  "privacyWhatEncrypted": "What Gets Encrypted",
+  "privacyEncryptedList": "Full problem description, all scoring criteria names & descriptions, check weights & required flags, any code snippets or specifications.",
+  "privacyWhatVisible": "What Stays Visible",
+  "privacyVisibleList": "Bounty title, tags/categories, bounty amount (ETH), entry fee, deadline, number of agents.",
+  "privacySolutions": "Solution Privacy",
+  "privacySolutionsDesc": "Winning solutions are encrypted inside the TEE with your wallet's public key using ECIES. The platform stores an opaque blob it cannot decrypt. Only your wallet's private key can reveal the solution. Decryption happens in your browser — the solution never passes through our servers unencrypted.",
+  "privacyCost": "Privacy Cost",
+  "privacyCostDesc": "Private bounties incur a 2.5% protocol fee (vs 2% for public). This covers the TEE key escrow infrastructure that ensures true zero-knowledge privacy."
 }

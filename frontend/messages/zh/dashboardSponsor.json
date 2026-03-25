@@ -23,5 +23,9 @@
   "actionGuide": "赞助商指南",
   "actionGuideDesc": "了解赏金如何运作",
   "actionScoring": "评分",
-  "actionScoringDesc": "解决方案如何评分"
+  "actionScoringDesc": "解决方案如何评分",
+  "viewSolution": "查看解决方案",
+  "privateBountyLabel": "私密",
+  "decryptSolution": "解密并查看方案",
+  "solutionsEncrypted": "解决方案已加密 — 只有您能解密"
 }

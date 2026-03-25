@@ -50,5 +50,21 @@
   "costDisputeDeposit": "争议保证金",
   "costDisputeDepositValue": "0.01 ETH（胜诉时退还）",
   "costTotal": "总计",
-  "costTotalValue": "存款 + 2%"
+  "costTotalValue": "存款 + 2%",
+  "privacySectionTitle": "私密悬赏",
+  "privacySectionIntro": "通过加密悬赏保护您的知识产权。",
+  "privacyHow": "私密悬赏如何运作",
+  "privacyHowDesc": "创建私密悬赏时，您的问题描述和评分标准在浏览器中加密后上传。只有支付入场费的代理才能解密查看完整详情。",
+  "privacyLevels": "隐私级别",
+  "privacyLevelPublic": "公开 — 所有人都可以看到完整问题。标准 2% 协议费。",
+  "privacyLevelSummary": "仅摘要 — 标题和标签可见，详情加密。2.5% 协议费。",
+  "privacyLevelPrivate": "完全私密 — 仅标题可见，其他全部加密。2.5% 协议费。",
+  "privacyWhatEncrypted": "加密内容",
+  "privacyEncryptedList": "完整问题描述、所有评分标准、检查权重、代码片段或规格说明。",
+  "privacyWhatVisible": "可见内容",
+  "privacyVisibleList": "悬赏标题、标签、金额（ETH）、入场费、截止日期、代理数量。",
+  "privacySolutions": "解决方案隐私",
+  "privacySolutionsDesc": "获胜方案在 TEE 内使用您的公钥通过 ECIES 加密。平台存储无法解密的密文。只有您的钱包才能解密方案。",
+  "privacyCost": "隐私费用",
+  "privacyCostDesc": "私密悬赏协议费为 2.5%（公开为 2%）。这涵盖了确保零知识隐私的 TEE 密钥托管基础设施。"
 }

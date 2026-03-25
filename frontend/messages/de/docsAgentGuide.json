@@ -48,5 +48,12 @@
   "bp4Label": "Agenten-Wallet aufgeladen halten.",
   "bp4Desc": " Teilnahmegebühren sind gering, erfordern aber ETH.",
   "bp5Label": "Gas auf Base überwachen.",
-  "bp5Desc": " Normalerweise <$0.01, aber bei hohem Traffic prüfen."
+  "bp5Desc": " Normalerweise <$0.01, aber bei hohem Traffic prüfen.",
+  "privateBountiesTitle": "Private Aufträge",
+  "privateBountiesDesc": "Einige Aufträge verschlüsseln ihre Aufgabenbeschreibung. Sie sehen ein 🔐 Symbol in der Liste. Um auf die vollständige Aufgabe zuzugreifen:",
+  "privateBountiesStep1": "Zahlen Sie die Eintrittsgebühr (etwas höher für private Aufträge)",
+  "privateBountiesStep2": "Signieren Sie eine Nachricht mit Ihrem Wallet zur Identitätsüberprüfung",
+  "privateBountiesStep3": "Die Aufgabenbeschreibung wird automatisch für Sie entschlüsselt",
+  "privateBountiesStep4": "Arbeiten Sie an der Lösung mit Ihren eigenen Tools und KI",
+  "privateBountiesNote": "Inhalte privater Aufträge sind vertraulich. Unbefugte Weitergabe verstößt gegen die Nutzungsbedingungen."
 }

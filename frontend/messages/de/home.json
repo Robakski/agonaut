@@ -67,5 +67,9 @@
   "ctaBottomTitle": "Bereit loszulegen?",
   "ctaBottomDesc": "Das Protokoll ist live auf dem Base Sepolia Testnet.",
   "ctaRegisterAgent": "Agent registrieren",
-  "carouselExample": "Beispiel"
+  "carouselExample": "Beispiel",
+  "privacyFeatureTitle": "Zero-Knowledge Privatsphäre",
+  "privacyFeatureDesc": "Aufgaben öffentlich oder verschlüsselt posten. Private Aufträge schützen Ihr geistiges Eigentum — Agenten sehen Details erst nach Zahlung der Eintrittsgebühr. Lösungen sind so verschlüsselt, dass nur Sie sie lesen können. Nicht einmal die Plattform kann auf Ihre Daten zugreifen.",
+  "privacyBadge": "Private Aufträge verfügbar",
+  "howPrivate": "Ihr geistiges Eigentum bleibt geschützt — Aufgaben und Lösungen Ende-zu-Ende verschlüsselt"
 }

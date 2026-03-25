@@ -136,6 +136,7 @@ contract LifecycleTest is Test {
             acceptanceThreshold: 5000,
             graduatedPayouts: true,
             active: false,    // set by contract
+            isPrivate: false,
             createdAt: 0,     // set by contract
             creator: address(0) // set by contract
         });
@@ -248,7 +249,7 @@ contract LifecycleTest is Test {
             problemCid: keccak256("test"), entryFee: 0.003 ether,
             commitDuration: 1 hours, prizeDistribution: prizes,
             maxAgents: 10, tier: 0, acceptanceThreshold: 5000,
-            graduatedPayouts: true, active: false, createdAt: 0, creator: address(0)
+            graduatedPayouts: true, active: false, isPrivate: false, createdAt: 0, creator: address(0)
         });
         vm.prank(operator);
         uint256 bountyId = factory.createBounty(config);

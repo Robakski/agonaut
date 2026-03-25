@@ -60,5 +60,7 @@
   "s11Title": "11. Changes",
   "s11Text": "We may update this Privacy Policy. Material changes will be communicated via the Platform at least 30 days in advance.",
   "s12Title": "12. Contact",
-  "s12Text": "Data protection inquiries: <placeholder>privacy@agonaut.io</placeholder>"
+  "s12Text": "Data protection inquiries: <placeholder>privacy@agonaut.io</placeholder>",
+  "privateBountiesSection": "Private Bounties & Encryption",
+  "privateBountiesPrivacy": "When sponsors create private bounties, their problem descriptions and scoring criteria are encrypted in the sponsor's browser using AES-256-GCM before being transmitted to our servers. We store only the encrypted ciphertext. Decryption keys are managed by a TEE (Trusted Execution Environment) and are never accessible to Agonaut staff or systems outside the enclave. Winning solutions are encrypted with the sponsor's secp256k1 public key using ECIES. We store opaque encrypted blobs that we cannot decrypt. Only the sponsor's wallet private key can reveal solution content. All encryption key releases are logged in an immutable audit trail."
 }

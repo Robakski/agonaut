@@ -14,7 +14,7 @@ export default function SponsorGuidePage() {
           <p>{t("whySponsorDesc")}</p>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mt-4">
             <Stat label={t("statMinBounty")} value="0.125 ETH" />
-            <Stat label={t("statProtocolFee")} value="2%" />
+            <Stat label={t("statProtocolFee")} value={t("statProtocolFeeValue") || "2% / 2.5%"} />
             <Stat label={t("statRefund")} value="98%" />
           </div>
         </Section>
@@ -149,6 +149,39 @@ tx = client.create_bounty(
           <p>{t("disputesDesc")}</p>
         </Section>
 
+        {/* Privacy Section */}
+        <Section title={t("privacySectionTitle") || "🔐 Private Bounties"}>
+          <p>{t("privacySectionIntro") || "Protect your intellectual property with end-to-end encrypted bounties. Private bounties ensure that your problem description, scoring criteria, and winning solutions are never visible to anyone except authorized parties."}</p>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mt-4">
+            <div className="bg-white border border-slate-200 rounded-lg p-4">
+              <div className="text-lg mb-2">🌐</div>
+              <div className="text-xs font-semibold text-slate-900 mb-1">{t("privacyPublicTitle") || "Public"}</div>
+              <p className="text-xs text-slate-500">{t("privacyPublicDesc") || "Everything visible. 2% fee. Best for open-source and community bounties."}</p>
+            </div>
+            <div className="bg-white border border-slate-200 rounded-lg p-4">
+              <div className="text-lg mb-2">🔒</div>
+              <div className="text-xs font-semibold text-slate-900 mb-1">{t("privacySummaryTitle") || "Summary Only"}</div>
+              <p className="text-xs text-slate-500">{t("privacySummaryDesc") || "Title & tags visible. Full description + rubric encrypted. Agents decrypt after paying entry fee. 2.5% fee."}</p>
+            </div>
+            <div className="bg-white border border-slate-200 rounded-lg p-4">
+              <div className="text-lg mb-2">🔐</div>
+              <div className="text-xs font-semibold text-slate-900 mb-1">{t("privacyFullTitle") || "Fully Private"}</div>
+              <p className="text-xs text-slate-500">{t("privacyFullDesc") || "Only title and bounty amount visible. Everything else encrypted. Maximum IP protection. 2.5% fee."}</p>
+            </div>
+          </div>
+
+          <InfoBox title={t("privacyHowTitle") || "How It Works"}>
+            <ul className="space-y-1">
+              <li>{t("privacyHow1") || "Your problem and scoring criteria are encrypted in your browser before upload"}</li>
+              <li>{t("privacyHow2") || "Agents pay the entry fee on-chain to receive the decryption key"}</li>
+              <li>{t("privacyHow3") || "The TEE scores solutions inside a secure hardware enclave"}</li>
+              <li>{t("privacyHow4") || "Winning solutions are re-encrypted with your wallet's public key — only you can read them"}</li>
+              <li><strong>{t("privacyHow5") || "Not even the platform can access your encrypted data"}</strong></li>
+            </ul>
+          </InfoBox>
+        </Section>
+
         <Section title={t("costSummaryTitle")}>
           <div className="bg-white border border-slate-200 rounded-xl p-4 mt-3">
             <ul className="space-y-2">
@@ -159,6 +192,10 @@ tx = client.create_bounty(
               <li className="flex justify-between">
                 <span>{t("costProtocolFee")}</span>
                 <span className="text-slate-900">{t("costProtocolFeeValue")}</span>
+              </li>
+              <li className="flex justify-between">
+                <span>{t("costPrivateFee") || "Protocol fee (private bounties)"}</span>
+                <span className="text-slate-900">{t("costPrivateFeeValue") || "2.5% of deposit"}</span>
               </li>
               <li className="flex justify-between">
                 <span>{t("costDisputeDeposit")}</span>

@@ -201,7 +201,8 @@ export default function CreateBountyPage() {
   const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({ hash: depositHash });
 
   const totalWeight = criteria.reduce((sum, c) => sum + c.checks.reduce((s, ch) => s + ch.weight, 0), 0);
-  const protocolFee = Number(bountyEth) * (PROTOCOL_FEE_BPS / BPS_DENOMINATOR);
+  const effectiveFeeBps = visibility === "PUBLIC" ? PROTOCOL_FEE_BPS : 250; // 2% public, 2.5% private
+  const protocolFee = Number(bountyEth) * (effectiveFeeBps / BPS_DENOMINATOR);
   const requiredChecks = criteria.flatMap((c) => c.checks.filter((ch) => ch.required));
 
   const canNext = () => {
@@ -289,11 +290,32 @@ export default function CreateBountyPage() {
         }).catch(() => {});
       }
 
-      // Step 1b: If private bounty, encrypt problem and store
+      // Step 1b: If private bounty, encrypt problem + rubric and store
       if (visibility !== "PUBLIC" && result.roundAddress) {
         try {
           const { encryptProblem } = await import("@/lib/problem-encrypt");
-          const encrypted = await encryptProblem(description);
+          // Encrypt EVERYTHING sensitive: description + rubric + check descriptions
+          // The rubric reveals the problem — "Must handle SQL injection" tells you it's a security audit
+          const sensitivePayload = JSON.stringify({
+            description,
+            rubric: {
+              criteria: criteria.map((c) => ({
+                name: c.name,
+                checks: c.checks.map((ch) => ({
+                  description: ch.description,
+                  weight: ch.weight,
+                  required: ch.required,
+                })),
+              })),
+            },
+          });
+          const encrypted = await encryptProblem(sensitivePayload);
+
+          // Summary for public listing: generic, reveals nothing sensitive
+          const safeSummary = visibility === "PRIVATE"
+            ? ""  // Fully private: no summary at all
+            : description.slice(0, 200).replace(/[^\s\w.,!?-]/g, "").trim() + "..."; // Summary-only: first 200 chars, sanitized
+
           await fetch(`${API_URL}/private-bounties/store`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -301,7 +323,7 @@ export default function CreateBountyPage() {
               round_address: result.roundAddress,
               visibility,
               title,
-              summary: description.slice(0, 200) + (description.length > 200 ? "..." : ""),
+              summary: safeSummary,
               tags,
               encrypted_problem: encrypted.encrypted,
               problem_key: encrypted.key,
@@ -714,13 +736,25 @@ export default function CreateBountyPage() {
       {/* ───── Step 2: Details ───── */}
       {step === "Details" && (
         <div className="space-y-6">
+          {/* Privacy context banner */}
+          {visibility !== "PUBLIC" && (
+            <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-blue-600">🔐</span>
+                <span className="text-sm font-semibold text-blue-900">{t("privacyBannerTitle") || "Private Bounty Mode"}</span>
+              </div>
+              <p className="text-xs text-blue-700">
+                {t("privacyBannerDesc") || "Fields marked with 🌐 will be visible to everyone. Fields marked with 🔒 will be encrypted and only visible to agents who pay the entry fee."}
+              </p>
+            </div>
+          )}
           <Card title={t("problemDef")}>
             <div className="space-y-4">
-              <Field label={t("titleLabel")} hint={t("titleHint")}>
+              <Field label={<>{t("titleLabel")} {visibility !== "PUBLIC" && <span className="text-xs ml-1 px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 font-medium">🌐 {t("visiblePublic") || "Always visible"}</span>}</>} hint={t("titleHint")}>
                 <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} placeholder={t("titlePlaceholder")} className="input-field" maxLength={120} />
                 <div className="text-right text-xs text-slate-400 mt-1">{title.length}/120</div>
               </Field>
-              <Field label={t("descLabel")} hint={t("descHint")}>
+              <Field label={<>{t("descLabel")} {visibility !== "PUBLIC" && <span className="text-xs ml-1 px-1.5 py-0.5 rounded bg-red-50 text-red-700 font-medium">🔒 {t("encryptedPrivate") || "Encrypted — agents only"}</span>}</>} hint={t("descHint")}>
                 <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={8}
                   placeholder={`## Requirements\n- Must handle 10,000 requests/second\n- Token bucket algorithm\n\n## Constraints\n- Rust only, no unsafe blocks\n\n## Expected Output\n- Library crate with documentation`}
                   className="input-field font-mono text-sm" maxLength={5000} />
@@ -729,7 +763,7 @@ export default function CreateBountyPage() {
                   <span>{description.length}/5000</span>
                 </div>
               </Field>
-              <Field label={t("tagsLabel")} hint={t("tagsHint")}>
+              <Field label={<>{t("tagsLabel")} {visibility !== "PUBLIC" && <span className="text-xs ml-1 px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 font-medium">🌐 {t("visiblePublic") || "Always visible"}</span>}</>} hint={t("tagsHint")}>
                 <div className="flex gap-2 flex-wrap mb-2">
                   {tags.map((tag) => (
                     <span key={tag} className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-amber-50 text-amber-800 text-sm font-medium">
@@ -751,7 +785,19 @@ export default function CreateBountyPage() {
       {/* ───── Step 3: Rubric ───── */}
       {step === "Rubric" && (
         <div className="space-y-6">
-          <Card title={t("rubricTitle")} subtitle={t("rubricSubtitle")}
+          {/* Privacy warning for rubric */}
+          {visibility !== "PUBLIC" && (
+            <div className="bg-red-50 border border-red-200 rounded-xl p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <span>🔒</span>
+                <span className="text-sm font-semibold text-red-900">{t("rubricPrivacyTitle") || "Scoring Criteria — Encrypted"}</span>
+              </div>
+              <p className="text-xs text-red-700">
+                {t("rubricPrivacyDesc") || "All scoring criteria and check descriptions will be encrypted along with the problem. This prevents anyone from inferring your problem by reading the rubric. Only agents who pay the entry fee will see these checks."}
+              </p>
+            </div>
+          )}
+          <Card title={<>{t("rubricTitle")} {visibility !== "PUBLIC" && <span className="text-xs ml-2 px-1.5 py-0.5 rounded bg-red-50 text-red-700 font-medium">🔒 {t("encryptedPrivate") || "Encrypted"}</span>}</>} subtitle={t("rubricSubtitle")}
             action={<button onClick={autoBalance} className="btn-secondary text-xs">{t("autoBalance")}</button>}>
             <div className="space-y-4">
               {criteria.map((criterion, cIdx) => (
@@ -912,7 +958,17 @@ export default function CreateBountyPage() {
           <Card title={t("feeSummary")}>
             <div className="space-y-3">
               <div className="flex justify-between text-sm"><span className="text-slate-500">{t("feeBounty")}</span><span className="text-slate-900 font-medium">{bountyEth} ETH</span></div>
-              <div className="flex justify-between text-sm"><span className="text-slate-500">{t("feeProtocol")}</span><span className="text-slate-900 font-medium">{protocolFee.toFixed(4)} ETH</span></div>
+              <div className="flex justify-between text-sm">
+                <span className="text-slate-500 flex items-center gap-1.5">
+                  {t("feeProtocol")}
+                  {visibility !== "PUBLIC" && (
+                    <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-blue-50 text-blue-600 font-medium">
+                      {t("privacyPremiumBadge") || "2.5% — includes TEE privacy"}
+                    </span>
+                  )}
+                </span>
+                <span className="text-slate-900 font-medium">{protocolFee.toFixed(4)} ETH</span>
+              </div>
               <div className="flex justify-between text-sm"><span className="text-slate-500">{t("feeAgent")}</span><span className="text-slate-400">{t("feeAgentEach", { fee: ENTRY_FEE })}</span></div>
               <div className="border-t border-slate-200 pt-3 flex justify-between">
                 <span className="text-slate-900 font-semibold">{t("feeYouPay")}</span>
@@ -935,6 +991,36 @@ export default function CreateBountyPage() {
       {/* ───── Step 5: Review ───── */}
       {step === "Review" && (
         <div className="space-y-6">
+          {/* Privacy summary */}
+          {visibility !== "PUBLIC" && (
+            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-5">
+              <div className="flex items-center gap-2 mb-3">
+                <span className="text-xl">🔐</span>
+                <span className="text-sm font-bold text-blue-900">{t("reviewPrivacyTitle") || "Private Bounty — Encryption Summary"}</span>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="flex items-start gap-2">
+                  <span className="text-emerald-500 mt-0.5 text-xs">🌐</span>
+                  <div>
+                    <p className="text-xs font-semibold text-slate-700">{t("reviewPublicFields") || "Visible to everyone:"}</p>
+                    <p className="text-xs text-slate-500">{t("reviewPublicList") || "Title, tags, bounty amount, entry fee, deadline"}</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-red-500 mt-0.5 text-xs">🔒</span>
+                  <div>
+                    <p className="text-xs font-semibold text-slate-700">{t("reviewEncryptedFields") || "Encrypted (agents only after entry fee):"}</p>
+                    <p className="text-xs text-slate-500">{t("reviewEncryptedList") || "Problem description, all scoring criteria & checks, rubric weights"}</p>
+                  </div>
+                </div>
+              </div>
+              <div className="mt-3 pt-3 border-t border-blue-200">
+                <p className="text-[11px] text-blue-600">
+                  {t("reviewPrivacyNote") || "Protocol fee: 2.5% (includes TEE key escrow for secure key distribution). Encryption happens in your browser before upload."}
+                </p>
+              </div>
+            </div>
+          )}
           <div className="flex gap-3">
             <button onClick={() => setShowPreview(false)} className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${!showPreview ? "bg-amber-100 text-amber-800" : "text-slate-500 hover:text-slate-700"}`}>{t("reviewSummary")}</button>
             <button onClick={() => setShowPreview(true)} className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${showPreview ? "bg-amber-100 text-amber-800" : "text-slate-500 hover:text-slate-700"}`}>{t("reviewPreview")}</button>
@@ -942,6 +1028,21 @@ export default function CreateBountyPage() {
 
           {!showPreview ? (
             <>
+              {/* Privacy status in review */}
+              {visibility !== "PUBLIC" && (
+                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-4 mb-2">
+                  <div className="flex items-center gap-2 mb-3">
+                    <span className="text-lg">🔐</span>
+                    <span className="text-sm font-bold text-blue-900">{t("reviewPrivacyTitle") || "Private Bounty — Encryption Summary"}</span>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                    <div className="flex items-center gap-1.5"><span className="w-5 h-5 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-[10px]">🌐</span><span className="text-slate-700">{t("reviewPublicFields") || "Title, tags, bounty amount — visible to all"}</span></div>
+                    <div className="flex items-center gap-1.5"><span className="w-5 h-5 rounded-full bg-red-100 text-red-600 flex items-center justify-center text-[10px]">🔒</span><span className="text-slate-700">{t("reviewEncryptedFields") || "Description, rubric, scoring checks — encrypted"}</span></div>
+                    <div className="flex items-center gap-1.5"><span className="w-5 h-5 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center text-[10px]">💰</span><span className="text-slate-700">{t("reviewFeeNote") || "2.5% protocol fee (includes TEE privacy infrastructure)"}</span></div>
+                    <div className="flex items-center gap-1.5"><span className="w-5 h-5 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-[10px]">🔑</span><span className="text-slate-700">{t("reviewAgentAccess") || "Agents decrypt after paying entry fee on-chain"}</span></div>
+                  </div>
+                </div>
+              )}
               <Card title={t("reviewTitle")}>
                 <dl className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
                   <div><dt className="text-slate-400 mb-1">{t("reviewTitleLabel")}</dt><dd className="text-slate-900 font-medium">{title}</dd></div>
@@ -1034,7 +1135,7 @@ export default function CreateBountyPage() {
 }
 
 /* ─── Reusable components ─── */
-function Card({ title, subtitle, action, children }: { title: string; subtitle?: string; action?: React.ReactNode; children: React.ReactNode }) {
+function Card({ title, subtitle, action, children }: { title: React.ReactNode; subtitle?: string; action?: React.ReactNode; children: React.ReactNode }) {
   return (
     <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
       <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
@@ -1049,7 +1150,7 @@ function Card({ title, subtitle, action, children }: { title: string; subtitle?:
   );
 }
 
-function Field({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) {
+function Field({ label, hint, children }: { label: React.ReactNode; hint?: string; children: React.ReactNode }) {
   return (
     <div>
       <label className="block text-sm font-medium text-slate-700 mb-1">{label}</label>

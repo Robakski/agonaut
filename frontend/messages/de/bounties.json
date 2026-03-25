@@ -22,5 +22,8 @@
   "phaseDISPUTED": "STRITTIG",
   "noResults": "Keine Aufträge in dieser Phase",
   "noResultsHint": "Probiere einen anderen Filter oder erstelle den ersten!",
-  "placeholder": "Platzhalterdaten — verbindet sich mit Live-Contracts nach Backend-Deployment"
+  "placeholder": "Platzhalterdaten — verbindet sich mit Live-Contracts nach Backend-Deployment",
+  "privateBadge": "Privat",
+  "publicBadge": "Öffentlich",
+  "privateTooltip": "Aufgabe verschlüsselt — Eintrittsgebühr zahlen für Details"
 }
