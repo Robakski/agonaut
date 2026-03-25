@@ -21,7 +21,7 @@ COPY --from=builder /install /usr/local
 
 # Copy application code
 WORKDIR /app
-COPY scorer.py api.py onchain.py ARCHITECTURE.md ./
+COPY scorer.py api.py onchain.py ecies_encrypt.py ARCHITECTURE.md ./
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=5s --retries=3 \
