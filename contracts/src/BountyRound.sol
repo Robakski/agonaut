@@ -45,7 +45,9 @@ interface IScoringOracle {
 interface IStableRegistry {
     function getAgentStable(uint256 agentId) external view returns (uint16);
     function distributeRevenue(uint16 stableId, uint256 agentId, uint256 totalPrize) external payable;
-    function getStable(uint16 stableId) external view returns (address owner, uint16 revenueShareBps);
+    /// @dev Use getStableShare() — NOT getStable() — because the full Stable struct
+    ///      contains a dynamic `string name` which breaks tuple-style ABI decoding.
+    function getStableShare(uint16 stableId) external view returns (address owner, uint16 revenueShareBps);
 }
 
 interface ISeasonManager {
@@ -450,6 +452,11 @@ contract BountyRound is Initializable, ReentrancyGuard {
         (uint256[] memory agentIds, uint256[] memory scores) =
             scoringOracle.getScores(address(this));
 
+        // Validate all scored agents are actual participants (defense-in-depth)
+        for (uint256 i; i < agentIds.length; ++i) {
+            if (!_isParticipant[agentIds[i]]) revert NotParticipant(agentIds[i]);
+        }
+
         // Build ranked arrays (insertion sort descending)
         uint256 len = agentIds.length;
         uint256[] memory _ranked = new uint256[](len);
@@ -531,7 +538,7 @@ contract BountyRound is Initializable, ReentrancyGuard {
                 uint16 stableId = stableRegistry.getAgentStable(agentId);
                 uint256 stableCut = 0;
                 if (stableId > 0) {
-                    (address stableOwner, uint16 revenueShareBps) = stableRegistry.getStable(stableId);
+                    (address stableOwner, uint16 revenueShareBps) = stableRegistry.getStableShare(stableId);
                     stableCut = (afterFee * revenueShareBps) / Constants.BPS_DENOMINATOR;
                     if (stableCut > 0) {
                         claimable[stableOwner] += stableCut;

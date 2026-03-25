@@ -1,119 +1,117 @@
-# Agonaut Security Audit — Smart Contracts
-Generated: 2026-03-25 by Brose (manual audit)
+# Agonaut Smart Contract Security Audit
 
-## Scope
-- BountyFactory.sol (725 lines)
-- BountyRound.sol (762 lines)
-- ScoringOracle.sol (126 lines)
-- Constants.sol (149 lines)
-- ArbitrationDAO.sol, ArenaRegistry.sol, EloSystem.sol, TimelockGovernor.sol (reviewed)
+**Auditor:** Brose Almighty (AI)  
+**Date:** 2026-03-25  
+**Scope:** All 13 contracts in `contracts/src/` (6,472 lines, Solidity 0.8.24)  
+**Status:** Pre-mainnet review (revised after Robert's feedback)
 
 ---
 
-## CRITICAL
+## Executive Summary
 
-*None found.* The contracts are well-structured with proper access control, reentrancy guards, and CEI pattern.
-
----
-
-## HIGH
-
-### C1: Scorer can submit arbitrary scores — single point of trust
-- **File:** `ScoringOracle.sol:75-90`
-- **Description:** The SCORER_ROLE holder can submit any scores for any round — there's no on-chain verification that scores came from a TEE. The TEE attestation hash is informational only (not checked during submitScores).
-- **Impact:** If the scorer private key is compromised, an attacker can submit fraudulent scores to steal all bounty prizes. This is the highest-value key in the system.
-- **Current mitigation:** Key is in `.env`, not committed to git. Port 8001 is localhost-only.
-- **Fix (pre-mainnet):**
-  1. Generate a FRESH scorer wallet for mainnet (never touch testnet key)
-  2. Store scorer key in a KMS or hardware wallet, not a .env file
-  3. Consider multi-sig scoring: require 2/3 independent TEE attestations
-  4. Add a delay/challenge window before scores can be finalized
-
-### C2: BountyRound.finalize() insertion sort is O(n²) — griefable
-- **File:** `BountyRound.sol:444-458`
-- **Description:** The insertion sort in finalize() is O(n²) where n = number of scored agents. With MAX_AGENTS_PER_ROUND = 50, worst case is ~1225 iterations. At current gas costs this is manageable (~100k gas), but if MAX_AGENTS is increased, finalization could exceed block gas limit.
-- **Impact:** LOW currently (max 50 agents). HIGH if limit is increased without changing sort algorithm.
-- **Fix:** Document the invariant: MAX_AGENTS_PER_ROUND must stay ≤50 unless sort is replaced with O(n log n).
-
-### C3: `isPrivate` flag is immutable after creation — no privacy downgrade path
-- **File:** `BountyFactory.sol:330` — `stored.isPrivate = config.isPrivate`
-- **Description:** Once a bounty is created as private (2.5% fee), it can never be changed to public. This is actually CORRECT behavior (you can't un-encrypt data), but there's no mechanism for a sponsor to request cancellation and re-create as public if they made a mistake.
-- **Impact:** LOW — sponsor can deactivate + create new bounty. But fee is already charged on the round.
-- **Fix:** Document this in the UI with a clear confirmation step.
+The codebase is well-structured with appropriate use of OpenZeppelin libraries, UUPS upgradeability, role-based access control, and pull-based prize claims. Most of the architecture is sound. Three genuine bugs need fixing before mainnet — one critical, one medium, one high.
 
 ---
 
-## MEDIUM
+## 🔴 BUGS — Must Fix Before Mainnet
 
-### C4: `commitSolution` allows overwriting previous commits
-- **File:** `BountyRound.sol:395-408`
-- **Description:** An agent can call `commitSolution` multiple times before the deadline, overwriting their previous solutionHash. While this might be intentional (allow agents to update solutions), it means the commit-reveal scheme is weakened — an agent could watch other commits and update theirs.
-- **Impact:** For off-chain TEE scoring this is LOW risk (agents can't see other solutions). But for any future on-chain reveal mechanism, this would be HIGH risk.
-- **Fix:** Add `require(commitments[agentId].solutionHash == bytes32(0), "Already committed")` if single-commit is desired. Otherwise, document as intentional.
+### BUG-1: StableRegistry Interface Mismatch in BountyRound [CRITICAL]
 
-### C5: `startScoringPhase()` is callable by anyone
-- **File:** `BountyRound.sol:413-420`
-- **Description:** Any address can call `startScoringPhase()` after the commit deadline. This is by design (permissionless transition), but it means a MEV bot could front-run the scoring transition to extract timing value.
-- **Impact:** LOW — no direct financial impact since scoring is off-chain. But the `scoringStartedAt` timestamp controls the SCORING_TIMEOUT cancellation window.
-- **Fix:** Accept as designed — permissionless transitions prevent operator liveness failures.
+**File:** `BountyRound.sol` lines 46-48  
+**Origin:** Pre-existing (since BountyRound was written)  
 
-### C6: No minimum deposit validation on testnet
-- **File:** `Constants.sol:56` — `MIN_BOUNTY_DEPOSIT = 0.009 ether`
-- **Description:** Testnet minimum is 0.009 ETH. The comment says "was 0.125 ether for mainnet." This needs to be changed before mainnet deployment.
-- **Impact:** If forgotten, anyone could create bounties with dust amounts, spamming the protocol.
-- **Fix:** Restore to 0.125 ether before mainnet. Add a deployment checklist.
+BountyRound declares:
+```solidity
+interface IStableRegistry {
+    function getStable(uint16 stableId) external view returns (address owner, uint16 revenueShareBps);
+}
+```
 
-### C7: `sweepExpiredClaims` sweeps ALL unclaimed to treasury
-- **File:** `BountyRound.sol:586-596`
-- **Description:** After 90 days, anyone can call `sweepExpiredClaims` which sends ALL remaining claimable funds to treasury in one shot. There's no partial sweep or per-address expiry.
-- **Impact:** LOW — 90 days is generous. But if a legitimate claim was delayed (e.g., lost key recovery), they lose everything after exactly 90 days with no recourse.
-- **Fix:** Consider extending to 180 days, or adding an admin grace period extension.
+But StableRegistry's actual `getStable()` returns `Stable memory` — a struct containing `string name` (a dynamic type). When a struct has dynamic types, ABI encoding uses offset pointers. The caller expecting `(address, uint16)` will decode garbage: `owner` becomes an offset pointer (~0xE0), `revenueShareBps` becomes the actual owner address truncated to uint16.
 
-### C8: `cancel()` allows sponsor cancellation ONLY before agents enter
-- **File:** `BountyRound.sol:551-563`
-- **Description:** Sponsor can cancel if `participants.length == 0`. Once even one agent enters, only the factory can cancel. This is correct, but means the sponsor has no way to cancel a bounty they funded if agents entered but scoring hasn't started.
-- **Impact:** LOW — factory (operator) can still cancel. But adds operational burden.
-- **Fix:** Consider allowing sponsor cancellation before commit phase starts (with agent refunds).
+**Impact:** Any round with a stable-affiliated winning agent will miscalculate the stable revenue share. Prizes distributed incorrectly.
 
----
+**Fix plan:** Add a dedicated view to StableRegistry that returns only what BountyRound needs:
+```solidity
+function getStableShare(uint16 stableId) external view returns (address owner, uint16 revenueShareBps) {
+    Stable storage s = stables[stableId];
+    return (s.owner, s.revenueShareBps);
+}
+```
+Then update BountyRound's interface to call `getStableShare()` instead of `getStable()`.
 
-## LOW
+### BUG-2: BountyMarketplace BountyConfig Missing `isPrivate` [MEDIUM]
 
-### C9: `emergencyWithdraw` doesn't track total refunded
-- **File:** `BountyRound.sol:568-581`
-- **Description:** Each agent gets `entryFee` refunded individually after cancellation, but the contract doesn't track total refunded vs total entry fees collected. An accounting mismatch is possible if the contract balance is insufficient (shouldn't happen in normal flow, but could in edge cases with selfdestruct forced ETH).
-- **Impact:** VERY LOW — would require forced ETH injection via selfdestruct, which is a known Solidity edge case.
-- **Fix:** Accept — forced ETH is a known non-issue for accounting.
+**File:** `BountyMarketplace.sol` ~line 55  
+**Origin:** Caused by private bounties feature addition  
 
-### C10: `claimBatch` re-credits on failed transfer — good but gas-heavy
-- **File:** `BountyRound.sol:569-586`
-- **Description:** When a batch claim transfer fails, it re-credits the balance. This is the correct behavior (no funds lost) but the re-credit + event emission adds gas for every failed transfer.
-- **Impact:** NONE — correct behavior, just a gas note.
+The `IBountyFactory.BountyConfig` struct inside BountyMarketplace doesn't include the `isPrivate` field that was added to BountyFactory's actual struct. The field sits between `active` and `createdAt`, so all fields after it are ABI-shifted. Crowdfunded bounty activation via `_activateBounty()` will produce a malformed `createBounty()` call.
 
----
+**Impact:** Crowdfunded bounties created through the Marketplace will have corrupted config data (wrong `createdAt`, wrong `creator`, possibly revert).
 
-## INFORMATIONAL
+**Fix plan:** Add `bool isPrivate` to the `IBountyFactory.BountyConfig` in BountyMarketplace, matching the real struct. Set it to `false` in `_activateBounty()` (crowdfunded bounties are always public in v1).
 
-### C11: No `receive()` or `fallback()` function
-- The BountyRound only accepts ETH via `depositBounty()` and `enter()`. Forced ETH (via selfdestruct) will increase `address(this).balance` without updating accounting variables. This is standard and acceptable — the contract uses internal accounting, not `address(this).balance`.
+### BUG-3: `finalize()` Doesn't Validate Scored Agents Are Participants [HIGH]
 
-### C12: Solidity 0.8.24 — overflow protection built in
-- All arithmetic is safe by default. Unchecked blocks are only used in loop increments (correct optimization).
+**File:** `BountyRound.sol` `finalize()` ~line 410  
+**Origin:** Pre-existing  
 
-### C13: OpenZeppelin contracts — latest stable
-- Using `@openzeppelin/contracts` and `@openzeppelin/contracts-upgradeable` with proper initializer patterns.
+`finalize()` reads scores from ScoringOracle and distributes prizes without checking that scored agent IDs actually exist in `_isParticipant[]`. A buggy scorer could submit scores for agents who never entered, and prizes would be allocated to their wallets.
 
-### C14: CREATE2 deterministic addressing
-- Round addresses are predictable via `predictRoundAddress()`. This is a feature, not a bug — enables off-chain pre-authorization.
+**Impact:** With the current trusted single scorer, risk is low. But defense-in-depth requires validation, especially before mainnet with real ETH.
+
+**Fix plan:** Add validation loop before prize distribution:
+```solidity
+for (uint256 i; i < len; ++i) {
+    require(_isParticipant[agentIds[i]], "Not a participant");
+}
+```
 
 ---
 
-## Pre-Mainnet Checklist (from this audit)
+## 📋 Design Notes — Intentional / Acknowledged
 
-- [ ] C1: Fresh scorer wallet — NEVER reuse testnet key
-- [ ] C1: Store scorer key in KMS, not .env
-- [ ] C2: Document MAX_AGENTS_PER_ROUND = 50 invariant
-- [ ] C4: Decide: allow commit overwrite or enforce single commit
-- [ ] C6: Restore MIN_BOUNTY_DEPOSIT to 0.125 ether
-- [ ] C6: Create deployment checklist for all testnet→mainnet constant changes
-- [ ] C7: Consider extending claim expiry to 180 days
+These were flagged during audit but are deliberate design decisions, not bugs.
+
+### DN-1: EloSystem Is Not Upgradeable
+**Intentional.** A non-upgradeable ELO system is more trustworthy for agents — ratings can't be changed under them. If a bug is found, a new EloSystem must be deployed and BountyFactory updated via `setContractAddresses()`. Existing active rounds keep the old reference. Agent ELO data doesn't migrate automatically — acceptable tradeoff for immutability guarantees.
+
+### DN-2: StableRegistry `distributeRevenue()` Not Called by BountyRound
+**Future-proofing.** BountyRound v1 calculates stable cuts inline and allocates to `claimable[]`. The `distributeRevenue()` function exists for a potential v2 push-based flow. `totalEarnings` in StableRegistry will be 0 in v1 — acknowledged.
+
+### DN-3: ArbitrationDAO Randomness Uses `blockhash` + Commit-Reveal
+**Known L2 trust assumption.** The commit-reveal scheme prevents single-party manipulation. Sequencer collusion remains theoretically possible on Base (centralized sequencer). Documented as acceptable for v1; Chainlink VRF is the v2 upgrade path.
+
+### DN-4: EmergencyGuardian Requires Pausable on Targets
+**Planned for later.** Core contracts don't implement `PausableUpgradeable` yet. EmergencyGuardian will be functional once Pausable is added in a future upgrade. Not a blocker for initial mainnet if the admin multisig can handle emergencies directly.
+
+### DN-5: Force-Sent ETH Locked in BountyRound
+**Standard behavior.** No `receive()`/`fallback()` means normal transfers revert. ETH force-sent via `selfdestruct` is permanently locked — this is the norm for most contracts and not worth adding sweep complexity for.
+
+### DN-6: SeasonManager Prize Pool — No Direct Withdrawal
+The championship BountyRound is the intended distribution mechanism. `spawnChampionship()` deploys the round, and the prize pool should fund it. **Note:** `spawnChampionship()` doesn't currently forward the ETH to the round — this gap should be addressed when seasons are implemented, but seasons aren't active for mainnet launch.
+
+### DN-7: TimelockGovernor Helper Functions Need PROPOSER_ROLE on Self
+Deployment configuration concern — the TimelockGovernor's own address must be granted PROPOSER_ROLE for `scheduleUpgrade()` etc. to work. Not a code bug; needs to be in the deployment checklist.
+
+---
+
+## 🔧 Deployment Checklist Items
+
+- [ ] Restore `MIN_BOUNTY_DEPOSIT` to `0.125 ether` in Constants.sol (currently testnet value 0.009)
+- [ ] Verify TimelockGovernor has PROPOSER_ROLE on itself
+- [ ] Fresh scorer wallet for mainnet (never commit private key to git)
+- [ ] Remove `unchecked` blocks in SeasonManager point accumulation (code hygiene, not a bug)
+- [ ] Add Pausable to core contracts when EmergencyGuardian is activated
+
+---
+
+## Summary
+
+| Category | Count | Action |
+|----------|-------|--------|
+| Bugs (must fix) | 3 | BUG-1 Critical, BUG-2 Medium, BUG-3 High |
+| Design notes | 7 | Acknowledged, no action needed |
+| Deployment checklist | 5 | Pre-mainnet tasks |
+
+**Overall:** The contract architecture is solid. The three real bugs are fixable without structural changes. BUG-1 is the most urgent — it will corrupt prize distribution for any stable-affiliated agent.

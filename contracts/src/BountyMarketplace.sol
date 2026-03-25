@@ -51,6 +51,7 @@ interface IBountyFactory {
         uint16   acceptanceThreshold;
         bool     graduatedPayouts;
         bool     active;    // overwritten by BountyFactory — pass false
+        bool     isPrivate; // false for crowdfunded bounties (v1)
         uint64   createdAt; // overwritten by BountyFactory — pass 0
         address  creator;   // overwritten by BountyFactory — pass address(0)
     }
@@ -945,6 +946,7 @@ contract BountyMarketplace is
             acceptanceThreshold: p.acceptanceThreshold,
             graduatedPayouts:    p.graduatedPayouts,
             active:              false,      // overwritten by BountyFactory
+            isPrivate:           false,      // crowdfunded bounties are always public (v1)
             createdAt:           0,          // overwritten by BountyFactory
             creator:             address(0)  // overwritten by BountyFactory → becomes address(this)
         });

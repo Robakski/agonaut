@@ -633,6 +633,25 @@ contract StableRegistry is
     }
 
     /**
+     * @notice Return only the owner and revenue share for a stable.
+     * @dev Added to provide a clean ABI-safe interface for BountyRound, which
+     *      needs only these two fields. The full `getStable()` returns a struct
+     *      containing a dynamic `string name`, making tuple-style decoding unsafe.
+     * @param stableId The stable to query.
+     * @return owner The stable owner address.
+     * @return revenueShareBps Revenue share in basis points.
+     */
+    function getStableShare(uint16 stableId)
+        external
+        view
+        stableExists(stableId)
+        returns (address owner, uint16 revenueShareBps)
+    {
+        Stable storage s = stables[stableId];
+        return (s.owner, s.revenueShareBps);
+    }
+
+    /**
      * @notice Get all agent IDs currently managed by a stable.
      * @param stableId The stable to query.
      * @return Array of agent IDs in the order they were linked.
