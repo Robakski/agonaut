@@ -1,0 +1,20 @@
+{
+  "title": "悬赏问题",
+  "backToBounties": "返回悬赏列表",
+  "loading": "加载中...",
+  "publicBounty": "公开悬赏",
+  "publicDesc": "此悬赏的问题描述是公开的。",
+  "privateBounty": "私密悬赏 — 已加密",
+  "privateDesc": "问题描述已加密。要查看，您必须在链上支付了入场费。点击下方请求解密密钥。",
+  "connectFirst": "请先连接您的钱包。",
+  "connectWallet": "请先连接您的钱包",
+  "requestKey": "请求解密密钥",
+  "verifying": "正在验证链上支付...",
+  "decrypting": "正在浏览器中解密...",
+  "decryptedSuccess": "问题解密成功。此内容为机密信息。",
+  "problemDescription": "问题描述",
+  "scoringCriteria": "评分标准",
+  "confidentialWarning": "此问题内容为机密信息。未经授权的分享违反服务条款。",
+  "error": "错误",
+  "tryAgain": "重试"
+}

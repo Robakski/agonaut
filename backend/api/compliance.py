@@ -191,3 +191,41 @@ async def blocked_jurisdictions():
         ],
         "note": "Subject to OFAC SDN and EU sanctions lists",
     }
+
+
+# ═══════════════════════════════════════════════════════════════
+# PUBLIC: Transaction recording (called by frontend after on-chain tx)
+# ═══════════════════════════════════════════════════════════════
+
+class RecordTxRequest(BaseModel):
+    wallet: str
+    tx_type: str  # bounty_deposit, entry_fee, registration_fee, prize_payout
+    amount_eth: float
+    tx_hash: Optional[str] = None
+    round_address: Optional[str] = None
+    metadata: Optional[dict] = None
+
+ALLOWED_TX_TYPES = {"bounty_deposit", "entry_fee", "registration_fee", "prize_payout", "bounty_refund"}
+
+@router.post("/record-tx")
+async def record_tx(req: RecordTxRequest):
+    """Record a confirmed on-chain transaction for compliance monitoring.
+    Called fire-and-forget by frontend after wallet confirms a tx."""
+    if req.tx_type not in ALLOWED_TX_TYPES:
+        raise HTTPException(status_code=400, detail=f"Invalid tx_type. Allowed: {ALLOWED_TX_TYPES}")
+    if not req.wallet or len(req.wallet) != 42:
+        raise HTTPException(status_code=400, detail="Invalid wallet address")
+    if req.amount_eth < 0 or req.amount_eth > 1000:
+        raise HTTPException(status_code=400, detail="Invalid amount")
+
+    from services.compliance_monitor import record_transaction
+    result = record_transaction(
+        wallet=req.wallet,
+        tx_type=req.tx_type,
+        amount_eth=req.amount_eth,
+        tx_hash=req.tx_hash,
+        chain_id=84532,  # TODO: make configurable for mainnet
+        round_address=req.round_address,
+        metadata=req.metadata,
+    )
+    return {"ok": True, "risk_flags": result.get("risk_flags", [])}

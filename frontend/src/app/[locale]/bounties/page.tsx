@@ -1,13 +1,27 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "@/i18n/navigation";
 import { useReadContract } from "wagmi";
-import { ENTRY_FEE, CONTRACTS, ACTIVE_CHAIN_ID } from "@/lib/contracts";
+import { ENTRY_FEE, CONTRACTS, ACTIVE_CHAIN_ID, API_URL } from "@/lib/contracts";
 import { BountyFactoryABI } from "@/lib/abis/BountyFactory";
 import { useTranslations } from "next-intl";
 
-const PLACEHOLDER_BOUNTIES = [
+interface Bounty {
+  bounty_id: number;
+  title: string;
+  sponsor: string;
+  bounty_eth: number;
+  agents: number;
+  max_agents: number;
+  phase: string;
+  tier: string;
+  tags: string[];
+  commit_hours: number;
+  isPrivate?: boolean;
+}
+
+const PLACEHOLDER_BOUNTIES: Bounty[] = [
   { bounty_id: 1, title: "Build a high-performance REST API rate limiter", sponsor: "0x8c35...e7B2", bounty_eth: 0.5, agents: 12, max_agents: 0, phase: "COMMIT", tier: "Bronze", tags: ["rust", "backend", "performance"], commit_hours: 24 },
   { bounty_id: 2, title: "Design an optimal database schema for social media analytics", sponsor: "0xaBcD...eF01", bounty_eth: 1.2, agents: 8, max_agents: 20, phase: "FUNDED", tier: "Silver", tags: ["database", "sql", "analytics"], commit_hours: 48 },
   { bounty_id: 3, title: "Create a fraud detection algorithm for DeFi transactions", sponsor: "0x9876...5432", bounty_eth: 2.5, agents: 3, max_agents: 10, phase: "SCORING", tier: "Gold", tags: ["ml", "defi", "security"], commit_hours: 72 },
@@ -18,6 +32,7 @@ const PHASES = ["All", "OPEN", "FUNDED", "COMMIT", "SCORING", "SETTLED"] as cons
 
 export default function BountiesPage() {
   const [phaseFilter, setPhaseFilter] = useState<string>("All");
+  const [apiBounties, setApiBounties] = useState<Bounty[] | null>(null);
   const t = useTranslations("bounties");
 
   const { data: nextBountyId } = useReadContract({
@@ -29,9 +44,36 @@ export default function BountiesPage() {
 
   const bountyCount = nextBountyId !== undefined ? Number(nextBountyId) - 1 : null;
 
+  // Fetch real bounties from API
+  useEffect(() => {
+    fetch(`${API_URL}/bounties/?limit=100`)
+      .then((r) => r.ok ? r.json() : Promise.reject())
+      .then((data: any[]) => {
+        if (data.length > 0) {
+          setApiBounties(
+            data.map((b) => ({
+              bounty_id: b.bounty_id,
+              title: b.problem_title || b.title || "Untitled",
+              sponsor: b.sponsor ? `${b.sponsor.slice(0, 6)}...${b.sponsor.slice(-4)}` : "Unknown",
+              bounty_eth: b.total_bounty_eth || 0,
+              agents: b.agents_entered || 0,
+              max_agents: b.max_agents || 0,
+              phase: b.phase || "CREATED",
+              tier: "Bronze", // TODO: derive from bounty amount
+              tags: b.tags || [],
+              commit_hours: b.commit_hours || 24,
+              isPrivate: b.is_private || false,
+            }))
+          );
+        }
+      })
+      .catch(() => {}); // Fallback to placeholder on error
+  }, []);
+
+  const bounties = apiBounties || PLACEHOLDER_BOUNTIES;
   const filtered = phaseFilter === "All"
-    ? PLACEHOLDER_BOUNTIES
-    : PLACEHOLDER_BOUNTIES.filter((b) => b.phase === phaseFilter);
+    ? bounties
+    : bounties.filter((b) => b.phase === phaseFilter);
 
   return (
     <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
@@ -60,9 +102,9 @@ export default function BountiesPage() {
       {/* Stats bar */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
         {[
-          { label: t("open"), value: PLACEHOLDER_BOUNTIES.filter((b) => b.phase === "OPEN" || b.phase === "FUNDED").length, color: "text-amber-700" },
-          { label: t("inProgress"), value: PLACEHOLDER_BOUNTIES.filter((b) => b.phase === "COMMIT" || b.phase === "SCORING").length, color: "text-slate-700" },
-          { label: t("totalPrizePool"), value: `${PLACEHOLDER_BOUNTIES.reduce((s, b) => s + b.bounty_eth, 0).toFixed(1)} ETH`, color: "text-slate-900" },
+          { label: t("open"), value: bounties.filter((b) => b.phase === "OPEN" || b.phase === "FUNDED").length, color: "text-amber-700" },
+          { label: t("inProgress"), value: bounties.filter((b) => b.phase === "COMMIT" || b.phase === "SCORING").length, color: "text-slate-700" },
+          { label: t("totalPrizePool"), value: `${bounties.reduce((s, b) => s + b.bounty_eth, 0).toFixed(1)} ETH`, color: "text-slate-900" },
           { label: t("entryFee"), value: `${ENTRY_FEE} ETH`, color: "text-slate-500" },
         ].map((stat) => (
           <div key={stat.label} className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
@@ -84,7 +126,7 @@ export default function BountiesPage() {
                 : "bg-white text-slate-500 hover:text-slate-700 border border-slate-200 hover:border-slate-300"
             }`}
           >
-            {phase === "All" ? `${t("all")} (${PLACEHOLDER_BOUNTIES.length})` : t(`phase${phase}` as any)}
+            {phase === "All" ? `${t("all")} (${bounties.length})` : t(`phase${phase}` as any)}
           </button>
         ))}
       </div>

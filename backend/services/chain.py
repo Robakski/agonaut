@@ -291,6 +291,7 @@ class ChainService:
         acceptance_threshold: int,
         graduated_payouts: bool,
         sponsor_address: str,
+        is_private: bool = False,
     ) -> CreateBountyResult:
         """
         Create a bounty config + spawn a round in two transactions.
@@ -309,6 +310,7 @@ class ChainService:
             acceptance_threshold,                                # acceptanceThreshold
             graduated_payouts,                                   # graduatedPayouts
             True,                                                # active (overwritten by contract)
+            is_private,                                          # isPrivate (2.5% fee if true)
             0,                                                   # createdAt (overwritten)
             Web3.to_checksum_address(sponsor_address),          # creator (overwritten)
         )

@@ -34,6 +34,7 @@ export interface CreateBountyRequest {
     }[];
   };
   sponsorAddress: string;
+  isPrivate?: boolean;
 }
 
 export interface CreateBountyResponse {
@@ -120,6 +121,32 @@ export async function getKycStatus(address: string) {
 
 export async function getBlockedJurisdictions() {
   return fetchApi<any>("/compliance/blocked-jurisdictions");
+}
+
+/**
+ * Record an on-chain transaction for compliance monitoring.
+ * Fire-and-forget — never blocks UX.
+ */
+export function recordTransaction(
+  wallet: string,
+  txType: "bounty_deposit" | "entry_fee" | "registration_fee" | "prize_payout" | "bounty_refund",
+  amountEth: number,
+  txHash?: string,
+  roundAddress?: string,
+  metadata?: Record<string, unknown>,
+) {
+  fetch(`${API_URL}/compliance/record-tx`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      wallet,
+      tx_type: txType,
+      amount_eth: amountEth,
+      tx_hash: txHash,
+      round_address: roundAddress,
+      metadata,
+    }),
+  }).catch(() => {}); // fire-and-forget
 }
 
 // ── Protocol ──

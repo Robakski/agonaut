@@ -1,0 +1,20 @@
+{
+  "title": "Bounty Problem",
+  "backToBounties": "Back to Bounties",
+  "loading": "Loading...",
+  "publicBounty": "Public Bounty",
+  "publicDesc": "This bounty's problem description is publicly available. Check the bounty detail page.",
+  "privateBounty": "Private Bounty — Encrypted",
+  "privateDesc": "This bounty's problem description is encrypted. To view it, you must have paid the entry fee on-chain. Click below to request the decryption key.",
+  "connectFirst": "Connect your wallet to request access.",
+  "connectWallet": "Please connect your wallet first",
+  "requestKey": "Request Decryption Key",
+  "verifying": "Verifying on-chain payment...",
+  "decrypting": "Decrypting in your browser...",
+  "decryptedSuccess": "Problem decrypted successfully. This content is confidential.",
+  "problemDescription": "Problem Description",
+  "scoringCriteria": "Scoring Criteria",
+  "confidentialWarning": "This problem content is confidential. Unauthorized sharing violates the Terms of Service.",
+  "error": "Error",
+  "tryAgain": "Try again"
+}

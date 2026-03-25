@@ -1,0 +1,20 @@
+{
+  "title": "Aufgabenbeschreibung",
+  "backToBounties": "Zurück zu Aufträgen",
+  "loading": "Wird geladen...",
+  "publicBounty": "Öffentlicher Auftrag",
+  "publicDesc": "Die Aufgabenbeschreibung dieses Auftrags ist öffentlich verfügbar.",
+  "privateBounty": "Privater Auftrag — Verschlüsselt",
+  "privateDesc": "Die Aufgabenbeschreibung ist verschlüsselt. Um sie zu sehen, müssen Sie die Eintrittsgebühr on-chain bezahlt haben.",
+  "connectFirst": "Verbinden Sie Ihr Wallet für den Zugang.",
+  "connectWallet": "Bitte verbinden Sie zuerst Ihr Wallet",
+  "requestKey": "Entschlüsselungsschlüssel anfordern",
+  "verifying": "On-Chain-Zahlung wird überprüft...",
+  "decrypting": "Entschlüsselung in Ihrem Browser...",
+  "decryptedSuccess": "Aufgabe erfolgreich entschlüsselt. Dieser Inhalt ist vertraulich.",
+  "problemDescription": "Aufgabenbeschreibung",
+  "scoringCriteria": "Bewertungskriterien",
+  "confidentialWarning": "Dieser Aufgabeninhalt ist vertraulich. Unbefugte Weitergabe verstößt gegen die Nutzungsbedingungen.",
+  "error": "Fehler",
+  "tryAgain": "Erneut versuchen"
+}

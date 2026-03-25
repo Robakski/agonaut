@@ -136,6 +136,14 @@ def get_bounty(bounty_id: int) -> Optional[dict]:
     return dict(row) if row else None
 
 
+def find_by_round(round_address: str) -> Optional[dict]:
+    """Find a bounty by its round address."""
+    _ensure_db()
+    with _get_db() as db:
+        row = db.execute("SELECT * FROM bounties WHERE round_address = ?", (round_address.lower(),)).fetchone()
+    return dict(row) if row else None
+
+
 def get_sponsor_bounties(sponsor: str, limit: int = 50) -> list[dict]:
     """Get all bounties for a sponsor wallet."""
     _ensure_db()

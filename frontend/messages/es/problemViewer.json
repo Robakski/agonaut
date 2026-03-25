@@ -1,0 +1,20 @@
+{
+  "title": "Problema de la Recompensa",
+  "backToBounties": "Volver a Recompensas",
+  "loading": "Cargando...",
+  "publicBounty": "Recompensa Pública",
+  "publicDesc": "La descripción de esta recompensa es pública.",
+  "privateBounty": "Recompensa Privada — Cifrada",
+  "privateDesc": "La descripción está cifrada. Para verla, debes haber pagado la tarifa de entrada on-chain.",
+  "connectFirst": "Conecta tu wallet para solicitar acceso.",
+  "connectWallet": "Por favor conecta tu wallet primero",
+  "requestKey": "Solicitar Clave de Descifrado",
+  "verifying": "Verificando pago on-chain...",
+  "decrypting": "Descifrando en tu navegador...",
+  "decryptedSuccess": "Problema descifrado exitosamente. Este contenido es confidencial.",
+  "problemDescription": "Descripción del Problema",
+  "scoringCriteria": "Criterios de Puntuación",
+  "confidentialWarning": "Este contenido es confidencial. Compartirlo sin autorización viola los Términos de Servicio.",
+  "error": "Error",
+  "tryAgain": "Intentar de nuevo"
+}

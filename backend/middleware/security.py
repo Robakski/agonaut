@@ -36,6 +36,7 @@ RATE_LIMITS = {
     "/api/v1/compliance/monitor/reviews": "30/minute",
     "/api/v1/compliance/monitor/high-risk": "30/minute",
     "/api/v1/compliance/monitor/audit-log": "20/minute",
+    "/api/v1/compliance/record-tx": "30/minute",
     # Admin endpoints — moderate (authenticated anyway)
     "/api/v1/activity/wallets": "30/minute",
     "/api/v1/activity/stats": "30/minute",

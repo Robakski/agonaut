@@ -230,6 +230,12 @@ export default function CreateBountyPage() {
         roundAddress: s.roundAddress || ("" as Address),
         txHash: depositHash!,
       });
+      // Record deposit for compliance monitoring (fire-and-forget)
+      if (address && typeof window !== "undefined") {
+        import("@/lib/api").then(({ recordTransaction }) => {
+          recordTransaction(address, "bounty_deposit", Number(bountyEth), depositHash!, s.roundAddress);
+        }).catch(() => {});
+      }
     }
   }, [isConfirmed]);
 
@@ -268,6 +274,7 @@ export default function CreateBountyPage() {
           })),
         },
         sponsorAddress: address,
+        isPrivate: visibility !== "PUBLIC",
       };
 
       // Runtime validation before API call (defense-in-depth)

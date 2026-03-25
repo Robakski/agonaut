@@ -50,6 +50,7 @@ class CreateBountyRequest(BaseModel):
     graduated: bool = True
     rubric: dict  # { criteria: [{ name, checks: [{ description, weight, required }] }] }
     sponsorAddress: str
+    isPrivate: bool = False  # Private bounties: encrypted problem, 2.5% fee
 
 
 class CreateBountyResponse(BaseModel):
@@ -161,6 +162,7 @@ async def create_bounty_relay(req: CreateBountyRequest):
             acceptance_threshold=req.threshold,
             graduated_payouts=req.graduated,
             sponsor_address=req.sponsorAddress,
+            is_private=req.isPrivate,
         )
 
         # Store rubric on IPFS via Pinata

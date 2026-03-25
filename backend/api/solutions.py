@@ -189,12 +189,35 @@ async def trigger_scoring(round_address: str):
     """
     try:
         async with httpx.AsyncClient() as client:
+            # Fetch problem text — check private vault first, then IPFS/local
+            problem_text = ""
+            try:
+                from services.problem_vault import get_problem_for_scoring
+                vault_result = get_problem_for_scoring(round_address)
+                if vault_result:
+                    problem_text = vault_result.get("problem_text", "")
+            except Exception:
+                pass
+            if not problem_text:
+                # Fallback: try to get from bounty index / rubric store
+                try:
+                    from services.storage import load_rubric
+                    from services import bounty_index
+                    bounty_data = bounty_index.find_by_round(round_address)
+                    if bounty_data:
+                        rubric = load_rubric(bounty_data["bounty_id"])
+                        if rubric:
+                            problem_text = rubric.get("description", "")
+                except Exception:
+                    pass
+
+            # Solutions already stored in scoring service via receive-solution endpoint
             resp = await client.post(
                 f"{SCORING_SERVICE_URL}/score/round",
                 json={
                     "round_address": round_address,
-                    "problem_text": "",  # TODO: fetch from IPFS/on-chain
-                    "solutions": [],     # TODO: collect from stored solutions
+                    "problem_text": problem_text,
+                    "solutions": [],  # scoring service has them from receive-solution
                 },
                 timeout=10.0,
                 headers=_scoring_headers(),
