@@ -189,17 +189,25 @@ async def trigger_scoring(round_address: str):
     """
     try:
         async with httpx.AsyncClient() as client:
-            # Fetch problem text — check private vault first, then IPFS/local
+            # Fetch problem text
+            # SECURITY: Private bounties ONLY use the problem vault (encrypted at rest).
+            # IPFS/local storage contain PLAINTEXT — using them for private bounties
+            # would be a data breach. IPFS is public and immutable.
             problem_text = ""
+            is_private = False
+
+            # Step 1: Check if this is a private bounty (problem vault has it)
             try:
                 from services.problem_vault import get_problem_for_scoring
                 vault_result = get_problem_for_scoring(round_address)
                 if vault_result:
                     problem_text = vault_result.get("problem_text", "")
+                    is_private = True
             except Exception:
                 pass
-            if not problem_text:
-                # Fallback: try to get from bounty index / rubric store
+
+            # Step 2: ONLY for PUBLIC bounties — fall back to IPFS/local
+            if not problem_text and not is_private:
                 try:
                     from services.storage import load_rubric
                     from services import bounty_index

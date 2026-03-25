@@ -165,10 +165,11 @@ async def create_bounty_relay(req: CreateBountyRequest):
             is_private=req.isPrivate,
         )
 
-        # Store rubric on IPFS via Pinata
-        pinata = get_pinata_client()
+        # Store rubric
+        # SECURITY: Private bounty rubrics MUST NOT go to IPFS or local plaintext storage.
+        # IPFS is public and immutable — uploading would be an irrecoverable data breach.
+        # Private bounty data is ONLY stored encrypted in the problem vault (frontend handles this).
         rubric_metadata = {
-            **problem_data,
             "bounty_eth": req.bountyEth,
             "commit_hours": req.commitHours,
             "max_agents": req.maxAgents,
@@ -176,15 +177,27 @@ async def create_bounty_relay(req: CreateBountyRequest):
             "graduated": req.graduated,
             "sponsor": req.sponsorAddress,
             "round_address": result.round_address,
+            "is_private": req.isPrivate,
         }
 
-        ipfs_cid = pinata.upload_rubric(result.bounty_id, rubric_metadata)
-        if ipfs_cid:
-            logger.info(f"Bounty {result.bounty_id} rubric uploaded to IPFS: {ipfs_cid}")
-            rubric_metadata["ipfs_cid"] = ipfs_cid
-
-        # Also store locally for quick access (fallback)
-        store_rubric(result.bounty_id, rubric_metadata)
+        ipfs_cid = None
+        if not req.isPrivate:
+            # PUBLIC bounties: store full problem data on IPFS + locally
+            rubric_metadata.update(problem_data)
+            pinata = get_pinata_client()
+            ipfs_cid = pinata.upload_rubric(result.bounty_id, rubric_metadata)
+            if ipfs_cid:
+                logger.info(f"Bounty {result.bounty_id} rubric uploaded to IPFS: {ipfs_cid}")
+                rubric_metadata["ipfs_cid"] = ipfs_cid
+            # Local storage (plaintext OK for public bounties)
+            store_rubric(result.bounty_id, rubric_metadata)
+        else:
+            # PRIVATE bounties: store ONLY non-sensitive metadata locally
+            # Title is public (shown on listing), but description + rubric are NOT stored here
+            rubric_metadata["title"] = req.title
+            rubric_metadata["tags"] = req.tags
+            store_rubric(result.bounty_id, rubric_metadata)
+            logger.info(f"Bounty {result.bounty_id} is PRIVATE — rubric NOT uploaded to IPFS")
 
         # Index for fast listing
         bounty_index.index_bounty(
@@ -285,10 +298,15 @@ async def get_bounty(bounty_id: int):
     if not stored:
         raise HTTPException(status_code=404, detail="Bounty not found")
 
-    return {
-        "bounty_id": bounty_id,
-        **stored,
-    }
+    # SECURITY: Strip sensitive fields from private bounties
+    result = {"bounty_id": bounty_id, **stored}
+    if stored.get("is_private"):
+        result.pop("description", None)
+        result.pop("rubric", None)
+        result["is_private"] = True
+        result["privacy_notice"] = "This is a private bounty. Pay the entry fee to access the full description."
+
+    return result
 
 
 @router.get("/{bounty_id}/rubric")
@@ -297,6 +315,14 @@ async def get_rubric(bounty_id: int):
     stored = load_rubric(bounty_id)
     if not stored:
         raise HTTPException(status_code=404, detail="Rubric not found")
+
+    # SECURITY: Private bounty rubrics are NOT available via this endpoint.
+    # Agents must pay entry fee and use /private-bounties/request-key to decrypt.
+    if stored.get("is_private"):
+        raise HTTPException(
+            status_code=403,
+            detail="This is a private bounty. Pay the entry fee to access the rubric via /bounties/{round}/problem"
+        )
 
     # Prefer IPFS if available (immutable source of truth)
     if "ipfs_cid" in stored:
