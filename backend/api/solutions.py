@@ -220,11 +220,12 @@ async def trigger_scoring(round_address: str):
             try:
                 from services.problem_vault import get_problem_for_scoring
                 vault_result = get_problem_for_scoring(round_address)
-                if vault_result:
+                if vault_result and isinstance(vault_result, dict):
                     problem_text = vault_result.get("problem_text", "")
                     is_private = True
-            except Exception:
-                pass
+                    log.info(f"Loaded private problem for scoring: {len(problem_text)} chars")
+            except Exception as e:
+                log.error(f"Failed to load problem from vault: {e}")
 
             # Step 2: ONLY for PUBLIC bounties — fall back to IPFS/local
             if not problem_text and not is_private:

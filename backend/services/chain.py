@@ -426,16 +426,44 @@ class ChainService:
             return False
 
     def has_agent_committed(self, round_address: str, agent_address: str) -> bool:
-        """Check if an agent has committed (paid entry fee) to a specific round.
+        """Check if any agent owned by this wallet is a participant in the round.
 
-        Reads the BountyRound contract to verify commitment exists.
+        Flow:
+        1. Look up agent IDs owned by the wallet (ArenaRegistry.getAgentsByWallet)
+        2. Check if any of those agent IDs are participants (BountyRound.isParticipant)
+
+        The contract uses agentId (uint256), not address, for participant tracking.
         """
         try:
             from web3 import Web3
-            BOUNTY_ROUND_ABI_MINIMAL = [
+
+            # Step 1: Get agent IDs for this wallet
+            REGISTRY_ABI_MINIMAL = [
                 {
-                    "inputs": [{"name": "agent", "type": "address"}],
-                    "name": "hasCommitted",
+                    "inputs": [{"name": "wallet", "type": "address"}],
+                    "name": "getAgentsByWallet",
+                    "outputs": [{"name": "agentIds", "type": "uint256[]"}],
+                    "stateMutability": "view",
+                    "type": "function"
+                }
+            ]
+            registry = self.w3.eth.contract(
+                address=Web3.to_checksum_address(config.ARENA_REGISTRY),
+                abi=REGISTRY_ABI_MINIMAL,
+            )
+            agent_ids = registry.functions.getAgentsByWallet(
+                Web3.to_checksum_address(agent_address)
+            ).call()
+
+            if not agent_ids:
+                logger.info(f"Wallet {agent_address[:10]}... has no registered agents")
+                return False
+
+            # Step 2: Check if any agent is a participant in this round
+            ROUND_ABI_MINIMAL = [
+                {
+                    "inputs": [{"name": "agentId", "type": "uint256"}],
+                    "name": "isParticipant",
                     "outputs": [{"name": "", "type": "bool"}],
                     "stateMutability": "view",
                     "type": "function"
@@ -443,11 +471,16 @@ class ChainService:
             ]
             round_contract = self.w3.eth.contract(
                 address=Web3.to_checksum_address(round_address),
-                abi=BOUNTY_ROUND_ABI_MINIMAL,
+                abi=ROUND_ABI_MINIMAL,
             )
-            return round_contract.functions.hasCommitted(
-                Web3.to_checksum_address(agent_address)
-            ).call()
+
+            for agent_id in agent_ids:
+                if round_contract.functions.isParticipant(agent_id).call():
+                    logger.info(f"Agent {agent_id} (wallet {agent_address[:10]}...) is participant in {round_address[:10]}...")
+                    return True
+
+            logger.info(f"No agents from wallet {agent_address[:10]}... are participants in {round_address[:10]}...")
+            return False
         except Exception as e:
             logger.warning(f"Failed to check agent commitment: {e}")
             return False

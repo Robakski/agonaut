@@ -197,21 +197,44 @@ def release_problem_key(
         conn.close()
 
 
-def get_problem_for_scoring(round_address: str) -> Optional[str]:
-    """Get the problem key for TEE scoring. Internal use only.
+def get_problem_for_scoring(round_address: str) -> Optional[dict]:
+    """Get the decrypted problem text for TEE scoring. Internal use only.
 
-    The scoring service needs the decrypted problem to provide context
-    to the scoring LLM. This returns the raw key.
+    The scoring service needs the actual problem text to provide context
+    to the scoring LLM. We decrypt the problem here (server-side) and
+    return the plaintext.
+
+    Returns: {"problem_text": "...", "visibility": "..."} or None
     """
     conn = _get_db()
     try:
         row = conn.execute(
-            "SELECT problem_key_enc, visibility FROM private_problems WHERE round_address = ?",
+            "SELECT encrypted_problem, problem_key_enc, visibility FROM private_problems WHERE round_address = ?",
             (round_address.lower(),)
         ).fetchone()
         if not row or row["visibility"] == "PUBLIC":
             return None
-        return _get_fernet().decrypt(row["problem_key_enc"].encode()).decode()
+
+        # Decrypt the AES key from our vault
+        problem_key_hex = _get_fernet().decrypt(row["problem_key_enc"].encode()).decode()
+
+        # Decrypt the problem using AES-256-GCM
+        # Format: iv (12 bytes) + ciphertext + tag (16 bytes), all hex-encoded
+        encrypted_hex = row["encrypted_problem"]
+        encrypted_bytes = bytes.fromhex(encrypted_hex)
+        iv = encrypted_bytes[:12]
+        ciphertext_and_tag = encrypted_bytes[12:]
+
+        from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+        key_bytes = bytes.fromhex(problem_key_hex)
+        aesgcm = AESGCM(key_bytes)
+        plaintext_bytes = aesgcm.decrypt(iv, ciphertext_and_tag, None)
+        problem_text = plaintext_bytes.decode("utf-8")
+
+        return {"problem_text": problem_text, "visibility": row["visibility"]}
+    except Exception as e:
+        logger.error(f"Failed to decrypt problem for scoring: {e}")
+        return None
     finally:
         conn.close()
 

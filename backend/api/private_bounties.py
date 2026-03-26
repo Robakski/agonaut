@@ -174,13 +174,17 @@ async def get_problem_for_scoring(round_address: str, request: Request):
     if client_host not in ("127.0.0.1", "::1", "localhost"):
         raise HTTPException(403, "Internal endpoint — localhost only")
 
-    from services.problem_vault import get_problem_for_scoring as vault_scoring_key
+    from services.problem_vault import get_problem_for_scoring as vault_scoring
 
-    key = vault_scoring_key(round_address)
-    if not key:
+    result = vault_scoring(round_address)
+    if not result:
         return {"has_key": False}
 
-    return {"has_key": True, "problem_key": key}
+    return {
+        "has_key": True,
+        "problem_text": result.get("problem_text", ""),
+        "visibility": result.get("visibility", "PRIVATE"),
+    }
 
 
 @router.get("/access-log/{round_address}")

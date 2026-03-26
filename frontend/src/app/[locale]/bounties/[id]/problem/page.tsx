@@ -65,13 +65,29 @@ export default function ProblemViewerPage() {
     setState({ kind: "requesting_key" });
 
     try {
-      // Request decryption key — backend verifies entry fee paid on-chain
+      // We need a wallet client to sign — dynamic import to avoid SSR issues
+      const { getWalletClient } = await import("wagmi/actions");
+      const { config } = await import("@/lib/wagmi");
+      const walletClient = await getWalletClient(config);
+      if (!walletClient) {
+        setState({ kind: "error", message: "Wallet not available — please reconnect" });
+        return;
+      }
+
+      // Sign a message proving wallet ownership (backend requires this)
+      const timestamp = Math.floor(Date.now() / 1000);
+      const message = `Agonaut Problem Access\nRound: ${roundAddress}\nTimestamp: ${timestamp}`;
+      const signature = await walletClient.signMessage({ account: address, message });
+
+      // Request decryption key — backend verifies signature + entry fee on-chain
       const resp = await fetch(`${API_URL}/private-bounties/request-key`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           round_address: roundAddress,
           agent_address: address,
+          signature,
+          message,
         }),
       });
 
