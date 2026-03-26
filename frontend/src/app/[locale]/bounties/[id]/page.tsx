@@ -1,11 +1,16 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams } from "next/navigation";
-import { useAccount } from "wagmi";
+import { useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt } from "wagmi";
+import { parseEther, formatEther } from "viem";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
-import { API_URL, ENTRY_FEE, BASESCAN_URL } from "@/lib/contracts";
+import { API_URL, CONTRACTS, BASESCAN_URL } from "@/lib/contracts";
+import { ArenaRegistryABI } from "@/lib/abis/ArenaRegistry";
+import { BountyRoundABI } from "@/lib/abis/BountyRound";
+
+// ── Types ──
 
 type BountyDetail = {
   bounty_id: number;
@@ -15,7 +20,9 @@ type BountyDetail = {
   sponsor?: string;
   total_bounty_eth?: number;
   bounty_eth?: number;
+  entry_fee_eth?: number;
   phase?: string;
+  phase_id?: number;
   max_agents?: number;
   agents_entered?: number;
   agent_count?: number;
@@ -35,19 +42,21 @@ type PageState =
   | { kind: "loaded"; bounty: BountyDetail }
   | { kind: "error"; message: string };
 
+// Phase enum matching BountyRound.sol
+const PHASE = { CREATED: 0, FUNDED: 1, COMMIT: 2, SCORING: 3, SETTLED: 4, CANCELLED: 5 } as const;
+
 export default function BountyDetailPage() {
   const params = useParams();
   const bountyId = params.id as string;
-  const { address } = useAccount();
+  const { address, isConnected } = useAccount();
   const t = useTranslations("bountyDetail");
   const [state, setState] = useState<PageState>({ kind: "loading" });
 
+  // ── Fetch bounty data from API ──
   useEffect(() => {
     if (!bountyId) return;
-
-    // Try numeric bounty ID first, then treat as round address
     const endpoint = bountyId.startsWith("0x")
-      ? `${API_URL}/bounties/?limit=100` // Will filter client-side
+      ? `${API_URL}/bounties/?limit=100`
       : `${API_URL}/bounties/${bountyId}`;
 
     fetch(endpoint)
@@ -57,7 +66,6 @@ export default function BountyDetailPage() {
       })
       .then((data) => {
         if (Array.isArray(data)) {
-          // Find by round address
           const match = data.find((b: any) => b.round_address?.toLowerCase() === bountyId.toLowerCase());
           if (match) setState({ kind: "loaded", bounty: match });
           else setState({ kind: "error", message: "Bounty not found" });
@@ -105,6 +113,7 @@ export default function BountyDetailPage() {
   const roundAddr = b.round_address || "";
   const isPrivate = b.is_private || false;
   const isSponsor = address && sponsor && address.toLowerCase() === sponsor.toLowerCase();
+  const entryFeeEth = b.entry_fee_eth || 0;
 
   return (
     <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 py-8">
@@ -143,7 +152,7 @@ export default function BountyDetailPage() {
       {/* Stats Grid */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
         <StatCard label={t("prize")} value={`${eth} ETH`} />
-        <StatCard label={t("entryFee")} value={`${ENTRY_FEE} ETH`} />
+        <StatCard label={t("entryFee")} value={entryFeeEth > 0 ? `${entryFeeEth} ETH` : "—"} />
         <StatCard label={t("agents")} value={maxAgents > 0 ? `${agents}/${maxAgents}` : `${agents}`} />
         <StatCard label={t("commitWindow")} value={b.commit_hours ? `${b.commit_hours}h` : "—"} />
       </div>
@@ -196,38 +205,27 @@ export default function BountyDetailPage() {
         </div>
       )}
 
-      {/* Action Buttons */}
-      <div className="flex flex-wrap gap-3 mb-8">
-        {/* Agent actions */}
-        {phase === "COMMIT" && roundAddr && (
-          <Link
-            href={isPrivate ? `/bounties/${roundAddr}/problem` : "#"}
-            className="px-6 py-3 bg-slate-900 text-white rounded-xl font-medium hover:bg-slate-800 transition-colors"
-          >
-            🤖 {t("enterRound")}
-          </Link>
-        )}
+      {/* ── Agent Actions (on-chain interactions) ── */}
+      {isConnected && !isSponsor && roundAddr && (
+        <AgentActions
+          roundAddress={roundAddr as `0x${string}`}
+          entryFeeEth={entryFeeEth}
+          phase={phase}
+          isPrivate={isPrivate}
+        />
+      )}
 
-        {/* Sponsor actions */}
-        {isSponsor && roundAddr && (
+      {/* Sponsor actions */}
+      {isSponsor && roundAddr && (
+        <div className="mb-8">
           <Link
             href={`/bounties/${roundAddr}/solution`}
-            className="px-6 py-3 bg-amber-600 text-white rounded-xl font-medium hover:bg-amber-700 transition-colors"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-amber-600 text-white rounded-xl font-medium hover:bg-amber-700 transition-colors"
           >
             📄 {t("viewSolutions")}
           </Link>
-        )}
-
-        {/* Problem viewer for agents on private bounties */}
-        {isPrivate && roundAddr && !isSponsor && (
-          <Link
-            href={`/bounties/${roundAddr}/problem`}
-            className="px-6 py-3 border border-slate-200 text-slate-700 rounded-xl font-medium hover:bg-slate-50 transition-colors"
-          >
-            🔓 {t("viewProblem")}
-          </Link>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Settings */}
       <div className="bg-slate-50 border border-slate-200 rounded-xl p-6 text-sm text-slate-500">
@@ -242,6 +240,277 @@ export default function BountyDetailPage() {
     </div>
   );
 }
+
+// ══════════════════════════════════════════════════════════════
+//  AGENT ACTIONS COMPONENT — Enter, Commit, Claim
+// ══════════════════════════════════════════════════════════════
+
+function AgentActions({
+  roundAddress,
+  entryFeeEth,
+  phase,
+  isPrivate,
+}: {
+  roundAddress: `0x${string}`;
+  entryFeeEth: number;
+  phase: string;
+  isPrivate: boolean;
+}) {
+  const { address } = useAccount();
+  const t = useTranslations("bountyDetail");
+  const [commitHash, setCommitHash] = useState("");
+  const [txStatus, setTxStatus] = useState<string | null>(null);
+
+  // ── Read agent IDs for connected wallet ──
+  const { data: agentIds } = useReadContract({
+    address: CONTRACTS.arenaRegistry as `0x${string}`,
+    abi: ArenaRegistryABI,
+    functionName: "getAgentsByWallet",
+    args: address ? [address] : undefined,
+    query: { enabled: !!address },
+  });
+
+  const agentId = agentIds && (agentIds as bigint[]).length > 0 ? (agentIds as bigint[])[0] : null;
+  const isRegistered = agentId !== null;
+
+  // ── Check if agent is already a participant ──
+  const { data: isParticipant, refetch: refetchParticipant } = useReadContract({
+    address: roundAddress,
+    abi: BountyRoundABI,
+    functionName: "isParticipant",
+    args: agentId !== null ? [agentId] : undefined,
+    query: { enabled: agentId !== null },
+  });
+
+  // ── Check claimable amount ──
+  const { data: claimableAmount, refetch: refetchClaimable } = useReadContract({
+    address: roundAddress,
+    abi: BountyRoundABI,
+    functionName: "claimable",
+    args: address ? [address] : undefined,
+    query: { enabled: !!address && phase === "SETTLED" },
+  });
+
+  // ── Read on-chain phase ──
+  const { data: onChainPhase } = useReadContract({
+    address: roundAddress,
+    abi: BountyRoundABI,
+    functionName: "phase",
+  });
+
+  const currentPhase = onChainPhase !== undefined ? Number(onChainPhase) : null;
+
+  // ── Write contracts ──
+  const { writeContract: enterRound, data: enterTxHash, isPending: enterPending } = useWriteContract();
+  const { writeContract: commitSolution, data: commitTxHash, isPending: commitPending } = useWriteContract();
+  const { writeContract: claimPrize, data: claimTxHash, isPending: claimPending } = useWriteContract();
+
+  // ── Wait for tx confirmations ──
+  const { isSuccess: enterConfirmed } = useWaitForTransactionReceipt({ hash: enterTxHash });
+  const { isSuccess: commitConfirmed } = useWaitForTransactionReceipt({ hash: commitTxHash });
+  const { isSuccess: claimConfirmed } = useWaitForTransactionReceipt({ hash: claimTxHash });
+
+  // Refetch state after confirmations
+  useEffect(() => {
+    if (enterConfirmed) {
+      refetchParticipant();
+      setTxStatus(t("enterSuccess"));
+    }
+  }, [enterConfirmed]);
+
+  useEffect(() => {
+    if (commitConfirmed) setTxStatus(t("commitSuccess"));
+  }, [commitConfirmed]);
+
+  useEffect(() => {
+    if (claimConfirmed) {
+      refetchClaimable();
+      setTxStatus(t("claimSuccess"));
+    }
+  }, [claimConfirmed]);
+
+  // ── Handlers ──
+  const handleEnter = useCallback(() => {
+    if (!agentId) return;
+    setTxStatus(null);
+    enterRound({
+      address: roundAddress,
+      abi: BountyRoundABI,
+      functionName: "enter",
+      args: [agentId],
+      value: entryFeeEth > 0 ? parseEther(String(entryFeeEth)) : BigInt(0),
+    });
+  }, [agentId, roundAddress, entryFeeEth, enterRound]);
+
+  const handleCommit = useCallback(() => {
+    if (!agentId || !commitHash) return;
+    setTxStatus(null);
+    const hashBytes = commitHash.startsWith("0x") ? commitHash : `0x${commitHash}`;
+    commitSolution({
+      address: roundAddress,
+      abi: BountyRoundABI,
+      functionName: "commitSolution",
+      args: [agentId, hashBytes as `0x${string}`],
+    });
+  }, [agentId, commitHash, roundAddress, commitSolution]);
+
+  const handleClaim = useCallback(() => {
+    if (!address) return;
+    setTxStatus(null);
+    claimPrize({
+      address: roundAddress,
+      abi: BountyRoundABI,
+      functionName: "claim",
+      args: [address],
+    });
+  }, [address, roundAddress, claimPrize]);
+
+  // Not registered
+  if (!isRegistered) {
+    return (
+      <div className="bg-amber-50 border border-amber-200 rounded-xl p-6 mb-8">
+        <div className="flex items-start gap-3">
+          <span className="text-xl">🤖</span>
+          <div>
+            <p className="font-medium text-amber-900">{t("notRegistered")}</p>
+            <p className="text-sm text-amber-700 mt-1">{t("registerFirst")}</p>
+            <Link href="/agents/register" className="inline-block mt-3 text-sm font-semibold text-amber-800 hover:text-amber-900 underline">
+              {t("goRegister")} →
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const claimableEth = claimableAmount ? formatEther(claimableAmount as bigint) : "0";
+  const hasClaimable = claimableAmount && (claimableAmount as bigint) > BigInt(0);
+
+  return (
+    <div className="bg-white border border-slate-200 rounded-xl p-6 mb-8">
+      <h2 className="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
+        🤖 {t("agentActions")}
+        <span className="text-xs font-normal text-slate-400">
+          Agent #{agentId?.toString()}
+        </span>
+      </h2>
+
+      {/* Status message */}
+      {txStatus && (
+        <div className="mb-4 px-4 py-2 rounded-lg bg-emerald-50 border border-emerald-200 text-sm text-emerald-800">
+          ✅ {txStatus}
+        </div>
+      )}
+
+      {/* ── Step 1: Enter Round ── */}
+      {currentPhase === PHASE.FUNDED && !isParticipant && (
+        <div className="mb-4 p-4 bg-slate-50 rounded-lg">
+          <h3 className="font-medium text-slate-800 mb-2">{t("step1Enter")}</h3>
+          <p className="text-sm text-slate-500 mb-3">
+            {entryFeeEth > 0
+              ? t("enterCost", { fee: String(entryFeeEth) })
+              : t("enterFree")}
+          </p>
+          <button
+            onClick={handleEnter}
+            disabled={enterPending}
+            className="px-5 py-2.5 bg-slate-900 text-white rounded-lg font-medium hover:bg-slate-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {enterPending ? t("confirming") : t("enterRoundBtn")}
+          </button>
+        </div>
+      )}
+
+      {/* Already entered — show status */}
+      {isParticipant && currentPhase !== null && currentPhase <= PHASE.COMMIT && (
+        <div className="mb-4 px-4 py-2 rounded-lg bg-emerald-50 border border-emerald-100 text-sm text-emerald-700">
+          ✅ {t("alreadyEntered")}
+        </div>
+      )}
+
+      {/* ── Step 2: View Problem (after entering) ── */}
+      {isParticipant && currentPhase === PHASE.COMMIT && (
+        <div className="mb-4 p-4 bg-slate-50 rounded-lg">
+          <h3 className="font-medium text-slate-800 mb-2">{t("step2Problem")}</h3>
+          <p className="text-sm text-slate-500 mb-3">{t("readProblemDesc")}</p>
+          <Link
+            href={`/bounties/${roundAddress}/problem`}
+            className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
+          >
+            {isPrivate ? "🔓" : "📄"} {t("viewProblem")}
+          </Link>
+        </div>
+      )}
+
+      {/* ── Step 3: Commit Solution Hash ── */}
+      {isParticipant && currentPhase === PHASE.COMMIT && (
+        <div className="mb-4 p-4 bg-slate-50 rounded-lg">
+          <h3 className="font-medium text-slate-800 mb-2">{t("step3Commit")}</h3>
+          <p className="text-sm text-slate-500 mb-3">{t("commitDesc")}</p>
+          <div className="flex gap-2">
+            <input
+              type="text"
+              placeholder={t("commitHashPlaceholder")}
+              value={commitHash}
+              onChange={(e) => setCommitHash(e.target.value)}
+              className="flex-1 px-3 py-2.5 border border-slate-300 rounded-lg text-sm font-mono focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none"
+            />
+            <button
+              onClick={handleCommit}
+              disabled={commitPending || !commitHash || commitHash.length < 64}
+              className="px-5 py-2.5 bg-slate-900 text-white rounded-lg font-medium hover:bg-slate-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+            >
+              {commitPending ? t("confirming") : t("commitBtn")}
+            </button>
+          </div>
+          <p className="text-xs text-slate-400 mt-2">{t("commitHint")}</p>
+        </div>
+      )}
+
+      {/* ── Scoring in progress ── */}
+      {currentPhase === PHASE.SCORING && (
+        <div className="mb-4 p-4 bg-amber-50 border border-amber-100 rounded-lg">
+          <h3 className="font-medium text-amber-800 mb-1">⏳ {t("scoringInProgress")}</h3>
+          <p className="text-sm text-amber-600">{t("scoringDesc")}</p>
+        </div>
+      )}
+
+      {/* ── Step 4: Claim Prize ── */}
+      {currentPhase === PHASE.SETTLED && (
+        <div className="mb-4 p-4 bg-slate-50 rounded-lg">
+          <h3 className="font-medium text-slate-800 mb-2">{t("step4Claim")}</h3>
+          {hasClaimable ? (
+            <>
+              <p className="text-sm text-emerald-700 font-semibold mb-3">
+                🎉 {t("claimableAmount", { amount: claimableEth })}
+              </p>
+              <button
+                onClick={handleClaim}
+                disabled={claimPending}
+                className="px-5 py-2.5 bg-emerald-600 text-white rounded-lg font-medium hover:bg-emerald-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {claimPending ? t("confirming") : t("claimBtn")}
+              </button>
+            </>
+          ) : (
+            <p className="text-sm text-slate-500">{t("noPrize")}</p>
+          )}
+        </div>
+      )}
+
+      {/* Round cancelled */}
+      {currentPhase === PHASE.CANCELLED && (
+        <div className="mb-4 p-4 bg-slate-100 border border-slate-200 rounded-lg">
+          <p className="text-sm text-slate-500">{t("roundCancelled")}</p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════════════════════════
+//  UI COMPONENTS
+// ══════════════════════════════════════════════════════════════
 
 function PhaseTag({ phase }: { phase: string }) {
   const styles: Record<string, string> = {
