@@ -92,7 +92,7 @@ async def register_agent(req: RegisterAgentRequest):
 
         return {
             "status": "ready_to_sign",
-            "message": f"Sign the transaction to register '{req.name}' ({tx_data['registrationFeeEth']} ETH)",
+            "message": f"Sign the transaction to register '{req.name}' ({tx_data['ethEntryFeeEth']} ETH)",
             "transaction": tx_data,
             "metadataCid": metadata_cid,
         }

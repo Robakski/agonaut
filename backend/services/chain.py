@@ -194,7 +194,14 @@ ARENA_REGISTRY_ABI = json.loads("""[
   },
   {
     "type": "function",
-    "name": "registrationFee",
+    "name": "ethEntryFee",
+    "inputs": [],
+    "outputs": [{"type": "uint256", "name": ""}],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "usdcEntryFee",
     "inputs": [],
     "outputs": [{"type": "uint256", "name": ""}],
     "stateMutability": "view"
@@ -517,7 +524,7 @@ class ChainService:
             address=Web3.to_checksum_address(config.ARENA_REGISTRY),
             abi=ARENA_REGISTRY_ABI,
         )
-        reg_fee = registry.functions.registrationFee().call()
+        reg_fee = registry.functions.ethEntryFee().call()
 
         # Convert metadata CID to bytes32 hash
         import hashlib
@@ -551,8 +558,8 @@ class ChainService:
             "maxFeePerGas": hex(tx["maxFeePerGas"]),
             "maxPriorityFeePerGas": hex(tx["maxPriorityFeePerGas"]),
             "chainId": hex(config.CHAIN_ID),
-            "registrationFeeWei": str(reg_fee),
-            "registrationFeeEth": str(float(self.w3.from_wei(reg_fee, "ether"))),
+            "ethEntryFeeWei": str(reg_fee),
+            "ethEntryFeeEth": str(float(self.w3.from_wei(reg_fee, "ether"))),
         }
 
 
