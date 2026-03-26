@@ -125,6 +125,22 @@ def get_public_key(wallet: str) -> Optional[str]:
         conn.close()
 
 
+def register_derived_key(wallet: str, derived_public_key_hex: str) -> bool:
+    """Store a derived encryption public key for a sponsor.
+
+    V2 approach: The frontend derives a keypair from keccak256(signature).
+    The derived PUBLIC key is what the TEE uses for ECIES encryption.
+    The derived PRIVATE key is re-derived by the frontend for decryption.
+
+    This ensures compatibility because wallets don't expose raw private keys.
+    """
+    stored = store_public_key(wallet, derived_public_key_hex)
+    if not stored:
+        raise RuntimeError("Failed to store derived public key")
+    logger.info(f"Stored derived encryption key for {wallet[:10]}...")
+    return stored
+
+
 def register_from_signature(message: str, signature: str) -> dict:
     """
     One-shot: verify signature, recover public key, store it.

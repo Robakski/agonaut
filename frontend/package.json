@@ -12,6 +12,8 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@noble/curves": "^2.0.1",
+    "@noble/hashes": "^2.0.1",
     "@tanstack/react-query": "^5.90.21",
     "connectkit": "^1.9.1",
     "next": "16.1.6",

@@ -1,18 +1,30 @@
 /**
  * ECIES Decryption — Client-side decryption of solutions encrypted for the sponsor.
  *
- * The TEE encrypts winning solutions with the sponsor's secp256k1 public key.
- * Only the sponsor's wallet private key can decrypt them.
+ * Architecture:
+ * 1. During bounty creation, sponsor signs a deterministic message
+ * 2. From that signature, we derive a secp256k1 keypair (private + public)
+ * 3. The PUBLIC key is registered with the backend (stored in sponsor_keys DB)
+ * 4. The TEE encrypts winning solutions using ECIES with that public key
+ * 5. Here in the browser, we re-derive the SAME private key from the same signature
+ * 6. We perform ECDH(derived_private_key, ephemeral_pubkey) to get the shared secret
+ * 7. We derive the AES key via HKDF and decrypt
  *
- * This module handles the browser-side decryption using the Web Crypto API
- * and the secp256k1 curve (via the noble-secp256k1 library).
+ * Why signature-derived instead of raw wallet key?
+ * - MetaMask/wallets don't expose the raw private key
+ * - eth_decrypt uses x25519, not secp256k1 — incompatible
+ * - Signing the same deterministic message always produces the same signature
+ * - keccak256(signature) gives us a valid secp256k1 private key
+ * - This is secure: only the wallet holder can produce the signature
  *
- * Flow:
- * 1. Sponsor receives encrypted blob: {ephemeral_pubkey, iv, ciphertext, mac}
- * 2. Browser derives shared secret: ECDH(sponsor_private_key, ephemeral_pubkey)
- * 3. Derives AES key: HKDF(shared_secret, "agonaut-ecies-v1")
- * 4. Decrypts: AES-256-GCM(aes_key, iv, ciphertext + mac)
+ * The deterministic message is: "Agonaut Encryption Keypair\nAddress: {address}"
+ * This MUST match what the frontend sends during sponsor key registration.
  */
+
+import { secp256k1 } from "@noble/curves/secp256k1.js";
+import { hkdf } from "@noble/hashes/hkdf.js";
+import { sha256 } from "@noble/hashes/sha2.js";
+import { keccak_256 } from "@noble/hashes/sha3.js";
 
 export interface EncryptedSolution {
   ephemeral_pubkey: string; // hex, 65 bytes (0x04...)
@@ -22,14 +34,49 @@ export interface EncryptedSolution {
 }
 
 /**
- * Request the wallet to decrypt by signing a derived key.
+ * The deterministic message used to derive the encryption keypair.
+ * MUST match what's used during sponsor key registration.
+ */
+export function getEncryptionMessage(address: string): string {
+  return `Agonaut Encryption Keypair\nAddress: ${address.toLowerCase()}`;
+}
+
+// secp256k1 curve order
+const SECP256K1_N = BigInt("0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141");
+
+/**
+ * Derive a secp256k1 private key from a wallet signature.
  *
- * Since MetaMask doesn't expose raw ECDH, we use an alternative approach:
- * We ask the user to export their solution using eth_decrypt (EIP-2844)
- * or we use a signature-based key derivation.
+ * Takes keccak256 of the signature bytes, then reduces modulo the curve order
+ * to ensure it's a valid private key.
+ */
+function derivePrivateKey(signature: string): Uint8Array {
+  const sigBytes = hexToBytes(signature.replace("0x", ""));
+  const hash = keccak_256(sigBytes);
+  // Reduce modulo curve order to ensure valid private key
+  const scalar = bytesToBigInt(hash) % SECP256K1_N;
+  // Ensure non-zero (astronomically unlikely but be safe)
+  const finalScalar = scalar === BigInt(0) ? BigInt(1) : scalar;
+  return bigIntToBytes(finalScalar, 32);
+}
+
+/**
+ * Derive the public key from a wallet signature.
+ * Used during registration to send to the backend.
+ */
+export function derivePublicKey(signature: string): string {
+  const privKey = derivePrivateKey(signature);
+  const pubKey = secp256k1.getPublicKey(privKey, false); // uncompressed (65 bytes)
+  return "0x" + bytesToHex(pubKey);
+}
+
+/**
+ * Decrypt an ECIES-encrypted solution using the sponsor's wallet.
  *
- * For now, this returns a placeholder — the actual implementation depends
- * on wallet support for eth_decrypt or a custom signing flow.
+ * 1. Signs the deterministic message to re-derive the private key
+ * 2. Performs ECDH with the ephemeral public key
+ * 3. Derives AES key via HKDF
+ * 4. Decrypts with AES-256-GCM
  */
 export async function decryptSolution(
   encrypted: EncryptedSolution,
@@ -37,58 +84,46 @@ export async function decryptSolution(
   walletClient: any,
   address: string,
 ): Promise<string> {
-  // MetaMask supports eth_decrypt (EIP-2844) for encryption/decryption
-  // But it uses x25519-xsalsa20-poly1305, not secp256k1 ECIES
-  //
-  // For secp256k1 ECIES, we need the private key directly.
-  // Since wallets don't expose private keys, we use a workaround:
-  //
-  // Option 1: Ask MetaMask for eth_getEncryptionPublicKey + eth_decrypt (x25519)
-  // Option 2: Use a deterministic key derived from a wallet signature
-  //
-  // We use Option 2: sponsor signs a deterministic message, we derive a
-  // decryption key from the signature. The TEE uses the same derivation
-  // when encrypting. This is secure because:
-  // - The signature is deterministic (same message = same sig)
-  // - Only the wallet holder can produce it
-  // - The derived key never leaves the browser
-
   try {
-    // Sign a deterministic message to derive the decryption key
-    const message = `Agonaut Solution Decryption Key\nAddress: ${address}`;
+    // Step 1: Sign deterministic message to get the same signature as registration
+    const message = getEncryptionMessage(address);
     const signature = await walletClient.signMessage({
       account: address,
       message,
     });
 
-    // Derive AES key from signature using SHA-256
-    const sigBytes = hexToBytes(signature.slice(2));
-    const keyMaterial = await crypto.subtle.importKey(
-      "raw",
-      sigBytes.slice(0, 32).buffer as ArrayBuffer,
-      "HKDF",
-      false,
-      ["deriveKey"],
-    );
+    // Step 2: Derive private key from signature
+    const privKey = derivePrivateKey(signature);
 
-    const aesKey = await crypto.subtle.deriveKey(
-      {
-        name: "HKDF",
-        hash: "SHA-256",
-        salt: new TextEncoder().encode("agonaut-ecies-v1"),
-        info: new TextEncoder().encode(address.toLowerCase()),
-      },
-      keyMaterial,
-      { name: "AES-GCM", length: 256 },
-      false,
-      ["decrypt"],
-    );
+    // Step 3: Parse ephemeral public key from encrypted blob
+    const ephemPubBytes = hexToBytes(encrypted.ephemeral_pubkey.replace("0x", ""));
 
-    // Decrypt
+    // Step 4: ECDH — shared secret = ECDH(our_private, ephemeral_public)
+    const sharedPoint = secp256k1.getSharedSecret(privKey, ephemPubBytes);
+    // getSharedSecret returns the full point (65 bytes uncompressed or 33 compressed)
+    // We need just the x-coordinate (32 bytes) as the raw shared secret
+    // noble returns uncompressed by default: 04 + x(32) + y(32)
+    const sharedSecret = sharedPoint.slice(1, 33); // x-coordinate only
+
+    // Step 5: HKDF to derive AES key — MUST match backend's ecies_encrypt.py
+    // Backend uses: HKDF(SHA256, shared_secret, salt=None, info="agonaut-ecies-v1", length=32)
+    const info = new TextEncoder().encode("agonaut-ecies-v1");
+    const aesKeyBytes = hkdf(sha256, sharedSecret, undefined, info, 32);
+
+    // Step 6: AES-256-GCM decrypt
     const iv = hexToBytes(encrypted.iv);
     const ct = hexToBytes(encrypted.ciphertext);
     const mac = hexToBytes(encrypted.mac);
+    // GCM expects ciphertext + tag concatenated
     const combined = new Uint8Array([...ct, ...mac]);
+
+    const aesKey = await crypto.subtle.importKey(
+      "raw",
+      aesKeyBytes.buffer as ArrayBuffer,
+      { name: "AES-GCM" },
+      false,
+      ["decrypt"],
+    );
 
     const plaintext = await crypto.subtle.decrypt(
       { name: "AES-GCM", iv: iv.buffer as ArrayBuffer },
@@ -99,15 +134,42 @@ export async function decryptSolution(
     return new TextDecoder().decode(plaintext);
   } catch (error) {
     console.error("ECIES decryption failed:", error);
-    throw new Error("Failed to decrypt solution. Make sure you're using the correct wallet.");
+    throw new Error(
+      "Failed to decrypt solution. Make sure you're using the same wallet " +
+      "that created the bounty and that you sign the message when prompted."
+    );
   }
 }
+
+// ── Utility functions ──
 
 function hexToBytes(hex: string): Uint8Array {
   const clean = hex.replace("0x", "");
   const bytes = new Uint8Array(clean.length / 2);
   for (let i = 0; i < clean.length; i += 2) {
     bytes[i / 2] = parseInt(clean.substr(i, 2), 16);
+  }
+  return bytes;
+}
+
+function bytesToHex(bytes: Uint8Array): string {
+  return Array.from(bytes).map(b => b.toString(16).padStart(2, "0")).join("");
+}
+
+function bytesToBigInt(bytes: Uint8Array): bigint {
+  let result = BigInt(0);
+  for (const byte of bytes) {
+    result = (result << BigInt(8)) | BigInt(byte);
+  }
+  return result;
+}
+
+function bigIntToBytes(value: bigint, length: number): Uint8Array {
+  const bytes = new Uint8Array(length);
+  let n = value;
+  for (let i = length - 1; i >= 0; i--) {
+    bytes[i] = Number(n & BigInt(0xFF));
+    n >>= BigInt(8);
   }
   return bytes;
 }

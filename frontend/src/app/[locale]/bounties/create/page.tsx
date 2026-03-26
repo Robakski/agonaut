@@ -447,12 +447,21 @@ export default function CreateBountyPage() {
     setKeyRegistering(true);
     setKeyError(null);
     try {
-      const message = `Agonaut Sponsor Key Registration\nAddress: ${address}\nTimestamp: ${Math.floor(Date.now() / 1000)}`;
+      // Sign a DETERMINISTIC message — same message every time for the same address.
+      // This is critical: during decryption, we sign the SAME message to re-derive
+      // the same private key. If the message had a timestamp, decryption would fail.
+      const { getEncryptionMessage, derivePublicKey } = await import("@/lib/ecies");
+      const message = getEncryptionMessage(address);
       const signature = await walletClient.signMessage({ account: address, message });
+
+      // Derive the secp256k1 public key from the signature (keccak256 → private key → public key)
+      // This is NOT the wallet's Ethereum public key — it's a derived encryption keypair.
+      const derivedPubKey = derivePublicKey(signature);
+
       const res = await fetch(`${API_URL}/solutions/register-sponsor-key`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message, signature }),
+        body: JSON.stringify({ message, signature, derived_public_key: derivedPubKey }),
       });
       if (!res.ok) throw new Error((await res.json()).detail || "Registration failed");
       setHasSponsorKey(true);

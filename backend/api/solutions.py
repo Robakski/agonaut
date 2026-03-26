@@ -260,30 +260,57 @@ async def trigger_scoring(round_address: str):
 # ── Sponsor Public Key Registration ──
 
 class RegisterSponsorKeyRequest(BaseModel):
-    """Sponsor registers their public key by signing a message."""
+    """Sponsor registers their derived encryption public key."""
     message: str
     signature: str
+    derived_public_key: str = ""  # If provided, use this instead of recovered Ethereum pubkey
 
 
 @router.post("/register-sponsor-key")
 async def register_sponsor_key(req: RegisterSponsorKeyRequest):
     """Register a sponsor's secp256k1 public key for zero-knowledge solution delivery.
 
-    The sponsor signs a message with their wallet. We recover the full
-    public key from the signature and store it. This key is later given
-    to the Phala TEE to re-encrypt winning solutions so that ONLY the
-    sponsor can decrypt them — not even us.
+    Two modes:
+    1. (V2 — preferred) Frontend derives a keypair from the wallet signature and sends
+       the derived public key. This ensures the frontend can re-derive the matching
+       private key for decryption (wallets don't expose raw private keys).
+    2. (V1 — legacy) We recover the Ethereum public key from the signature. This only
+       works if the frontend can perform ECDH with the wallet's actual private key.
 
-    Should be called during bounty creation flow (before deposit).
+    The derived key approach (V2) uses: keccak256(signature) → private key → public key.
+    Both frontend and TEE use the same derived public key for encrypt/decrypt.
     """
     try:
-        from services.sponsor_keys import register_from_signature
-        result = register_from_signature(req.message, req.signature)
-        return {
-            "status": "registered",
-            "address": result["address"],
-            "public_key_preview": result["public_key"][:20] + "...",
-        }
+        from services.sponsor_keys import register_from_signature, register_derived_key
+        from eth_account.messages import encode_defunct
+        from eth_account import Account
+
+        # Verify signature is valid and recover address
+        msg = encode_defunct(text=req.message)
+        address = Account.recover_message(msg, signature=req.signature)
+
+        if req.derived_public_key:
+            # V2: Store the derived public key (frontend computed it from keccak256(sig))
+            # Validate it looks like an uncompressed secp256k1 key
+            pk = req.derived_public_key.replace("0x", "")
+            if len(pk) != 130 or not pk.startswith("04"):
+                raise ValueError("Invalid derived public key format (expected 65-byte uncompressed)")
+            register_derived_key(address, req.derived_public_key)
+            return {
+                "status": "registered",
+                "address": address,
+                "public_key_preview": req.derived_public_key[:20] + "...",
+                "key_type": "derived",
+            }
+        else:
+            # V1 legacy: recover Ethereum public key from signature
+            result = register_from_signature(req.message, req.signature)
+            return {
+                "status": "registered",
+                "address": result["address"],
+                "public_key_preview": result["public_key"][:20] + "...",
+                "key_type": "recovered",
+            }
     except ValueError as e:
         raise HTTPException(400, f"Invalid signature: {e}")
     except Exception as e:
