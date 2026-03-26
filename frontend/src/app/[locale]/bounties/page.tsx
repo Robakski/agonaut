@@ -49,7 +49,8 @@ export default function BountiesPage() {
     fetch(`${API_URL}/bounties/?limit=100`)
       .then((r) => r.ok ? r.json() : Promise.reject())
       .then((data: any[]) => {
-        if (data.length > 0) {
+        if (Array.isArray(data)) {
+          if (data.length === 0) { setApiBounties([]); return; }
           setApiBounties(
             data.map((b) => ({
               bounty_id: b.bounty_id,

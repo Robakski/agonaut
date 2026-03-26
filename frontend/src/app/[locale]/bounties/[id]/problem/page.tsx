@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import { useAccount } from "wagmi";
 import { useTranslations } from "next-intl";
@@ -35,7 +35,7 @@ export default function ProblemViewerPage() {
   const [state, setState] = useState<ViewState>({ kind: "loading" });
 
   // Load metadata on mount
-  useState(() => {
+  useEffect(() => {
     if (!roundAddress) return;
     fetch(`${API_URL}/private-bounties/metadata/${roundAddress}`)
       .then((r) => {
@@ -54,7 +54,7 @@ export default function ProblemViewerPage() {
         });
       })
       .catch(() => setState({ kind: "error", message: "Failed to load bounty metadata" }));
-  });
+  }, [roundAddress]);
 
   const requestDecryption = async () => {
     if (!address) {
