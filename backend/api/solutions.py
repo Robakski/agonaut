@@ -132,6 +132,7 @@ async def submit_solution(req: SubmitSolutionRequest):
                 "agent_id": req.agent_id,
                 "encrypted_solution": req.encrypted_solution,
                 "commit_hash": req.commit_hash,
+                "agent_address": req.agent_address,
             }).encode()
             resp = await client.post(
                 f"{SCORING_SERVICE_URL}/score/receive-solution",

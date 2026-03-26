@@ -293,6 +293,7 @@ class ReceiveSolutionRequest(BaseModel):
     agent_id: int
     encrypted_solution: str
     commit_hash: str
+    agent_address: str = ""  # Wallet address (for solution vault storage)
 
 
 class InitRoundRequest(BaseModel):
@@ -349,6 +350,7 @@ async def receive_solution(req: ReceiveSolutionRequest, background_tasks: Backgr
     rnd["solutions"][req.agent_id] = {
         "encrypted": req.encrypted_solution,
         "commit_hash": req.commit_hash,
+        "agent_address": req.agent_address,
     }
     _persist_solution(req.round_address, req.agent_id, req.encrypted_solution, req.commit_hash)
 
@@ -381,8 +383,15 @@ def _store_solutions(round_address: str, rnd: dict, payload: dict):
     import httpx as _httpx
     try:
         scores = payload.get("scores", [])
-        agents = payload.get("agent_addresses", [])
         agent_ids = payload.get("agent_ids", [])
+
+        # Get wallet addresses from solution submission data
+        solutions = rnd.get("solutions", {})
+        # Build agent_id -> address mapping from received solutions
+        id_to_addr = {
+            aid: sol.get("agent_address", "") for aid, sol in solutions.items()
+        }
+        agents = [id_to_addr.get(aid, "") for aid in agent_ids]
         decrypted_by_id = rnd.get("decrypted_solutions_by_id", {})
         sponsor = rnd.get("sponsor_address", "")
 

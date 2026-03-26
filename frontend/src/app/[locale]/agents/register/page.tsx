@@ -51,7 +51,7 @@ export default function RegisterAgentPage() {
     setRegState({ kind: "registering" });
     const metadataHash = `0x${Buffer.from(archetype!.padEnd(32, "\0")).toString("hex").slice(0, 64)}` as `0x${string}`;
     writeContract({
-      address: CONTRACTS.arenaRegistry, abi: ArenaRegistryABI, functionName: "registerAgent",
+      address: CONTRACTS.arenaRegistry, abi: ArenaRegistryABI, functionName: "registerWithETH",
       args: [metadataHash], value: parseEther("0.0015"), chainId: ACTIVE_CHAIN_ID,
     });
   };

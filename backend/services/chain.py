@@ -44,6 +44,7 @@ BOUNTY_FACTORY_ABI = json.loads("""[
         {"type": "uint16", "name": "acceptanceThreshold"},
         {"type": "bool", "name": "graduatedPayouts"},
         {"type": "bool", "name": "active"},
+        {"type": "bool", "name": "isPrivate"},
         {"type": "uint64", "name": "createdAt"},
         {"type": "address", "name": "creator"}
       ]
@@ -82,6 +83,7 @@ BOUNTY_FACTORY_ABI = json.loads("""[
         {"type": "uint16", "name": "acceptanceThreshold"},
         {"type": "bool", "name": "graduatedPayouts"},
         {"type": "bool", "name": "active"},
+        {"type": "bool", "name": "isPrivate"},
         {"type": "uint64", "name": "createdAt"},
         {"type": "address", "name": "creator"}
       ]
@@ -164,8 +166,18 @@ BOUNTY_ROUND_ABI = json.loads("""[
   {
     "type": "function",
     "name": "getCommitment",
-    "inputs": [{"type": "address", "name": "agent"}],
-    "outputs": [{"type": "bytes32", "name": ""}],
+    "inputs": [{"type": "uint256", "name": "agentId"}],
+    "outputs": [
+      {"type": "bytes32", "name": "hash"},
+      {"type": "uint64", "name": "timestamp"}
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "isParticipant",
+    "inputs": [{"type": "uint256", "name": "agentId"}],
+    "outputs": [{"type": "bool", "name": ""}],
     "stateMutability": "view"
   }
 ]""")
@@ -173,10 +185,9 @@ BOUNTY_ROUND_ABI = json.loads("""[
 ARENA_REGISTRY_ABI = json.loads("""[
   {
     "type": "function",
-    "name": "registerAgent",
+    "name": "registerWithETH",
     "inputs": [
-      {"type": "string", "name": "metadataCid"},
-      {"type": "string", "name": "name"}
+      {"type": "bytes32", "name": "metadataHash"}
     ],
     "outputs": [{"type": "uint256", "name": "agentId"}],
     "stateMutability": "payable"
@@ -196,11 +207,15 @@ ARENA_REGISTRY_ABI = json.loads("""[
       "type": "tuple",
       "name": "agent",
       "components": [
-        {"type": "address", "name": "owner"},
-        {"type": "string", "name": "metadataCid"},
-        {"type": "string", "name": "name"},
-        {"type": "uint256", "name": "registeredAt"},
-        {"type": "bool", "name": "active"}
+        {"type": "address", "name": "wallet"},
+        {"type": "bytes32", "name": "metadataHash"},
+        {"type": "uint64", "name": "registeredAt"},
+        {"type": "uint64", "name": "deregisteredAt"},
+        {"type": "uint16", "name": "stableId"},
+        {"type": "uint16", "name": "eloRating"},
+        {"type": "uint256", "name": "totalWinnings"},
+        {"type": "uint32", "name": "roundsEntered"},
+        {"type": "uint32", "name": "roundsWon"}
       ]
     }],
     "stateMutability": "view"
@@ -210,6 +225,13 @@ ARENA_REGISTRY_ABI = json.loads("""[
     "name": "nextAgentId",
     "inputs": [],
     "outputs": [{"type": "uint256", "name": ""}],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "getAgentsByWallet",
+    "inputs": [{"type": "address", "name": "wallet"}],
+    "outputs": [{"type": "uint256[]", "name": "agentIds"}],
     "stateMutability": "view"
   }
 ]""")
@@ -361,17 +383,42 @@ class ChainService:
         return float(self.w3.from_wei(bal, "ether"))
 
     def verify_commitment(self, round_address: str, agent_address: str, commit_hash: str) -> bool:
-        """Verify an agent's on-chain commitment matches the submitted hash."""
-        contract = self.w3.eth.contract(
-            address=Web3.to_checksum_address(round_address),
-            abi=BOUNTY_ROUND_ABI,
-        )
-        on_chain_hash = contract.functions.getCommitment(
-            Web3.to_checksum_address(agent_address)
-        ).call()
-        # on_chain_hash is bytes32, commit_hash is hex string
-        expected = bytes.fromhex(commit_hash.replace("0x", ""))
-        return on_chain_hash == expected
+        """Verify an agent's on-chain commitment matches the submitted hash.
+
+        Looks up agent IDs for the wallet, then checks each for a matching commitment.
+        """
+        try:
+            # Get agent IDs for this wallet
+            registry = self.w3.eth.contract(
+                address=Web3.to_checksum_address(config.ARENA_REGISTRY),
+                abi=ARENA_REGISTRY_ABI,
+            )
+            agent_ids = registry.functions.getAgentsByWallet(
+                Web3.to_checksum_address(agent_address)
+            ).call()
+
+            if not agent_ids:
+                return False
+
+            contract = self.w3.eth.contract(
+                address=Web3.to_checksum_address(round_address),
+                abi=BOUNTY_ROUND_ABI,
+            )
+            expected = bytes.fromhex(commit_hash.replace("0x", ""))
+
+            for agent_id in agent_ids:
+                try:
+                    result = contract.functions.getCommitment(agent_id).call()
+                    on_chain_hash = result[0]  # (bytes32 hash, uint64 timestamp)
+                    if on_chain_hash == expected:
+                        return True
+                except Exception:
+                    continue
+
+            return False
+        except Exception as e:
+            logger.warning(f"Commitment verification failed: {e}")
+            return False
 
     def get_round_details(self, round_address: str) -> dict:
         """Read full round state for dashboard/listing."""
@@ -399,23 +446,26 @@ class ChainService:
     def is_registered_agent(self, wallet_address: str) -> bool:
         """
         Check if a wallet address is registered as an active agent in ArenaRegistry.
-        Always reads fresh from chain — no caching (enterprise: real-time compliance).
+        Uses getAgentsByWallet for efficient lookup (no iteration needed).
         """
-        wallet_lower = wallet_address.lower()
-
         try:
             registry = self.w3.eth.contract(
                 address=Web3.to_checksum_address(config.ARENA_REGISTRY),
                 abi=ARENA_REGISTRY_ABI,
             )
-            next_id = registry.functions.nextAgentId().call()
+            agent_ids = registry.functions.getAgentsByWallet(
+                Web3.to_checksum_address(wallet_address)
+            ).call()
 
-            for agent_id in range(1, next_id):
+            if not agent_ids:
+                return False
+
+            # Check if any of the wallet's agents are active (deregisteredAt == 0)
+            for agent_id in agent_ids:
                 try:
                     agent = registry.functions.getAgent(agent_id).call()
-                    owner = agent[0]  # owner address
-                    active = agent[4]  # active flag
-                    if active and owner.lower() == wallet_lower:
+                    deregistered_at = agent[3]  # deregisteredAt (uint64)
+                    if deregistered_at == 0:  # 0 means still active
                         return True
                 except Exception:
                     continue
@@ -426,30 +476,12 @@ class ChainService:
             return False
 
     def has_agent_committed(self, round_address: str, agent_address: str) -> bool:
-        """Check if any agent owned by this wallet is a participant in the round.
-
-        Flow:
-        1. Look up agent IDs owned by the wallet (ArenaRegistry.getAgentsByWallet)
-        2. Check if any of those agent IDs are participants (BountyRound.isParticipant)
-
-        The contract uses agentId (uint256), not address, for participant tracking.
-        """
+        """Check if any agent owned by this wallet is a participant in the round."""
         try:
-            from web3 import Web3
-
-            # Step 1: Get agent IDs for this wallet
-            REGISTRY_ABI_MINIMAL = [
-                {
-                    "inputs": [{"name": "wallet", "type": "address"}],
-                    "name": "getAgentsByWallet",
-                    "outputs": [{"name": "agentIds", "type": "uint256[]"}],
-                    "stateMutability": "view",
-                    "type": "function"
-                }
-            ]
+            # Use the main ABIs (which now include getAgentsByWallet and isParticipant)
             registry = self.w3.eth.contract(
                 address=Web3.to_checksum_address(config.ARENA_REGISTRY),
-                abi=REGISTRY_ABI_MINIMAL,
+                abi=ARENA_REGISTRY_ABI,
             )
             agent_ids = registry.functions.getAgentsByWallet(
                 Web3.to_checksum_address(agent_address)
@@ -459,19 +491,9 @@ class ChainService:
                 logger.info(f"Wallet {agent_address[:10]}... has no registered agents")
                 return False
 
-            # Step 2: Check if any agent is a participant in this round
-            ROUND_ABI_MINIMAL = [
-                {
-                    "inputs": [{"name": "agentId", "type": "uint256"}],
-                    "name": "isParticipant",
-                    "outputs": [{"name": "", "type": "bool"}],
-                    "stateMutability": "view",
-                    "type": "function"
-                }
-            ]
             round_contract = self.w3.eth.contract(
                 address=Web3.to_checksum_address(round_address),
-                abi=ROUND_ABI_MINIMAL,
+                abi=BOUNTY_ROUND_ABI,
             )
 
             for agent_id in agent_ids:
@@ -486,13 +508,23 @@ class ChainService:
             return False
 
     def build_register_agent_tx(self, owner_address: str, name: str, metadata_cid: str) -> dict:
-        """Build unsigned transaction for agent registration."""
+        """Build unsigned transaction for agent registration.
+
+        The contract uses registerWithETH(bytes32 metadataHash).
+        We hash the metadata CID to get a bytes32 value.
+        """
         registry = self.w3.eth.contract(
             address=Web3.to_checksum_address(config.ARENA_REGISTRY),
             abi=ARENA_REGISTRY_ABI,
         )
         reg_fee = registry.functions.registrationFee().call()
-        tx_data = registry.functions.registerAgent(metadata_cid, name)
+
+        # Convert metadata CID to bytes32 hash
+        import hashlib
+        metadata_hash = bytes.fromhex(
+            hashlib.sha256(metadata_cid.encode()).hexdigest()
+        )
+        tx_data = registry.functions.registerWithETH(metadata_hash)
 
         # Build unsigned transaction
         tx = tx_data.build_transaction({

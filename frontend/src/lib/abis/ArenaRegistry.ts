@@ -57,7 +57,7 @@ export const ArenaRegistryABI = [
   // ── Write ──
   {
     type: "function",
-    name: "registerAgent",
+    name: "registerWithETH",
     inputs: [{ type: "bytes32", name: "metadataHash" }],
     outputs: [{ type: "uint256", name: "agentId" }],
     stateMutability: "payable",
