@@ -151,7 +151,7 @@ BOUNTY_ROUND_ABI = json.loads("""[
   },
   {
     "type": "function",
-    "name": "agentCount",
+    "name": "getParticipantCount",
     "inputs": [],
     "outputs": [{"type": "uint256", "name": ""}],
     "stateMutability": "view"
@@ -427,7 +427,7 @@ class ChainService:
             abi=BOUNTY_ROUND_ABI,
         )
         phase = contract.functions.phase().call()
-        agent_count = contract.functions.agentCount().call()
+        agent_count = contract.functions.getParticipantCount().call()
         sponsor = contract.functions.sponsor().call()
         deposit = contract.functions.sponsorDeposit().call()
         deadline = contract.functions.commitDeadline().call()
