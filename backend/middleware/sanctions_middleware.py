@@ -83,6 +83,24 @@ class SanctionsMiddleware(BaseHTTPMiddleware):
             if not wallet:
                 wallet = request.headers.get("X-Wallet-Address")
 
+            # Try to extract from POST body if not found elsewhere
+            if not wallet and request.method == "POST":
+                try:
+                    body = await request.body()
+                    if body:
+                        import json
+                        data = json.loads(body)
+                        wallet = (
+                            data.get("sponsorAddress")
+                            or data.get("owner_address")
+                            or data.get("wallet")
+                            or data.get("agent_address")
+                        )
+                        # Re-attach body so downstream handlers can read it
+                        # (Starlette caches it after first read)
+                except Exception:
+                    pass
+
             if wallet:
                 action = path.split("/")[-1]  # e.g., "register", "create", "commit"
                 result = screen_user(wallet, action, ip_address=client_ip)

@@ -121,10 +121,119 @@ class ScoringAuthMiddleware(BaseHTTPMiddleware):
 
 app.add_middleware(ScoringAuthMiddleware)
 
-# ── In-memory state (replace with Redis/DB in production) ──
+# ── Persistent round state (SQLite-backed for crash recovery) ──
+# Solutions and round status survive restarts. Results stay in memory
+# during scoring but are persisted after completion.
 
-# round_address -> { status, solutions, results, ... }
+import sqlite3
+
+_SCORING_DB = Path(os.environ.get("SCORING_DB_PATH", "/opt/agonaut-scoring/data/scoring.db"))
 _rounds: dict[str, dict] = {}
+
+
+def _get_scoring_db() -> sqlite3.Connection:
+    _SCORING_DB.parent.mkdir(parents=True, exist_ok=True)
+    conn = sqlite3.connect(str(_SCORING_DB), timeout=10)
+    conn.row_factory = sqlite3.Row
+    conn.execute("PRAGMA journal_mode=WAL")
+    conn.execute("PRAGMA busy_timeout=5000")
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS round_state (
+            round_address TEXT PRIMARY KEY,
+            status TEXT NOT NULL,
+            problem_text TEXT,
+            expected_agents INTEGER,
+            rubric TEXT,
+            solution_key TEXT,
+            created_at REAL
+        )
+    """)
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS round_solutions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            round_address TEXT NOT NULL,
+            agent_id INTEGER NOT NULL,
+            encrypted_solution TEXT NOT NULL,
+            commit_hash TEXT,
+            received_at REAL,
+            UNIQUE(round_address, agent_id)
+        )
+    """)
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_rs_round ON round_solutions(round_address)")
+    conn.commit()
+    return conn
+
+
+def _persist_round(round_address: str, rnd: dict):
+    """Save round metadata to SQLite."""
+    try:
+        conn = _get_scoring_db()
+        conn.execute(
+            """INSERT OR REPLACE INTO round_state
+               (round_address, status, problem_text, expected_agents, rubric, solution_key, created_at)
+               VALUES (?, ?, ?, ?, ?, ?, ?)""",
+            (round_address, rnd.get("status", ""), rnd.get("problem_text", ""),
+             rnd.get("expected_agents", 0), json.dumps(rnd.get("rubric")),
+             rnd.get("solution_key", ""), time.time())
+        )
+        conn.commit()
+        conn.close()
+    except Exception as e:
+        log.warning(f"Failed to persist round state: {e}")
+
+
+def _persist_solution(round_address: str, agent_id: int, encrypted: str, commit_hash: str):
+    """Save a received solution to SQLite."""
+    try:
+        conn = _get_scoring_db()
+        conn.execute(
+            """INSERT OR REPLACE INTO round_solutions
+               (round_address, agent_id, encrypted_solution, commit_hash, received_at)
+               VALUES (?, ?, ?, ?, ?)""",
+            (round_address, agent_id, encrypted, commit_hash, time.time())
+        )
+        conn.commit()
+        conn.close()
+    except Exception as e:
+        log.warning(f"Failed to persist solution: {e}")
+
+
+def _recover_rounds():
+    """On startup, recover any in-progress rounds from SQLite."""
+    try:
+        conn = _get_scoring_db()
+        rows = conn.execute(
+            "SELECT * FROM round_state WHERE status IN ('receiving', 'scoring')"
+        ).fetchall()
+        for row in rows:
+            addr = row["round_address"]
+            sols = conn.execute(
+                "SELECT agent_id, encrypted_solution, commit_hash FROM round_solutions WHERE round_address = ?",
+                (addr,)
+            ).fetchall()
+            _rounds[addr] = {
+                "status": row["status"],
+                "problem_text": row["problem_text"],
+                "expected_agents": row["expected_agents"],
+                "rubric": json.loads(row["rubric"]) if row["rubric"] else None,
+                "solution_key": row["solution_key"] or "",
+                "solutions": {
+                    s["agent_id"]: {"encrypted": s["encrypted_solution"], "commit_hash": s["commit_hash"]}
+                    for s in sols
+                },
+                "results": None,
+                "scoring_started_at": None,
+                "scoring_completed_at": None,
+                "error": None,
+            }
+            log.info(f"Recovered round {addr[:10]}... with {len(sols)} solutions (status: {row['status']})")
+        conn.close()
+    except Exception as e:
+        log.warning(f"Round recovery failed (starting fresh): {e}")
+
+
+# Recover on startup
+_recover_rounds()
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -218,6 +327,7 @@ async def init_round(req: InitRoundRequest):
         "error": None,
     }
 
+    _persist_round(req.round_address, _rounds[req.round_address])
     log.info(f"Round {req.round_address[:10]}... initialized, expecting {req.expected_agents} solutions")
     return {"status": "initialized", "round_address": req.round_address}
 
@@ -240,6 +350,7 @@ async def receive_solution(req: ReceiveSolutionRequest, background_tasks: Backgr
         "encrypted": req.encrypted_solution,
         "commit_hash": req.commit_hash,
     }
+    _persist_solution(req.round_address, req.agent_id, req.encrypted_solution, req.commit_hash)
 
     received = len(rnd["solutions"])
     expected = rnd["expected_agents"]
@@ -272,11 +383,11 @@ def _store_solutions(round_address: str, rnd: dict, payload: dict):
         scores = payload.get("scores", [])
         agents = payload.get("agent_addresses", [])
         agent_ids = payload.get("agent_ids", [])
-        decrypted = rnd.get("decrypted_solutions", {})
+        decrypted_by_id = rnd.get("decrypted_solutions_by_id", {})
         sponsor = rnd.get("sponsor_address", "")
 
-        if not agents or not decrypted or not sponsor:
-            log.warning("Cannot store solutions — missing agent addresses, decrypted solutions, or sponsor")
+        if not agents or not decrypted_by_id or not sponsor:
+            log.warning(f"Cannot store solutions — agents={len(agents)}, decrypted={len(decrypted_by_id)}, sponsor={'yes' if sponsor else 'no'}")
             return
 
         # Fetch sponsor's public key from backend
@@ -305,9 +416,9 @@ def _store_solutions(round_address: str, rnd: dict, payload: dict):
         from ecies_encrypt import encrypt_for_wallet
         stored = 0
         for i, (addr, score) in enumerate(zip(agents, scores)):
-            if score > 0 and addr.lower() in decrypted:
-                agent_id = agent_ids[i] if i < len(agent_ids) else 0
-                solution_text = decrypted[addr.lower()]
+            agent_id = agent_ids[i] if i < len(agent_ids) else 0
+            if score > 0 and agent_id in decrypted_by_id:
+                solution_text = decrypted_by_id[agent_id]
 
                 # Encrypt — after this, we can't read it anymore
                 encrypted_blob = encrypt_for_wallet(solution_text, sponsor_pubkey)
@@ -386,8 +497,12 @@ async def _score_round_async(round_address: str):
             solution_key=rnd.get("solution_key", ""),
         )
 
-        # Store results
+        # Store results + decrypted solutions for vault storage
         payload = to_onchain_payload(results)
+        # Save decrypted solutions keyed by agent_id (for ECIES re-encryption)
+        rnd["decrypted_solutions_by_id"] = {
+            r.agent_id: r.plaintext for r in results if r.plaintext and r.final_score > 0
+        }
         rnd["results"] = payload
         rnd["status"] = "completed"
         rnd["scoring_completed_at"] = time.time()

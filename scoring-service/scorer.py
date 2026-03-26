@@ -513,6 +513,7 @@ class ScoredSolution:
     commit_hash: str
     breakdown: ScoreBreakdown
     error: Optional[str] = None
+    plaintext: Optional[str] = None  # Decrypted solution text (for vault storage)
 
     @property
     def final_score(self) -> int:
@@ -624,6 +625,7 @@ class ScoringEngine:
 
         return ScoredSolution(
             agent_id=agent_id, commit_hash=commit_hash, breakdown=breakdown,
+            plaintext=solution_text,
         )
 
     def _verification_pass(

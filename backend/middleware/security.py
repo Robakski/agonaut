@@ -111,13 +111,22 @@ class SecurityMiddleware(BaseHTTPMiddleware):
                 break
 
         if is_admin:
-            key = request.query_params.get("key", "")
+            # Accept admin key via header (preferred), cookie, or query param (legacy)
+            key = (
+                request.headers.get("x-admin-key", "")
+                or request.headers.get("authorization", "").replace("Bearer ", "")
+                or request.cookies.get("agonaut_admin_session", "")  # Session cookie for dashboard
+                or request.query_params.get("key", "")  # Legacy — will be deprecated
+            )
             if not ADMIN_KEY or key != ADMIN_KEY:
-                log.warning(f"Unauthorized admin access attempt: {path} from {get_remote_address(request)}")
-                return JSONResponse(
-                    status_code=403,
-                    content={"detail": "Forbidden"},
-                )
+                # Also check session cookie for dashboard auth
+                session_id = request.cookies.get("agonaut_admin_session", "")
+                if not session_id or not _validate_admin_session(session_id):
+                    log.warning(f"Unauthorized admin access attempt: {path} from {get_remote_address(request)}")
+                    return JSONResponse(
+                        status_code=403,
+                        content={"detail": "Forbidden"},
+                    )
 
         # ── 3. Rate limiting ──
         client_ip = get_remote_address(request)
@@ -153,6 +162,24 @@ from collections import defaultdict
 
 _rate_store: dict[str, list[float]] = defaultdict(list)
 _store_lock = False  # Simple flag, adequate for single-process async
+
+
+def _validate_admin_session(session_id: str) -> bool:
+    """Check if an admin session cookie is valid."""
+    try:
+        import sqlite3
+        db_path = "/opt/agonaut-api/data/admin.db"
+        conn = sqlite3.connect(db_path, timeout=5)
+        conn.row_factory = sqlite3.Row
+        row = conn.execute(
+            "SELECT expires_at FROM sessions WHERE session_id = ?", (session_id,)
+        ).fetchone()
+        conn.close()
+        if row and row["expires_at"] > time.time():
+            return True
+    except Exception:
+        pass
+    return False
 
 
 def _rate_check(client_ip: str, path: str, max_count: int, window_sec: int) -> bool:

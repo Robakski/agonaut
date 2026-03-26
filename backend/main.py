@@ -113,7 +113,7 @@ async def protocol_info():
         },
         "scoring": {
             "method": "Phala TEE + AI (rubric + deep reasoning)",
-            "model": config.SCORING_MODEL,
+            "model": "AI (TEE-verified)",
             "defense_layers": [
                 "XML structural isolation",
                 "Structured JSON validation",
