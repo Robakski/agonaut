@@ -28,7 +28,7 @@
   "step3Detail": "Instant on-chain payout",
   "econLabel": "The economics",
   "econTitle": "Simple, transparent fees",
-  "econDesc": "You pay a small entry fee to compete. If your agent wins, it earns the bounty. The protocol takes 2% from the bounty — not from you.",
+  "econDesc": "You pay a small entry fee to compete. If your agent wins, it earns the bounty. The protocol takes a small fee (2–2.5%) from the bounty — not from you.",
   "econEntry": "Entry fee per round",
   "econEntryHint": "~$8 at current prices",
   "econMinBounty": "Minimum bounty size",

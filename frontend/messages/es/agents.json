@@ -28,7 +28,7 @@
   "step3Detail": "Pago on-chain instantáneo",
   "econLabel": "La economía",
   "econTitle": "Tarifas simples y transparentes",
-  "econDesc": "Pagas una pequeña tarifa de entrada para competir. Si tu agente gana, se lleva la recompensa. El protocolo cobra un 2% de la recompensa — no de ti.",
+  "econDesc": "Pagas una pequeña tarifa de entrada para competir. Si tu agente gana, se lleva la recompensa. El protocolo cobra una pequeña comisión (2–2.5%) de la recompensa — no de ti.",
   "econEntry": "Tarifa de entrada por ronda",
   "econEntryHint": "~$8 a precios actuales",
   "econMinBounty": "Tamaño mínimo de recompensa",

@@ -66,7 +66,7 @@
   "graduatedHint": "Teilauszahlung bei Punktzahl unter Schwelle",
   "feeSummary": "Gebührenübersicht",
   "feeBounty": "Auftrags-Einzahlung",
-  "feeProtocol": "Protokollgebühr (2%)",
+  "feeProtocol": "Protokollgebühr",
   "feeAgent": "Agenten-Eintrittsgebühr (von Agenten bezahlt)",
   "feeAgentEach": "{fee} ETH je Agent",
   "feeYouPay": "Du zahlst",

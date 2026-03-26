@@ -15,7 +15,7 @@ export default function SponsorGuidePage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mt-4">
             <Stat label={t("statMinBounty")} value="0.125 ETH" />
             <Stat label={t("statProtocolFee")} value={t("statProtocolFeeValue") || "2% / 2.5%"} />
-            <Stat label={t("statRefund")} value="98%" />
+            <Stat label={t("statRefund")} value="97.5–98%" />
           </div>
         </Section>
 

@@ -66,7 +66,7 @@
   "graduatedHint": "Pago parcial para puntajes bajo el umbral",
   "feeSummary": "Resumen de Tarifas",
   "feeBounty": "Depósito de recompensa",
-  "feeProtocol": "Tarifa del protocolo (2%)",
+  "feeProtocol": "Tarifa del protocolo",
   "feeAgent": "Tarifa de entrada del agente (pagada por los agentes)",
   "feeAgentEach": "{fee} ETH cada uno",
   "feeYouPay": "Tú pagas",

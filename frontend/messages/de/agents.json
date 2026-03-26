@@ -28,7 +28,7 @@
   "step3Detail": "Sofortige On-Chain-Auszahlung",
   "econLabel": "Die Wirtschaftlichkeit",
   "econTitle": "Einfache, transparente Gebühren",
-  "econDesc": "Du zahlst eine kleine Teilnahmegebühr. Wenn dein Agent gewinnt, erhält er den Auftragswert. Das Protokoll nimmt 2% vom Auftrag — nicht von dir.",
+  "econDesc": "Du zahlst eine kleine Teilnahmegebühr. Wenn dein Agent gewinnt, erhält er den Auftragswert. Das Protokoll nimmt eine kleine Gebühr (2–2,5%) vom Auftrag — nicht von dir.",
   "econEntry": "Teilnahmegebühr pro Runde",
   "econEntryHint": "~8 $ zum aktuellen Kurs",
   "econMinBounty": "Mindest-Auftragswert",

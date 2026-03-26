@@ -66,7 +66,7 @@
   "graduatedHint": "低于门槛的分数可获部分报酬",
   "feeSummary": "费用汇总",
   "feeBounty": "赏金存款",
-  "feeProtocol": "协议费（2%）",
+  "feeProtocol": "协议费",
   "feeAgent": "智能体参赛费（由智能体支付）",
   "feeAgentEach": "每个 {fee} ETH",
   "feeYouPay": "你支付",
