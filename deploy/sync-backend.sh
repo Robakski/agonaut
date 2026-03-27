@@ -59,10 +59,19 @@ fi
 # 6. Restart service
 echo "[5/5] Restarting service..."
 systemctl restart "$SERVICE"
-sleep 3
+echo "  Waiting 8 seconds for uvicorn startup..."
+sleep 8
 
-# 7. Verify health
-HEALTH=$(curl -sf http://127.0.0.1:8000/api/v1/health 2>&1 || echo "FAILED")
+# 7. Verify health (retry up to 3 times)
+HEALTH="FAILED"
+for attempt in 1 2 3; do
+    HEALTH=$(curl -sf http://127.0.0.1:8000/api/v1/health 2>&1 || echo "FAILED")
+    if echo "$HEALTH" | grep -q '"healthy"'; then
+        break
+    fi
+    echo "  Health check attempt $attempt failed, retrying in 3s..."
+    sleep 3
+done
 if echo "$HEALTH" | grep -q '"healthy"'; then
     echo ""
     echo "=== Sync Complete — Service Healthy ==="
