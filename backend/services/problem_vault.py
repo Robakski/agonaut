@@ -43,9 +43,11 @@ def _get_fernet() -> Fernet:
     if _fernet is None:
         key = os.environ.get("PROBLEM_VAULT_KEY", "")
         if not key:
-            key = os.environ.get("KYC_ENCRYPTION_KEY", "")
-        if not key:
-            raise RuntimeError("PROBLEM_VAULT_KEY not set")
+            raise RuntimeError(
+                "FATAL: PROBLEM_VAULT_KEY environment variable not set. "
+                "This key encrypts problem descriptions at rest. "
+                "Cannot start without it. Add PROBLEM_VAULT_KEY to .env and restart."
+            )
         _fernet = Fernet(key.encode())
     return _fernet
 

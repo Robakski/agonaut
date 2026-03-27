@@ -12,6 +12,7 @@ Production:
     uvicorn main:app --host 0.0.0.0 --port 8000 --workers 4
 """
 
+import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -76,6 +77,72 @@ app.include_router(admin_dashboard.router)
 
 from api import private_bounties
 app.include_router(private_bounties.router, prefix="/api/v1")
+
+
+# ── Startup Validation (BUG-12, BUG-13, BUG-14) ──
+
+@app.on_event("startup")
+async def validate_secrets():
+    """
+    Validate all critical secrets are present and usable before accepting requests.
+    This catches configuration errors at startup, not at runtime.
+    """
+    import logging
+    logger = logging.getLogger(__name__)
+    
+    errors = []
+    
+    # BUG-12: PROBLEM_VAULT_KEY (Fernet key for encrypting problem descriptions)
+    problem_vault_key = os.environ.get("PROBLEM_VAULT_KEY", "").strip()
+    if not problem_vault_key:
+        errors.append(
+            "PROBLEM_VAULT_KEY missing. This key encrypts private problem descriptions at rest. "
+            "Generate: python3 -c \"from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())\""
+        )
+    else:
+        try:
+            from cryptography.fernet import Fernet
+            Fernet(problem_vault_key)
+            logger.info("✓ PROBLEM_VAULT_KEY validated")
+        except Exception as e:
+            errors.append(f"PROBLEM_VAULT_KEY invalid: {e}")
+    
+    # BUG-13: SOLUTION_KEY (256-bit AES hex key for encrypting solutions)
+    solution_key = os.environ.get("SOLUTION_KEY", "").strip()
+    if not solution_key:
+        errors.append(
+            "SOLUTION_KEY missing. This is a 256-bit AES key (hex) for encrypting agent solutions. "
+            "Generate: python3 -c \"import os; print(os.urandom(32).hex())\""
+        )
+    else:
+        try:
+            key_bytes = bytes.fromhex(solution_key)
+            if len(key_bytes) != 32:
+                errors.append(f"SOLUTION_KEY must be 32 bytes (256 bits), got {len(key_bytes)}")
+            else:
+                logger.info("✓ SOLUTION_KEY validated")
+        except Exception as e:
+            errors.append(f"SOLUTION_KEY invalid (must be 64 hex chars): {e}")
+    
+    # BUG-14: SUMSUB variables (KYC provider)
+    sumsub_vars = {
+        "SUMSUB_APP_TOKEN": "API application token",
+        "SUMSUB_WORKFLOW_ID": "KYC workflow ID",
+        "SUMSUB_SECRET_KEY": "API secret key (for webhook verification)",
+    }
+    for var_name, description in sumsub_vars.items():
+        if not os.environ.get(var_name, "").strip():
+            errors.append(f"{var_name} missing ({description})")
+        else:
+            logger.info(f"✓ {var_name} present")
+    
+    # If any errors, fail startup
+    if errors:
+        error_msg = "STARTUP VALIDATION FAILED:\n  " + "\n  ".join(errors)
+        logger.critical(error_msg)
+        raise RuntimeError(error_msg)
+    
+    logger.info("✅ All critical secrets validated. Proceeding with startup.")
 
 
 # ── Health ──
