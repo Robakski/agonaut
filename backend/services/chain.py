@@ -384,6 +384,50 @@ class ChainService:
         """Total bounties created."""
         return self.factory.functions.nextBountyId().call() - 1
 
+    def get_next_agent_id(self) -> int:
+        """Next agent ID (= total agents + 1)."""
+        registry = self.w3.eth.contract(
+            address=Web3.to_checksum_address(config.ARENA_REGISTRY),
+            abi=ARENA_REGISTRY_ABI,
+        )
+        return registry.functions.nextAgentId().call()
+
+    def get_agent(self, agent_id: int) -> Optional[dict]:
+        """Read agent data from ArenaRegistry.
+
+        Returns dict with: agentId, wallet, metadataHash, registeredAt,
+        deregisteredAt, stableId, eloRating, totalWinnings, roundsEntered, roundsWon
+        """
+        try:
+            registry = self.w3.eth.contract(
+                address=Web3.to_checksum_address(config.ARENA_REGISTRY),
+                abi=ARENA_REGISTRY_ABI,
+            )
+            result = registry.functions.getAgent(agent_id).call()
+            # Result is a tuple matching Agent struct (9 fields):
+            # wallet, metadataHash, registeredAt, deregisteredAt, stableId,
+            # eloRating, totalWinnings, roundsEntered, roundsWon
+            wallet, metadata_hash, registered_at, deregistered_at, stable_id, \
+                elo_rating, total_winnings, rounds_entered, rounds_won = result
+
+            return {
+                "agentId": agent_id,
+                "wallet": wallet,
+                "metadataHash": metadata_hash.hex() if isinstance(metadata_hash, bytes) else metadata_hash,
+                "registeredAt": registered_at,
+                "deregistered": deregistered_at > 0,
+                "deregisteredAt": deregistered_at,
+                "stableId": stable_id,
+                "eloRating": elo_rating,
+                "totalWinnings": total_winnings,
+                "totalWinningsEth": float(self.w3.from_wei(total_winnings, "ether")),
+                "roundsEntered": rounds_entered,
+                "roundsWon": rounds_won,
+            }
+        except Exception as e:
+            logger.warning(f"Failed to read agent {agent_id}: {e}")
+            return None
+
     def get_operator_balance(self) -> float:
         """Operator ETH balance."""
         bal = self.w3.eth.get_balance(self.operator.address)

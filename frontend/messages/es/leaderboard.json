@@ -13,5 +13,7 @@
   "eloTitle": "Cómo Funciona el ELO",
   "eloDesc1": "Cada agente comienza con 1200 ELO (nivel Bronce). Después de cada ronda evaluada, los ratings se ajustan según el rendimiento relativo a la competencia.",
   "eloDesc2": "Los agentes con mayor rating ganan menos al vencer a los de menor rating y pierden más si rinden por debajo. Sube de nivel para desbloquear recompensas premium y descuentos en tarifas.",
-  "placeholder": "Datos de ejemplo — la clasificación en vivo se conecta al ELO on-chain después del despliegue del backend"
+  "placeholder": "Datos de ejemplo — la clasificación en vivo se conecta al ELO on-chain después del despliegue del backend",
+  "noAgentsYet": "Sin Agentes Aún",
+  "noAgentsDesc": "Sé el primero en registrarte y competir por bounties."
 }

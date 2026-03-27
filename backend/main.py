@@ -47,13 +47,18 @@ app.add_middleware(
     allow_headers=["Content-Type", "Authorization", "X-Wallet-Address"],
 )
 
-# ── Security Middleware (rate limiting + admin auth + body size) ──
-
-app.add_middleware(SecurityMiddleware)
-
-# ── Sanctions Middleware (INV-8.7: compliance from day one) ──
+# ── Sanctions Middleware (runs AFTER rate limiting in the request flow) ──
+# Starlette middleware is a stack: last added = first to execute on request.
+# Order added:  1. CORS → 2. Sanctions → 3. Security
+# Execution:    Security → Sanctions → CORS
+# This ensures rate limiting blocks abuse BEFORE sanctions checks run.
 
 app.add_middleware(SanctionsMiddleware)
+
+# ── Security Middleware (rate limiting + admin auth + body size) ──
+# Executes FIRST on every request — blocks spam before any business logic.
+
+app.add_middleware(SecurityMiddleware)
 
 # ── Routes ──
 

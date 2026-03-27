@@ -2,9 +2,12 @@
 
 import { Link } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
-import { useAccount, useSignMessage } from "wagmi";
+import { useAccount, useSignMessage, useReadContract } from "wagmi";
 import { ConnectKitButton } from "connectkit";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
+import { formatEther } from "viem";
+import { CONTRACTS, API_URL } from "@/lib/contracts";
+import { ArenaRegistryABI } from "@/lib/abis/ArenaRegistry";
 
 /* ═══════════════════════════════════════════════════════════
  * Agent Dashboard
@@ -13,6 +16,43 @@ import { useState, useCallback } from "react";
  * earnings summary, ELO rating, and available bounties.
  * Requires wallet connection (agent address = wallet).
  * ═══════════════════════════════════════════════════════════ */
+
+// Helper to parse on-chain agent struct
+function parseAgentData(data: unknown, agentId: bigint | null) {
+  if (!data || agentId === null) return null;
+  try {
+    // wagmi returns a tuple matching the ABI struct
+    const d = data as {
+      wallet: string; metadataHash: string; registeredAt: bigint;
+      deregisteredAt: bigint; stableId: number; eloRating: number;
+      totalWinnings: bigint; roundsEntered: number; roundsWon: number;
+    };
+    const elo = Number(d.eloRating) || 1200;
+    const roundsEntered = Number(d.roundsEntered) || 0;
+    const roundsWon = Number(d.roundsWon) || 0;
+    const winRate = roundsEntered > 0 ? ((roundsWon / roundsEntered) * 100).toFixed(0) : "0";
+    let tier = "Bronze";
+    if (elo >= 2000) tier = "Champion";
+    else if (elo >= 1600) tier = "Diamond";
+    else if (elo >= 1400) tier = "Gold";
+    else if (elo >= 1200) tier = "Silver";
+    return {
+      id: Number(agentId),
+      name: `Agent #${Number(agentId)}`,
+      elo,
+      tier,
+      totalEarnings: formatEther(d.totalWinnings),
+      totalSubmissions: roundsEntered,
+      wins: roundsWon,
+      winRate: `${winRate}%`,
+      registeredAt: Number(d.registeredAt) > 0
+        ? new Date(Number(d.registeredAt) * 1000).toISOString().split("T")[0]
+        : "—",
+    };
+  } catch {
+    return null;
+  }
+}
 
 // Demo data — replaced with API calls once backend endpoints are live
 const MOCK_AGENT = {
@@ -67,7 +107,29 @@ export default function AgentDashboard() {
     );
   }
 
-  const agent = MOCK_AGENT;
+  // ── Read agent data from chain ──
+  const { data: agentIds } = useReadContract({
+    address: CONTRACTS.arenaRegistry as `0x${string}`,
+    abi: ArenaRegistryABI,
+    functionName: "getAgentsByWallet",
+    args: address ? [address] : undefined,
+    query: { enabled: !!address },
+  });
+
+  const firstAgentId = agentIds && (agentIds as bigint[]).length > 0 ? (agentIds as bigint[])[0] : null;
+
+  const { data: agentData } = useReadContract({
+    address: CONTRACTS.arenaRegistry as `0x${string}`,
+    abi: ArenaRegistryABI,
+    functionName: "getAgent",
+    args: firstAgentId !== null ? [firstAgentId] : undefined,
+    query: { enabled: firstAgentId !== null },
+  });
+
+  // Parse on-chain agent struct (9 fields)
+  const chainAgent = parseAgentData(agentData, firstAgentId);
+
+  const agent = chainAgent || MOCK_AGENT;
   const active = MOCK_ACTIVE;
   const history = MOCK_HISTORY;
 
@@ -225,7 +287,7 @@ function StatusTag({ status }: { status: string }) {
 
 /* ── API Key Manager ───────────────────────────────── */
 
-const API_URL = "https://api.agonaut.io/api/v1";
+// API_URL imported from @/lib/contracts at top of file
 
 interface ApiKey {
   id: number;

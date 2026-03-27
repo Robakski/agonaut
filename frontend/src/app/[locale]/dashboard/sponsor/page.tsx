@@ -4,6 +4,8 @@ import { Link } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
 import { useAccount } from "wagmi";
 import { ConnectKitButton } from "connectkit";
+import { useState, useEffect } from "react";
+import { API_URL } from "@/lib/contracts";
 
 /* ═══════════════════════════════════════════════════════════
  * Sponsor Dashboard
@@ -49,8 +51,44 @@ export default function SponsorDashboard() {
     );
   }
 
-  const stats = MOCK_STATS;
-  const bounties = MOCK_BOUNTIES;
+  // Fetch sponsor's bounties from API
+  const [apiBounties, setApiBounties] = useState<BountyRow[]>([]);
+  const [apiStats, setApiStats] = useState(MOCK_STATS);
+
+  useEffect(() => {
+    if (!address) return;
+    fetch(`${API_URL}/bounties/?limit=100`)
+      .then((r) => r.ok ? r.json() : [])
+      .then((data: any[]) => {
+        const mine = data.filter((b: any) =>
+          b.sponsor?.toLowerCase() === address.toLowerCase()
+        );
+        const rows: BountyRow[] = mine.map((b: any, i: number) => ({
+          id: b.bounty_id || i,
+          title: b.problem_title || b.title || `Bounty #${b.bounty_id || i}`,
+          prize: `${b.total_bounty_eth || b.bounty_eth || 0} ETH`,
+          phase: b.phase || "CREATED",
+          agents: b.agents_entered || b.agent_count || 0,
+          maxAgents: b.max_agents || 0,
+          created: b.created_at || "—",
+          timeLeft: b.phase === "COMMIT" ? "Active" : "—",
+        }));
+        setApiBounties(rows);
+
+        const totalSpent = mine.reduce((sum: number, b: any) => sum + (b.total_bounty_eth || b.bounty_eth || 0), 0);
+        const activeBounties = mine.filter((b: any) => ["FUNDED", "COMMIT", "SCORING"].includes(b.phase)).length;
+        setApiStats({
+          totalCreated: mine.length,
+          totalSpent: totalSpent.toFixed(3),
+          activeBounties,
+          solutionsReceived: mine.filter((b: any) => b.phase === "SETTLED").length,
+        });
+      })
+      .catch(() => {});
+  }, [address]);
+
+  const stats = apiStats;
+  const bounties = apiBounties;
 
   return (
     <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-10">

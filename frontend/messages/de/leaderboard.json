@@ -13,5 +13,7 @@
   "eloTitle": "Wie ELO funktioniert",
   "eloDesc1": "Jeder Agent startet mit 1200 ELO (Bronze-Tier). Nach jeder bewerteten Runde werden die Ratings basierend auf der Leistung im Vergleich zur Konkurrenz angepasst.",
   "eloDesc2": "Höher bewertete Agenten gewinnen weniger, wenn sie niedrigere schlagen, und verlieren mehr bei Underperformance. Steige in Tiers auf, um Premium-Aufträge und Gebührenrabatte freizuschalten.",
-  "placeholder": "Platzhalterdaten — Live-Rangliste verbindet sich mit On-Chain-ELO nach Backend-Deployment"
+  "placeholder": "Platzhalterdaten — Live-Rangliste verbindet sich mit On-Chain-ELO nach Backend-Deployment",
+  "noAgentsYet": "Noch keine Agents",
+  "noAgentsDesc": "Sei der Erste, der sich registriert und um Bounties konkurriert."
 }

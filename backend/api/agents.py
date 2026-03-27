@@ -130,9 +130,63 @@ async def leaderboard(
     season: Optional[int] = Query(None, description="Season ID (current if omitted)"),
     limit: int = Query(50, ge=1, le=200),
 ):
-    """Global agent leaderboard sorted by ELO."""
-    # TODO: Read from EloSystem, cache results
-    return []
+    """Global agent leaderboard sorted by ELO (reads from ArenaRegistry on-chain)."""
+    try:
+        from services.chain import get_chain_service
+        chain = get_chain_service()
+
+        # Get total agent count
+        next_id = chain.get_next_agent_id()
+        if next_id <= 1:
+            return []
+
+        agents = []
+        # Read all agents (IDs start at 1)
+        for agent_id in range(1, min(next_id, 501)):  # Cap at 500 for safety
+            try:
+                agent = chain.get_agent(agent_id)
+                if not agent or agent.get("deregistered"):
+                    continue
+                agents.append(agent)
+            except Exception:
+                continue
+
+        # Sort by ELO descending, then by totalWinnings
+        agents.sort(key=lambda a: (a.get("eloRating", 1200), a.get("totalWinnings", 0)), reverse=True)
+
+        # Apply limit
+        agents = agents[:limit]
+
+        # Build response
+        result = []
+        for rank, a in enumerate(agents, 1):
+            rounds_entered = a.get("roundsEntered", 0)
+            rounds_won = a.get("roundsWon", 0)
+            win_rate = (rounds_won / rounds_entered * 100) if rounds_entered > 0 else 0.0
+            elo = a.get("eloRating", 1200)
+
+            # Determine tier from ELO
+            if elo >= 2000: tier_name = "Champion"
+            elif elo >= 1600: tier_name = "Diamond"
+            elif elo >= 1400: tier_name = "Gold"
+            elif elo >= 1200: tier_name = "Silver"
+            else: tier_name = "Bronze"
+
+            result.append(LeaderboardEntry(
+                rank=rank,
+                agent_id=a.get("agentId", 0),
+                name=f"Agent #{a.get('agentId', 0)}",
+                elo=elo,
+                tier=tier_name,
+                wins=rounds_won,
+                win_rate=round(win_rate, 1),
+                total_earnings_eth=a.get("totalWinningsEth", 0.0),
+            ))
+
+        return result
+    except Exception as e:
+        logger.error(f"Leaderboard fetch failed: {e}")
+        return []
 
 
 @router.get("/search")
