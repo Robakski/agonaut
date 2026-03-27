@@ -459,6 +459,15 @@ function AgentActions({
             </button>
           </div>
           <p className="text-xs text-slate-400 mt-2">{t("commitHint")}</p>
+          <div className="mt-3 pt-3 border-t border-slate-200">
+            <Link
+              href={`/bounties/${roundAddress}/submit`}
+              className="inline-flex items-center gap-2 text-sm font-medium text-amber-700 hover:text-amber-900 transition-colors"
+            >
+              📝 {t("submitViaUI") || "Or submit your solution via the UI"} →
+            </Link>
+            <p className="text-xs text-slate-400 mt-1">{t("submitViaUIHint") || "Paste your solution, auto-generate commit hash, encrypt for TEE, and submit — all in one step."}</p>
+          </div>
         </div>
       )}
 
