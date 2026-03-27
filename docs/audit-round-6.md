@@ -113,12 +113,53 @@ The only working scoring path is the manual `trigger-scoring` endpoint which use
 
 ---
 
-## Priority Fix Order
-1. **BUG-2** (init-round gap) — agents literally can't submit solutions
-2. **BUG-1** (sponsor_address missing) — sponsors can't see winning solutions
-3. **BUG-3** (stale phases) — listing is misleading
-4. **BUG-5** (trigger-scoring sponsor) — scoring can't store solutions even with manual trigger
-5. **M-5** (auto-trigger) — rounds don't automatically score after deadline
-6. **BUG-4** (model name leak) — quick fix
-7. **BUG-6** (round address lookup) — new endpoint
-8. **M-2** (sponsor filter) — one-line fix
+## Audit Round 6b — Follow-up (same session)
+
+### BUG-8 CRITICAL (FIXED `508c903`): /score/round overwrites previously received solutions
+`trigger-scoring` sends `solutions: []` → `/score/round` replaces stored solutions with empty dict.
+Fixed: merges existing + new + SQLite recovery. Returns 400 if no solutions.
+
+### BUG-9 HIGH (FIXED `508c903`): agent_address lost after scoring service restart
+`round_solutions` SQLite table didn't store `agent_address`. After restart, all addresses empty → ECIES encrypt fails.
+Fixed: added column, migration, persist, recovery.
+
+### BUG-10 MEDIUM (FIXED `508c903`): is_private missing from listing response
+Bounty listing never returned `is_private` → frontend couldn't show 🔐 badge.
+Fixed: added to BountyResponse model, bounty_index schema, migration.
+
+### BUG-11 LOW (FIXED `508c903`): by-round endpoint missing round_address
+Could cause frontend on-chain reads to fail silently.
+Fixed: always include `round_address` in response.
+
+### M-7: SOLUTION_KEY not generated for scoring service
+The scoring engine needs `SOLUTION_KEY` env var (shared AES-256 key) to decrypt agent solutions.
+SDK agents encrypt with this key. Currently empty in VPS config.
+**Must be generated before dry-run:** `python3 -c "import os; print(os.urandom(32).hex())"`
+
+### M-8: No automated scoring trigger after commit deadline
+Rounds sit in COMMIT phase forever after deadline. Someone must manually call `/trigger-scoring`.
+Recommend: periodic check (cron or heartbeat) for expired COMMIT rounds.
+
+---
+
+## All Fixed Bugs Summary
+| Bug | Severity | Status | Commit |
+|-----|----------|--------|--------|
+| BUG-1 | 🔴 Critical | ✅ Fixed | `516c39b` |
+| BUG-2 | 🔴 Critical | ✅ Fixed | `516c39b` |
+| BUG-3 | 🟡 High | ✅ Fixed | `516c39b` |
+| BUG-4 | 🟡 High | ✅ Fixed | `516c39b` |
+| BUG-5 | 🟡 High | ✅ Fixed | `516c39b` |
+| BUG-6 | 🟡 High | ✅ Fixed | `516c39b` |
+| BUG-7 | 🟡 High | Open | — (dashboard mock data) |
+| BUG-8 | 🔴 Critical | ✅ Fixed | `508c903` |
+| BUG-9 | 🟡 High | ✅ Fixed | `508c903` |
+| BUG-10 | 🟢 Medium | ✅ Fixed | `508c903` |
+| BUG-11 | 🟢 Low | ✅ Fixed | `508c903` |
+| M-5 | 🟢 Medium | Open | — (auto-trigger) |
+| M-7 | 🟢 Setup | Open | — (SOLUTION_KEY) |
+
+## Priority Fix Order (remaining)
+1. **M-7** (SOLUTION_KEY) — generate before dry-run
+2. **M-5** (auto-trigger) — cron for expired rounds
+3. **BUG-7** (dashboard mock data) — wire to real API
