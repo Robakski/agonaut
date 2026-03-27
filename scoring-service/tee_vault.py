@@ -42,6 +42,15 @@ def store_problem(
         sponsor_public_key: Sponsor's ECIES public key (for result encryption later)
         problem_window_hours: How long agents can request the problem
     """
+    # Immutability guard: prevent problem replacement once stored
+    existing = _active_problems.get(round_address.lower())
+    if existing:
+        log.warning(
+            f"Problem already stored for round {round_address[:10]}... "
+            f"(stored at {existing['stored_at']:.0f}). Rejecting overwrite."
+        )
+        return False
+
     try:
         # Get TEE's private key hex for decryption
         tee_priv = get_tee_private_key()

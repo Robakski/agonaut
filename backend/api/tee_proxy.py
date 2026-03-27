@@ -118,7 +118,7 @@ async def store_problem_proxy(req: StoreProblemProxyRequest, request: Request):
         if not bounty:
             raise HTTPException(404, "Round address not found in bounty index")
         if bounty.get("phase") not in ("CREATED", "FUNDED", None):
-            raise HTTPException(400, "Problem can only be stored for rounds in CREATED or FUNDED phase")
+            raise HTTPException(400, "Problem can only be stored for rounds in CREATED or FUNDED phase (before agents enter)")
     except HTTPException:
         raise
     except Exception as e:

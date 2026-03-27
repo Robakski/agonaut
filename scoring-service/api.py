@@ -816,6 +816,14 @@ async def store_problem_endpoint(req: StoreProblemRequest):
     The problem is encrypted with TEE's public key.
     TEE decrypts and holds plaintext in secure enclave memory.
     """
+    # Check if problem already stored (immutability)
+    from tee_vault import _active_problems
+    if req.round_address.lower() in _active_problems:
+        raise HTTPException(
+            409,
+            "Problem already stored for this round. Problems are immutable once stored."
+        )
+
     success = store_problem(
         round_address=req.round_address,
         encrypted_problem=req.encrypted_problem,
