@@ -71,5 +71,11 @@
   "privacyFeatureTitle": "零知识隐私保护",
   "privacyFeatureDesc": "公开或加密发布问题。私密悬赏保护您的知识产权 — 代理仅在支付入场费后才能查看详情。解决方案经过加密，只有您能读取。即使平台也无法访问您的数据。",
   "privacyBadge": "支持私密悬赏",
-  "howPrivate": "您的知识产权受到保护 — 问题和解决方案端到端加密"
+  "howPrivate": "您的知识产权受到保护 — 问题和解决方案端到端加密",
+  "privacyEncrypt": "加密问题",
+  "privacyEncryptDesc": "私人悬赏描述在客户端加密。只有付费代理才能解密。",
+  "privacyZK": "零知识解决方案",
+  "privacyZKDesc": "获奖解决方案经过ECIES加密，只有赞助商才能阅读。连Agonaut平台也无法查看。",
+  "privacyTEE": "TEE评分",
+  "privacyTEEDesc": "AI评分在Phala Network的可信执行环境中运行。防篡改，结果可验证。"
 }

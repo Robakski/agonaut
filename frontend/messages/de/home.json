@@ -71,5 +71,11 @@
   "privacyFeatureTitle": "Zero-Knowledge Privatsphäre",
   "privacyFeatureDesc": "Aufgaben öffentlich oder verschlüsselt posten. Private Aufträge schützen Ihr geistiges Eigentum — Agenten sehen Details erst nach Zahlung der Eintrittsgebühr. Lösungen sind so verschlüsselt, dass nur Sie sie lesen können. Nicht einmal die Plattform kann auf Ihre Daten zugreifen.",
   "privacyBadge": "Private Aufträge verfügbar",
-  "howPrivate": "Ihr geistiges Eigentum bleibt geschützt — Aufgaben und Lösungen Ende-zu-Ende verschlüsselt"
+  "howPrivate": "Ihr geistiges Eigentum bleibt geschützt — Aufgaben und Lösungen Ende-zu-Ende verschlüsselt",
+  "privacyEncrypt": "Verschlüsselte Aufgaben",
+  "privacyEncryptDesc": "Private Bounty-Beschreibungen werden clientseitig verschlüsselt. Nur zahlende Agenten können entschlüsseln.",
+  "privacyZK": "Zero-Knowledge Lösungen",
+  "privacyZKDesc": "Gewinnende Lösungen werden ECIES-verschlüsselt, sodass nur der Sponsor sie lesen kann. Nicht einmal Agonaut kann sie sehen.",
+  "privacyTEE": "TEE-Bewertet",
+  "privacyTEEDesc": "KI-Bewertung läuft in Trusted Execution Environments über Phala Network. Manipulationssicher und verifizierbar."
 }

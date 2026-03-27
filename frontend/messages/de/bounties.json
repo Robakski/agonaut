@@ -25,5 +25,8 @@
   "placeholder": "Platzhalterdaten — verbindet sich mit Live-Contracts nach Backend-Deployment",
   "privateBadge": "Privat",
   "publicBadge": "Öffentlich",
-  "privateTooltip": "Aufgabe verschlüsselt — Eintrittsgebühr zahlen für Details"
+  "privateTooltip": "Aufgabe verschlüsselt — Eintrittsgebühr zahlen für Details",
+  "errorTitle": "Bounties konnten nicht geladen werden",
+  "errorDesc": "Bitte überprüfen Sie Ihre Verbindung und versuchen Sie es erneut.",
+  "retry": "Erneut versuchen"
 }

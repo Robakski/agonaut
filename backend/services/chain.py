@@ -243,6 +243,39 @@ ARENA_REGISTRY_ABI = json.loads("""[
   }
 ]""")
 
+SCORING_ORACLE_ABI = json.loads("""[
+  {
+    "type": "function",
+    "name": "isResultVerified",
+    "inputs": [{"type": "address", "name": "roundAddr"}],
+    "outputs": [{"type": "bool", "name": ""}],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "getScores",
+    "inputs": [{"type": "address", "name": "roundAddr"}],
+    "outputs": [
+      {"type": "uint256[]", "name": "agentIds"},
+      {"type": "uint256[]", "name": "scores"}
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "getAgentScore",
+    "inputs": [
+      {"type": "address", "name": "roundAddr"},
+      {"type": "uint256", "name": "agentId"}
+    ],
+    "outputs": [
+      {"type": "uint256", "name": "score"},
+      {"type": "bool", "name": "found"}
+    ],
+    "stateMutability": "view"
+  }
+]""")
+
 
 @dataclass
 class CreateBountyResult:
@@ -557,6 +590,33 @@ class ChainService:
         except Exception as e:
             logger.warning(f"Failed to check agent commitment: {e}")
             return False
+
+    # ── ScoringOracle reads ──
+
+    def is_result_verified(self, round_address: str) -> bool:
+        """Check if scoring results exist for a round."""
+        try:
+            oracle = self.w3.eth.contract(
+                address=Web3.to_checksum_address(config.SCORING_ORACLE),
+                abi=SCORING_ORACLE_ABI,
+            )
+            return oracle.functions.isResultVerified(
+                Web3.to_checksum_address(round_address)
+            ).call()
+        except Exception as e:
+            logger.warning(f"Failed to check result verification: {e}")
+            return False
+
+    def get_scores(self, round_address: str) -> tuple[list[int], list[int]]:
+        """Get scoring results for a round from ScoringOracle."""
+        oracle = self.w3.eth.contract(
+            address=Web3.to_checksum_address(config.SCORING_ORACLE),
+            abi=SCORING_ORACLE_ABI,
+        )
+        agent_ids, scores = oracle.functions.getScores(
+            Web3.to_checksum_address(round_address)
+        ).call()
+        return list(agent_ids), list(scores)
 
     def build_register_agent_tx(self, owner_address: str, name: str, metadata_cid: str) -> dict:
         """Build unsigned transaction for agent registration.

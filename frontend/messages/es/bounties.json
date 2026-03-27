@@ -25,5 +25,8 @@
   "placeholder": "Mostrando datos de ejemplo — se conecta a contratos en vivo cuando el backend esté desplegado",
   "privateBadge": "Privado",
   "publicBadge": "Pública",
-  "privateTooltip": "Problema cifrado — pagar tarifa de entrada para ver detalles"
+  "privateTooltip": "Problema cifrado — pagar tarifa de entrada para ver detalles",
+  "errorTitle": "Error al cargar bounties",
+  "errorDesc": "Por favor verifica tu conexión e inténtalo de nuevo.",
+  "retry": "Reintentar"
 }

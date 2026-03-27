@@ -121,12 +121,57 @@ async def leaderboard(
 
 @router.get("/search")
 async def search_agents(
-    q: str = Query(min_length=2, description="Search by name"),
+    q: str = Query(min_length=2, description="Search by name or wallet prefix"),
     limit: int = Query(10, ge=1, le=50),
 ):
-    """Search agents by name."""
-    # TODO: Implement search
-    return []
+    """Search agents by wallet address prefix or agent ID.
+
+    Since on-chain agents only have metadataHash (not searchable name),
+    this supports searching by:
+    - Wallet address prefix (e.g. "0x8c35")
+    - Agent ID (e.g. "42")
+    """
+    try:
+        from services.chain import get_chain_service
+        chain = get_chain_service()
+
+        # If query is a number, try direct agent ID lookup
+        if q.isdigit():
+            agent_id = int(q)
+            try:
+                agent = chain.get_agent(agent_id)
+                if agent and not agent.get("deregistered"):
+                    return [{"agent_id": agent_id, "wallet": agent.get("wallet", ""), "elo": agent.get("eloRating", 1200)}]
+            except Exception:
+                pass
+            return []
+
+        # If query looks like a wallet address, search by wallet
+        if q.startswith("0x"):
+            next_id = chain.get_next_agent_id()
+            results = []
+            for aid in range(1, min(next_id, 501)):
+                try:
+                    agent = chain.get_agent(aid)
+                    if agent and not agent.get("deregistered"):
+                        wallet = agent.get("wallet", "").lower()
+                        if wallet.startswith(q.lower()):
+                            results.append({
+                                "agent_id": aid,
+                                "wallet": agent.get("wallet", ""),
+                                "elo": agent.get("eloRating", 1200),
+                                "name": f"Agent #{aid}",
+                            })
+                            if len(results) >= limit:
+                                break
+                except Exception:
+                    continue
+            return results
+
+        return []
+    except Exception as e:
+        logger.error(f"Agent search failed: {e}")
+        return []
 
 
 @router.get("/check-role")
@@ -210,9 +255,48 @@ async def register_agent(req: RegisterAgentRequest):
 
 @router.get("/{agent_id}", response_model=AgentProfile)
 async def get_agent(agent_id: int):
-    """Get full profile for an agent."""
-    # TODO: Read from ArenaRegistry + EloSystem
-    raise HTTPException(status_code=404, detail="Agent not found")
+    """Get full profile for an agent from ArenaRegistry on-chain."""
+    try:
+        from services.chain import get_chain_service
+        chain = get_chain_service()
+        agent = chain.get_agent(agent_id)
+
+        if not agent:
+            raise HTTPException(status_code=404, detail="Agent not found")
+
+        if agent.get("deregistered"):
+            raise HTTPException(status_code=404, detail="Agent has been deregistered")
+
+        elo = agent.get("eloRating", 1200)
+        rounds_entered = agent.get("roundsEntered", 0)
+        rounds_won = agent.get("roundsWon", 0)
+
+        # Determine tier
+        if elo >= 2000: tier = "Champion"
+        elif elo >= 1600: tier = "Diamond"
+        elif elo >= 1400: tier = "Gold"
+        elif elo >= 1200: tier = "Silver"
+        else: tier = "Bronze"
+
+        return AgentProfile(
+            agent_id=agent_id,
+            name=f"Agent #{agent_id}",
+            description="",
+            owner=agent.get("wallet", ""),
+            elo=elo,
+            tier=tier,
+            wins=rounds_won,
+            losses=max(0, rounds_entered - rounds_won),
+            total_rounds=rounds_entered,
+            total_earnings_eth=agent.get("totalWinningsEth", 0.0),
+            registered_at=agent.get("registeredAt", 0),
+            stable=None,
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to get agent {agent_id}: {e}")
+        raise HTTPException(status_code=500, detail="Failed to fetch agent profile")
 
 
 @router.get("/{agent_id}/history")

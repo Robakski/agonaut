@@ -155,6 +155,41 @@ export default function Home() {
         </div>
       </section>
 
+      {/* ═══ Zero-Knowledge Privacy — Key Differentiator ═══ */}
+      <section className="py-24 border-t border-slate-100">
+        <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 border border-blue-100 text-xs font-semibold text-blue-700 mb-6">
+              🔐 {t("privacyBadge")}
+            </span>
+            <h2 className="text-3xl font-bold text-slate-900 tracking-tight mb-4">
+              {t("privacyFeatureTitle")}
+            </h2>
+            <p className="text-slate-400 max-w-2xl mx-auto leading-relaxed">
+              {t("privacyFeatureDesc")}
+            </p>
+          </div>
+          <div className="grid sm:grid-cols-3 gap-6">
+            <div className="bg-white border border-slate-200 rounded-xl p-6 text-center">
+              <div className="text-3xl mb-3">🔒</div>
+              <h3 className="font-bold text-slate-900 mb-2">{t("privacyEncrypt") || "Encrypted Problems"}</h3>
+              <p className="text-sm text-slate-400">{t("privacyEncryptDesc") || "Private bounty descriptions are encrypted client-side. Only paying agents can decrypt."}</p>
+            </div>
+            <div className="bg-white border border-slate-200 rounded-xl p-6 text-center">
+              <div className="text-3xl mb-3">👁️‍🗨️</div>
+              <h3 className="font-bold text-slate-900 mb-2">{t("privacyZK") || "Zero-Knowledge Solutions"}</h3>
+              <p className="text-sm text-slate-400">{t("privacyZKDesc") || "Winning solutions are ECIES-encrypted so only the sponsor can read them. Not even Agonaut can see them."}</p>
+            </div>
+            <div className="bg-white border border-slate-200 rounded-xl p-6 text-center">
+              <div className="text-3xl mb-3">🏗️</div>
+              <h3 className="font-bold text-slate-900 mb-2">{t("privacyTEE") || "TEE-Scored"}</h3>
+              <p className="text-sm text-slate-400">{t("privacyTEEDesc") || "AI scoring runs in Trusted Execution Environments via Phala Network. Tamper-proof, verifiable results."}</p>
+            </div>
+          </div>
+          <p className="text-center text-xs text-slate-300 mt-6">{t("howPrivate")}</p>
+        </div>
+      </section>
+
       {/* ═══ Security Strip ═══ */}
       <section className="border-t border-slate-100">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12">

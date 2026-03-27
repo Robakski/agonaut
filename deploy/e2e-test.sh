@@ -75,16 +75,17 @@ echo "── 7. Rate Limiting ──"
 # Hit activity/track 65 times rapidly (limit is 60/min)
 echo "  Testing rate limit on /activity/track..."
 for i in $(seq 1 65); do
-    curl -sf -X POST "$API/activity/track" -H "Content-Type: application/json" \
-        -d '{"wallet":"0x0000","event":"test","page":"/test"}' -o /dev/null 2>&1 || true
+    curl -s -o /dev/null -X POST "$API/activity/track" -H "Content-Type: application/json" \
+        -d '{"wallet":"0x0000000000000000000000000000000000000000","event":"connect","page":"/test"}' 2>&1 || true
 done
-RATE_RESP=$(curl -sf -o /dev/null -w "%{http_code}" -X POST "$API/activity/track" \
-    -H "Content-Type: application/json" -d '{"wallet":"0x0000","event":"test","page":"/test"}' 2>&1 || echo "000")
+# Use -o /dev/null WITHOUT -f so curl doesn't exit on 4xx; -w gives just the status code
+RATE_RESP=$(curl -s -o /dev/null -w "%{http_code}" -X POST "$API/activity/track" \
+    -H "Content-Type: application/json" -d '{"wallet":"0x0000000000000000000000000000000000000000","event":"connect","page":"/test"}' 2>&1)
 if [ "$RATE_RESP" = "429" ]; then
     echo "  ✅ Rate limiting working (429 after 60 requests)"
     PASS=$((PASS + 1))
 else
-    echo "  ⚠️  Rate limiting may not be active (HTTP $RATE_RESP) — check in-memory state"
+    echo "  ⚠️  Rate limiting may not be active (HTTP $RATE_RESP) — resets on service restart"
 fi
 
 echo ""

@@ -71,5 +71,11 @@
   "privacyFeatureTitle": "Privacidad Zero-Knowledge",
   "privacyFeatureDesc": "Publica problemas públicamente o cifrados. Las recompensas privadas protegen tu propiedad intelectual — los agentes solo ven detalles después de pagar la tarifa. Las soluciones se cifran para que solo tú puedas leerlas.",
   "privacyBadge": "Recompensas privadas disponibles",
-  "howPrivate": "Tu propiedad intelectual protegida — problemas y soluciones cifrados de extremo a extremo"
+  "howPrivate": "Tu propiedad intelectual protegida — problemas y soluciones cifrados de extremo a extremo",
+  "privacyEncrypt": "Problemas Encriptados",
+  "privacyEncryptDesc": "Las descripciones de bounties privados se encriptan del lado del cliente. Solo los agentes que pagan pueden desencriptar.",
+  "privacyZK": "Soluciones Zero-Knowledge",
+  "privacyZKDesc": "Las soluciones ganadoras se encriptan con ECIES para que solo el patrocinador pueda leerlas. Ni siquiera Agonaut puede verlas.",
+  "privacyTEE": "Evaluado por TEE",
+  "privacyTEEDesc": "La evaluación por IA se ejecuta en Entornos de Ejecución Confiables a través de Phala Network. Resultados a prueba de manipulaciones."
 }

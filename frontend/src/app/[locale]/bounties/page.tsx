@@ -21,18 +21,13 @@ interface Bounty {
   isPrivate?: boolean;
 }
 
-const PLACEHOLDER_BOUNTIES: Bounty[] = [
-  { bounty_id: 1, title: "Build a high-performance REST API rate limiter", sponsor: "0x8c35...e7B2", bounty_eth: 0.5, agents: 12, max_agents: 0, phase: "COMMIT", tier: "Bronze", tags: ["rust", "backend", "performance"], commit_hours: 24 },
-  { bounty_id: 2, title: "Design an optimal database schema for social media analytics", sponsor: "0xaBcD...eF01", bounty_eth: 1.2, agents: 8, max_agents: 20, phase: "FUNDED", tier: "Silver", tags: ["database", "sql", "analytics"], commit_hours: 48 },
-  { bounty_id: 3, title: "Create a fraud detection algorithm for DeFi transactions", sponsor: "0x9876...5432", bounty_eth: 2.5, agents: 3, max_agents: 10, phase: "SCORING", tier: "Gold", tags: ["ml", "defi", "security"], commit_hours: 72 },
-  { bounty_id: 4, title: "Audit a Solidity smart contract for reentrancy vulnerabilities", sponsor: "0x4357...B473", bounty_eth: 5.0, agents: 0, max_agents: 5, phase: "OPEN", tier: "Diamond", tags: ["solidity", "security", "audit"], commit_hours: 48 },
-];
-
 const PHASES = ["All", "OPEN", "FUNDED", "COMMIT", "SCORING", "SETTLED"] as const;
 
 export default function BountiesPage() {
   const [phaseFilter, setPhaseFilter] = useState<string>("All");
-  const [apiBounties, setApiBounties] = useState<Bounty[] | null>(null);
+  const [bounties, setBounties] = useState<Bounty[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
   const t = useTranslations("bounties");
 
   const { data: nextBountyId } = useReadContract({
@@ -44,14 +39,14 @@ export default function BountiesPage() {
 
   const bountyCount = nextBountyId !== undefined ? Number(nextBountyId) - 1 : null;
 
-  // Fetch real bounties from API
+  // Fetch bounties from API
   useEffect(() => {
+    setLoading(true);
     fetch(`${API_URL}/bounties/?limit=100`)
-      .then((r) => r.ok ? r.json() : Promise.reject())
+      .then((r) => r.ok ? r.json() : Promise.reject(new Error(`HTTP ${r.status}`)))
       .then((data: any[]) => {
         if (Array.isArray(data)) {
-          if (data.length === 0) { setApiBounties([]); return; }
-          setApiBounties(
+          setBounties(
             data.map((b) => ({
               bounty_id: b.bounty_id,
               title: b.problem_title || b.title || "Untitled",
@@ -60,18 +55,18 @@ export default function BountiesPage() {
               agents: b.agents_entered || 0,
               max_agents: b.max_agents || 0,
               phase: b.phase || "CREATED",
-              tier: "Bronze", // TODO: derive from bounty amount
+              tier: "Bronze",
               tags: b.tags || [],
               commit_hours: b.commit_hours || 24,
               isPrivate: b.is_private || false,
             }))
           );
         }
+        setError(false);
       })
-      .catch(() => {}); // Fallback to placeholder on error
+      .catch(() => { setError(true); })
+      .finally(() => { setLoading(false); });
   }, []);
-
-  const bounties = apiBounties || PLACEHOLDER_BOUNTIES;
   const filtered = phaseFilter === "All"
     ? bounties
     : bounties.filter((b) => b.phase === phaseFilter);
@@ -132,8 +127,36 @@ export default function BountiesPage() {
         ))}
       </div>
 
+      {/* Loading state */}
+      {loading && (
+        <div className="space-y-4">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm animate-pulse">
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex-1">
+                  <div className="h-4 bg-slate-200 rounded w-1/4 mb-3" />
+                  <div className="h-5 bg-slate-200 rounded w-3/4 mb-3" />
+                  <div className="h-3 bg-slate-100 rounded w-1/2" />
+                </div>
+                <div className="h-8 bg-slate-200 rounded w-20" />
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Error state */}
+      {!loading && error && (
+        <div className="text-center py-20 bg-white border border-red-100 rounded-xl">
+          <div className="text-4xl mb-4">⚠️</div>
+          <h3 className="text-xl font-semibold text-slate-900">{t("errorTitle") || "Failed to load bounties"}</h3>
+          <p className="text-slate-500 mt-2">{t("errorDesc") || "Please try again later."}</p>
+          <button onClick={() => window.location.reload()} className="btn-primary mt-6 inline-block">{t("retry") || "Retry"}</button>
+        </div>
+      )}
+
       {/* Bounty cards */}
-      <div className="space-y-4">
+      {!loading && !error && <div className="space-y-4">
         {filtered.map((bounty) => (
           <Link
             key={bounty.bounty_id}
@@ -174,9 +197,9 @@ export default function BountiesPage() {
             </div>
           </Link>
         ))}
-      </div>
+      </div>}
 
-      {filtered.length === 0 && (
+      {!loading && !error && filtered.length === 0 && (
         <div className="text-center py-20 bg-white border border-slate-200 rounded-xl">
           <div className="text-4xl mb-4">📭</div>
           <h3 className="text-xl font-semibold text-slate-900">{t("noResults")}</h3>
@@ -185,7 +208,7 @@ export default function BountiesPage() {
         </div>
       )}
 
-      <p className="text-center text-slate-400 text-xs mt-8">{t("placeholder")}</p>
+
     </div>
   );
 }

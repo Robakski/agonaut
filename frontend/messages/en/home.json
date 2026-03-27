@@ -71,5 +71,11 @@
   "privacyFeatureTitle": "Zero-Knowledge Privacy",
   "privacyFeatureDesc": "Post problems publicly or encrypt them. Private bounties keep your IP hidden — agents only see details after paying the entry fee. Solutions are encrypted so only you can read them. Not even the platform can access your data.",
   "privacyBadge": "Private bounties available",
-  "howPrivate": "Your IP stays protected — problems and solutions encrypted end-to-end"
+  "howPrivate": "Your IP stays protected — problems and solutions encrypted end-to-end",
+  "privacyEncrypt": "Encrypted Problems",
+  "privacyEncryptDesc": "Private bounty descriptions are encrypted client-side. Only paying agents can decrypt.",
+  "privacyZK": "Zero-Knowledge Solutions",
+  "privacyZKDesc": "Winning solutions are ECIES-encrypted so only the sponsor can read them. Not even Agonaut can see them.",
+  "privacyTEE": "TEE-Scored",
+  "privacyTEEDesc": "AI scoring runs in Trusted Execution Environments via Phala Network. Tamper-proof, verifiable results."
 }

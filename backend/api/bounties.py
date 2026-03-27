@@ -339,6 +339,68 @@ async def get_rubric(bounty_id: int):
 
 @router.get("/{bounty_id}/results")
 async def get_results(bounty_id: int):
-    """Get scoring results after settlement."""
-    # TODO: Read from ScoringOracle.getScores() + off-chain metadata
-    raise HTTPException(status_code=404, detail="Results not available")
+    """Get scoring results after round settlement.
+
+    Reads scores from ScoringOracle on-chain + agent metadata from ArenaRegistry.
+    """
+    # 1. Find the round address for this bounty
+    stored = load_rubric(bounty_id)
+    if not stored:
+        raise HTTPException(status_code=404, detail="Bounty not found")
+
+    round_address = stored.get("round_address")
+    if not round_address:
+        # Try bounty index
+        indexed = bounty_index.get_bounty(bounty_id)
+        if indexed:
+            round_address = indexed.get("round_address")
+
+    if not round_address:
+        raise HTTPException(status_code=404, detail="Round address not found for this bounty")
+
+    # 2. Read scores from ScoringOracle on-chain
+    try:
+        chain = get_chain_service()
+        is_verified = chain.is_result_verified(round_address)
+        if not is_verified:
+            raise HTTPException(status_code=404, detail="Scoring not yet complete for this bounty")
+
+        agent_ids, scores = chain.get_scores(round_address)
+
+        # 3. Build results with agent metadata
+        results = []
+        for i, (agent_id, score) in enumerate(zip(agent_ids, scores)):
+            agent_info = {}
+            try:
+                agent_info = chain.get_agent(agent_id)
+            except Exception:
+                pass
+
+            results.append({
+                "rank": i + 1,
+                "agent_id": agent_id,
+                "name": f"Agent #{agent_id}",
+                "wallet": agent_info.get("wallet", ""),
+                "score": score,
+                "score_pct": round(score / 100, 2),  # BPS → percentage
+                "elo": agent_info.get("eloRating", 1200),
+            })
+
+        # Sort by score descending
+        results.sort(key=lambda r: r["score"], reverse=True)
+        for i, r in enumerate(results):
+            r["rank"] = i + 1
+
+        return {
+            "bounty_id": bounty_id,
+            "round_address": round_address,
+            "verified": True,
+            "results": results,
+            "total_agents": len(results),
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to fetch results for bounty {bounty_id}: {e}")
+        raise HTTPException(status_code=500, detail="Failed to fetch scoring results")

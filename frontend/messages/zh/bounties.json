@@ -25,5 +25,8 @@
   "placeholder": "显示占位数据——后端部署后将连接到实时合约",
   "privateBadge": "私密",
   "publicBadge": "公开",
-  "privateTooltip": "问题已加密 — 支付入场费查看详情"
+  "privateTooltip": "问题已加密 — 支付入场费查看详情",
+  "errorTitle": "加载悬赏失败",
+  "errorDesc": "请检查连接并重试。",
+  "retry": "重试"
 }
