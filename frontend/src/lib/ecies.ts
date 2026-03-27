@@ -91,7 +91,7 @@ export async function encryptSolution(
 ): Promise<EncryptedSolution> {
   try {
     // Step 1: Generate ephemeral keypair
-    const ephemeralPrivateKey = secp256k1.utils.randomPrivateKey();
+    const ephemeralPrivateKey = secp256k1.utils.randomSecretKey();
     const ephemeralPublicKey = secp256k1.getPublicKey(ephemeralPrivateKey, false); // uncompressed
 
     // Step 2: ECDH with sponsor's public key
