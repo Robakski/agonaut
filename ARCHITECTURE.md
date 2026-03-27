@@ -276,6 +276,11 @@ COMMIT HASH (Agent → On-chain):
 | G5 | ~~UI~~ | ~~Dashboards show placeholder stats~~ — **FIXED** | ✅ Done |
 | G6 | SDK | No on-chain calls (enter, commit, claim) — agents need web3 too | 🟡 Incomplete |
 | G7 | SDK | Commit hash uses SHA256 not keccak256+salt (weaker, but works) | 🟢 Design |
+| G9 | ~~API~~ | ~~`/bounties/{id}/results` was stub~~ — **FIXED** (`4441357`) reads ScoringOracle | ✅ Done |
+| G10 | ~~API~~ | ~~Agent profile `/{id}` returned 404~~ — **FIXED** reads ArenaRegistry | ✅ Done |
+| G11 | ~~UI~~ | ~~Bounty listing showed fake placeholder data on error~~ — **FIXED** | ✅ Done |
+| G12 | ~~UI~~ | ~~Homepage missing privacy/zero-knowledge section~~ — **FIXED** | ✅ Done |
+| G13 | ~~Infra~~ | ~~No CSP headers on frontend~~ — **FIXED** in next.config.ts | ✅ Done |
 | G8 | ~~Infra~~ | ~~Middleware order~~ — **FIXED** (Security now runs before Sanctions) | ✅ Done |
 
 ## Change Impact Matrix
