@@ -129,9 +129,9 @@ def decrypt_with_private_key(encrypted: dict, private_key_hex: str) -> str:
     ).derive(shared_secret)
 
     # Decrypt
-    iv = bytes.fromhex(encrypted["iv"])
-    ciphertext = bytes.fromhex(encrypted["ciphertext"])
-    mac = bytes.fromhex(encrypted["mac"])
+    iv = bytes.fromhex(encrypted["iv"].replace("0x", ""))
+    ciphertext = bytes.fromhex(encrypted["ciphertext"].replace("0x", ""))
+    mac = bytes.fromhex(encrypted["mac"].replace("0x", ""))
     aesgcm = AESGCM(aes_key)
 
     plaintext_bytes = aesgcm.decrypt(iv, ciphertext + mac, None)

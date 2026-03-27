@@ -36,21 +36,34 @@ _rate_buckets: dict[str, list[float]] = defaultdict(list)
 def _check_rate(key: str, limit: int, window: int = 60) -> bool:
     """Return True if within rate limit, False if exceeded."""
     now = time.time()
-    bucket = _rate_buckets[key]
+    bucket = _rate_buckets.get(key, [])
     # Prune old entries
-    _rate_buckets[key] = [t for t in bucket if now - t < window]
-    if len(_rate_buckets[key]) >= limit:
+    bucket = [t for t in bucket if now - t < window]
+    if len(bucket) >= limit:
+        _rate_buckets[key] = bucket
         return False
-    _rate_buckets[key].append(now)
+    bucket.append(now)
+    _rate_buckets[key] = bucket
+
+    # Periodic cleanup: remove empty buckets (every ~100 calls)
+    if len(_rate_buckets) > 200:
+        empty_keys = [k for k, v in _rate_buckets.items() if not v]
+        for k in empty_keys:
+            del _rate_buckets[k]
+
     return True
 
 def _get_client_ip(request: Request) -> str:
     """Get client IP from CF header or fallback."""
-    return (
-        request.headers.get("cf-connecting-ip")
-        or request.headers.get("x-forwarded-for", "").split(",")[0].strip()
-        or request.client.host if request.client else "unknown"
-    )
+    cf_ip = request.headers.get("cf-connecting-ip")
+    if cf_ip:
+        return cf_ip
+    xff = request.headers.get("x-forwarded-for", "")
+    if xff:
+        return xff.split(",")[0].strip()
+    if request.client:
+        return request.client.host
+    return "unknown"
 
 
 @router.get("/tee/public-key")
@@ -89,12 +102,28 @@ async def store_problem_proxy(req: StoreProblemProxyRequest, request: Request):
     Backend stores nothing — just relays the encrypted blob to TEE.
     TEE decrypts inside enclave and holds plaintext.
 
-    G4: Rate limited to 10/min per IP (creating private bounties is infrequent).
+    Security:
+    - A7-5: Verify round exists in bounty index (prevents arbitrary round injection)
+    - G4: Rate limited to 10/min per IP (creating private bounties is infrequent)
     """
     # G4: Rate limit
     ip = _get_client_ip(request)
     if not _check_rate(f"store:{ip}", limit=10, window=60):
         raise HTTPException(429, "Rate limit exceeded for problem storage")
+
+    # A7-5: Verify round exists and is a legitimate bounty
+    try:
+        from services.bounty_index import find_by_round
+        bounty = find_by_round(req.round_address)
+        if not bounty:
+            raise HTTPException(404, "Round address not found in bounty index")
+        if bounty.get("phase") not in ("CREATED", "FUNDED", None):
+            raise HTTPException(400, "Problem can only be stored for rounds in CREATED or FUNDED phase")
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.warning(f"Bounty index check failed: {e}")
+        # Fail-open for index issues (TEE itself is the security boundary)
 
     try:
         async with httpx.AsyncClient() as client:

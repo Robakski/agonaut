@@ -121,7 +121,8 @@ def index_bounty(
                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
             (bounty_id, title, description, json.dumps(tags), sponsor.lower(),
              bounty_eth, max_agents, commit_hours, threshold, int(graduated),
-             round_address, problem_cid, rubric_cid, "CREATED", int(is_private), now, now),
+             round_address.lower() if round_address else round_address,
+             problem_cid, rubric_cid, "CREATED", int(is_private), now, now),
         )
 
 
@@ -207,9 +208,9 @@ def get_agent_bounties(agent_address: str, limit: int = 50) -> list[dict]:
     _ensure_db()
     with _get_db() as db:
         rows = db.execute(
-            """SELECT b.*, ap.action as agent_action, ap.created_at as participated_at
+            """SELECT b.*, ap.agent_id as agent_id, ap.action as agent_action, ap.created_at as participated_at
                FROM agent_participations ap
-               JOIN bounties b ON b.round_address = ap.round_address
+               JOIN bounties b ON LOWER(b.round_address) = ap.round_address
                WHERE ap.agent_address = ?
                ORDER BY ap.created_at DESC
                LIMIT ?""",

@@ -343,15 +343,16 @@ async def get_agent_bounties(agent_address: str, limit: int = Query(50, ge=1, le
             # Try to get agent's score if settled
             score = None
             rank = None
+            total_scored = 0
             if b.get("phase") == "SETTLED" and ra:
                 try:
-                    agent_ids, scores = chain.get_scores(ra)
-                    # Find this agent's score
-                    for i, (aid, s) in enumerate(zip(agent_ids, scores)):
-                        # Match by agent_id from participation record
-                        if aid == b.get("agent_id", -1):
+                    scored_agent_ids, scores = chain.get_scores(ra)
+                    total_scored = len(scored_agent_ids)
+                    # Find this agent's score — use agent_id from participation record
+                    participant_agent_id = b.get("agent_id", -1)
+                    for aid, s in zip(scored_agent_ids, scores):
+                        if aid == participant_agent_id:
                             score = s
-                            # Rank = position in descending score order
                             sorted_scores = sorted(scores, reverse=True)
                             rank = sorted_scores.index(s) + 1
                             break
@@ -372,7 +373,7 @@ async def get_agent_bounties(agent_address: str, limit: int = Query(50, ge=1, le
                 "participated_at": b.get("participated_at"),
                 "score": score,
                 "rank": rank,
-                "total_agents": len(agent_ids) if b.get("phase") == "SETTLED" and ra else b.get("agent_count", 0),
+                "total_agents": total_scored if total_scored > 0 else b.get("agent_count", 0),
             })
 
         return results
