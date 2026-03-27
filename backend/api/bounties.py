@@ -265,19 +265,41 @@ async def list_bounties(
 ):
     """List bounties with optional phase/sponsor filter. Fast indexed queries."""
     try:
+        # Refresh on-chain phase for bounties (lazy update)
+        # For small sets, refresh directly. For large sets, return cached.
         total, bounties = bounty_index.list_bounties(
             phase=phase,
             sponsor=sponsor,
             limit=limit,
             offset=offset,
         )
+        # For small result sets (≤20), refresh on-chain phase
+        if len(bounties) <= 20:
+            chain = get_chain_service()
+            for b in bounties:
+                ra = b.get("round_address")
+                if ra:
+                    try:
+                        details = chain.get_round_details(ra)
+                        b["phase"] = details["phase"]
+                        b["agent_count"] = details["agent_count"]
+                        b["deposit_eth"] = details["deposit_eth"]
+                        # Update index (fire-and-forget)
+                        bounty_index.update_bounty_phase(
+                            b["bounty_id"], details["phase"],
+                            agent_count=details["agent_count"],
+                            deposit_eth=details["deposit_eth"],
+                        )
+                    except Exception:
+                        pass  # Use cached phase
+
         return [
             BountyResponse(
                 bounty_id=b["bounty_id"],
                 problem_title=b["title"],
                 problem_cid=b.get("problem_cid", ""),
                 sponsor=b.get("sponsor", ""),
-                total_bounty_eth=b.get("bounty_eth", 0),
+                total_bounty_eth=b.get("deposit_eth", b.get("bounty_eth", 0)),
                 entry_fee_eth=b.get("entry_fee_eth", 0.003),
                 agents_entered=b.get("agent_count", 0),
                 max_agents=b.get("max_agents", 0),
@@ -289,6 +311,43 @@ async def list_bounties(
     except Exception as e:
         logger.warning(f"Failed to list bounties: {e}")
         return []
+
+
+@router.get("/by-round/{round_address}")
+async def get_bounty_by_round(round_address: str):
+    """Look up a bounty by its round contract address.
+
+    More efficient than fetching all bounties and filtering client-side.
+    """
+    bounty_data = bounty_index.find_by_round(round_address)
+    if not bounty_data:
+        raise HTTPException(status_code=404, detail="No bounty found for this round address")
+
+    bounty_id = bounty_data["bounty_id"]
+    stored = load_rubric(bounty_id)
+    result = {"bounty_id": bounty_id, **(stored or bounty_data)}
+
+    # Strip private fields
+    if result.get("is_private"):
+        result.pop("description", None)
+        result.pop("rubric", None)
+        result["is_private"] = True
+        result["privacy_notice"] = "This is a private bounty. Pay the entry fee to access the full description."
+
+    # Read fresh on-chain phase
+    try:
+        chain = get_chain_service()
+        details = chain.get_round_details(round_address)
+        result["phase"] = details["phase"]
+        result["phase_id"] = details["phase_id"]
+        result["agents_entered"] = details["agent_count"]
+        result["agent_count"] = details["agent_count"]
+        result["total_bounty_eth"] = details["deposit_eth"]
+        result["commit_deadline"] = details["commit_deadline"]
+    except Exception as e:
+        logger.warning(f"Failed to read on-chain state: {e}")
+
+    return result
 
 
 @router.get("/{bounty_id}")
@@ -305,6 +364,28 @@ async def get_bounty(bounty_id: int):
         result.pop("rubric", None)
         result["is_private"] = True
         result["privacy_notice"] = "This is a private bounty. Pay the entry fee to access the full description."
+
+    # Read fresh on-chain phase and update index (BUG-3 fix)
+    round_address = stored.get("round_address")
+    if round_address:
+        try:
+            chain = get_chain_service()
+            details = chain.get_round_details(round_address)
+            result["phase"] = details["phase"]
+            result["phase_id"] = details["phase_id"]
+            result["agents_entered"] = details["agent_count"]
+            result["agent_count"] = details["agent_count"]
+            result["total_bounty_eth"] = details["deposit_eth"]
+            result["commit_deadline"] = details["commit_deadline"]
+            result["entry_fee_eth"] = stored.get("entry_fee_eth", 0.003)
+            # Update index so listing stays current
+            bounty_index.update_bounty_phase(
+                bounty_id, details["phase"],
+                agent_count=details["agent_count"],
+                deposit_eth=details["deposit_eth"],
+            )
+        except Exception as e:
+            logger.warning(f"Failed to read on-chain state for bounty {bounty_id}: {e}")
 
     return result
 

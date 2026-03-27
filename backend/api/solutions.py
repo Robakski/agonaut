@@ -75,6 +75,67 @@ class ScoringStatusResponse(BaseModel):
 
 
 
+# ── Helpers ──
+
+async def _auto_init_round(client: httpx.AsyncClient, round_address: str, round_details: dict):
+    """Auto-initialize a round in the scoring service.
+
+    Fetches problem text + sponsor from local storage/chain, then calls
+    /score/init-round so solutions can be received.
+    """
+    import json as _json
+    from services import bounty_index
+    from services.storage import load_rubric
+
+    # Get bounty data from index
+    bounty_data = bounty_index.find_by_round(round_address)
+    sponsor_address = round_details.get("sponsor", "")
+    problem_text = ""
+    rubric = None
+    is_private = False
+
+    # Try problem vault first (private bounties)
+    try:
+        from services.problem_vault import get_problem_for_scoring
+        vault_result = get_problem_for_scoring(round_address)
+        if vault_result and isinstance(vault_result, dict):
+            problem_text = vault_result.get("problem_text", "")
+            is_private = True
+    except Exception as e:
+        log.warning(f"Problem vault read failed: {e}")
+
+    # For public bounties, get from local storage
+    if not problem_text and not is_private and bounty_data:
+        stored = load_rubric(bounty_data["bounty_id"])
+        if stored:
+            problem_text = stored.get("description", "")
+            rubric = stored.get("rubric")
+
+    if not sponsor_address and bounty_data:
+        sponsor_address = bounty_data.get("sponsor", "")
+
+    expected_agents = round_details.get("agent_count", 0) or 1
+
+    init_body = _json.dumps({
+        "round_address": round_address,
+        "problem_text": problem_text,
+        "expected_agents": expected_agents,
+        "rubric": rubric,
+        "sponsor_address": sponsor_address,
+    }).encode()
+
+    init_resp = await client.post(
+        f"{SCORING_SERVICE_URL}/score/init-round",
+        content=init_body,
+        timeout=10.0,
+        headers={**_scoring_headers(init_body), "Content-Type": "application/json"},
+    )
+    if init_resp.status_code < 400:
+        log.info(f"Round {round_address[:10]}... auto-initialized (sponsor={sponsor_address[:10]}...)")
+    else:
+        log.error(f"Failed to auto-initialize round: {init_resp.text}")
+
+
 # ── Routes ──
 
 @router.post("/submit", response_model=SubmitSolutionResponse)
@@ -124,9 +185,11 @@ async def submit_solution(req: SubmitSolutionRequest):
         raise HTTPException(503, "Unable to verify on-chain commitment. Please try again.")
 
     # Forward to scoring service for storage
+    # Auto-initialize the round if this is the first solution (BUG-2 fix)
     try:
         import json as _json
         async with httpx.AsyncClient() as client:
+            # Try to receive the solution
             body = _json.dumps({
                 "round_address": req.round_address,
                 "agent_id": req.agent_id,
@@ -140,6 +203,20 @@ async def submit_solution(req: SubmitSolutionRequest):
                 timeout=10.0,
                 headers={**_scoring_headers(body), "Content-Type": "application/json"},
             )
+
+            # If round not initialized, auto-init then retry
+            if resp.status_code == 404:
+                log.info(f"Round {req.round_address[:10]}... not initialized, auto-initializing...")
+                await _auto_init_round(client, req.round_address, round_details)
+
+                # Retry receive-solution
+                resp = await client.post(
+                    f"{SCORING_SERVICE_URL}/score/receive-solution",
+                    content=body,
+                    timeout=10.0,
+                    headers={**_scoring_headers(body), "Content-Type": "application/json"},
+                )
+
             if resp.status_code >= 400:
                 detail = resp.json().get("detail", resp.text)
                 raise HTTPException(resp.status_code, detail)
@@ -241,12 +318,30 @@ async def trigger_scoring(round_address: str):
                 except Exception:
                     pass
 
+            # Get sponsor address for ECIES solution storage
+            sponsor_address = ""
+            try:
+                chain_svc = get_chain_service()
+                rd = chain_svc.get_round_details(round_address)
+                sponsor_address = rd.get("sponsor", "")
+            except Exception:
+                pass
+            if not sponsor_address:
+                try:
+                    from services import bounty_index
+                    bd = bounty_index.find_by_round(round_address)
+                    if bd:
+                        sponsor_address = bd.get("sponsor", "")
+                except Exception:
+                    pass
+
             # Solutions already stored in scoring service via receive-solution endpoint
             import json as _json
             trigger_body = _json.dumps({
                 "round_address": round_address,
                 "problem_text": problem_text,
                 "solutions": [],
+                "sponsor_address": sponsor_address,
             }).encode()
             resp = await client.post(
                 f"{SCORING_SERVICE_URL}/score/round",

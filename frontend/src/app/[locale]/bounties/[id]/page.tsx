@@ -55,8 +55,9 @@ export default function BountyDetailPage() {
   // ── Fetch bounty data from API ──
   useEffect(() => {
     if (!bountyId) return;
+    // Use efficient endpoint: by-round for 0x addresses, by-id otherwise
     const endpoint = bountyId.startsWith("0x")
-      ? `${API_URL}/bounties/?limit=100`
+      ? `${API_URL}/bounties/by-round/${bountyId}`
       : `${API_URL}/bounties/${bountyId}`;
 
     fetch(endpoint)
@@ -65,13 +66,7 @@ export default function BountyDetailPage() {
         return r.json();
       })
       .then((data) => {
-        if (Array.isArray(data)) {
-          const match = data.find((b: any) => b.round_address?.toLowerCase() === bountyId.toLowerCase());
-          if (match) setState({ kind: "loaded", bounty: match });
-          else setState({ kind: "error", message: "Bounty not found" });
-        } else {
-          setState({ kind: "loaded", bounty: data });
-        }
+        setState({ kind: "loaded", bounty: data });
       })
       .catch(() => setState({ kind: "error", message: "Failed to load bounty" }));
   }, [bountyId]);

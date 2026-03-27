@@ -57,12 +57,10 @@ export default function SponsorDashboard() {
 
   useEffect(() => {
     if (!address) return;
-    fetch(`${API_URL}/bounties/?limit=100`)
+    fetch(`${API_URL}/bounties/?sponsor=${address}&limit=100`)
       .then((r) => r.ok ? r.json() : [])
       .then((data: any[]) => {
-        const mine = data.filter((b: any) =>
-          b.sponsor?.toLowerCase() === address.toLowerCase()
-        );
+        const mine = data;
         const rows: BountyRow[] = mine.map((b: any, i: number) => ({
           id: b.bounty_id || i,
           title: b.problem_title || b.title || `Bounty #${b.bounty_id || i}`,

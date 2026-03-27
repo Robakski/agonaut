@@ -145,9 +145,15 @@ def _get_scoring_db() -> sqlite3.Connection:
             expected_agents INTEGER,
             rubric TEXT,
             solution_key TEXT,
+            sponsor_address TEXT DEFAULT '',
             created_at REAL
         )
     """)
+    # Migration: add sponsor_address if missing (existing DBs)
+    try:
+        conn.execute("ALTER TABLE round_state ADD COLUMN sponsor_address TEXT DEFAULT ''")
+    except Exception:
+        pass  # Column already exists
     conn.execute("""
         CREATE TABLE IF NOT EXISTS round_solutions (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -170,11 +176,11 @@ def _persist_round(round_address: str, rnd: dict):
         conn = _get_scoring_db()
         conn.execute(
             """INSERT OR REPLACE INTO round_state
-               (round_address, status, problem_text, expected_agents, rubric, solution_key, created_at)
-               VALUES (?, ?, ?, ?, ?, ?, ?)""",
+               (round_address, status, problem_text, expected_agents, rubric, solution_key, sponsor_address, created_at)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
             (round_address, rnd.get("status", ""), rnd.get("problem_text", ""),
              rnd.get("expected_agents", 0), json.dumps(rnd.get("rubric")),
-             rnd.get("solution_key", ""), time.time())
+             rnd.get("solution_key", ""), rnd.get("sponsor_address", ""), time.time())
         )
         conn.commit()
         conn.close()
@@ -217,6 +223,7 @@ def _recover_rounds():
                 "expected_agents": row["expected_agents"],
                 "rubric": json.loads(row["rubric"]) if row["rubric"] else None,
                 "solution_key": row["solution_key"] or "",
+                "sponsor_address": row["sponsor_address"] if "sponsor_address" in row.keys() else "",
                 "solutions": {
                     s["agent_id"]: {"encrypted": s["encrypted_solution"], "commit_hash": s["commit_hash"]}
                     for s in sols
@@ -258,6 +265,7 @@ class ScoreRoundRequest(BaseModel):
     solutions: list[SolutionInput]
     rubric: Optional[dict] = None  # Sponsor rubric JSON, or None for defaults
     solution_key: str = ""         # AES key (hex), or uses env var
+    sponsor_address: str = ""      # BUG-5 fix: needed for ECIES solution storage
 
 
 class ScoreSingleRequest(BaseModel):
@@ -303,6 +311,7 @@ class InitRoundRequest(BaseModel):
     expected_agents: int
     rubric: Optional[dict] = None
     solution_key: str = ""
+    sponsor_address: str = ""  # Needed for ECIES encryption of winning solutions
 
 
 @app.post("/score/init-round")
@@ -321,6 +330,7 @@ async def init_round(req: InitRoundRequest):
         "expected_agents": req.expected_agents,
         "rubric": req.rubric,
         "solution_key": req.solution_key,
+        "sponsor_address": req.sponsor_address,  # BUG-1 fix: needed for ECIES solution storage
         "solutions": {},
         "results": None,
         "scoring_started_at": None,
@@ -329,7 +339,7 @@ async def init_round(req: InitRoundRequest):
     }
 
     _persist_round(req.round_address, _rounds[req.round_address])
-    log.info(f"Round {req.round_address[:10]}... initialized, expecting {req.expected_agents} solutions")
+    log.info(f"Round {req.round_address[:10]}... initialized, expecting {req.expected_agents} solutions, sponsor={req.sponsor_address[:10] if req.sponsor_address else 'none'}...")
     return {"status": "initialized", "round_address": req.round_address}
 
 
@@ -562,6 +572,7 @@ async def score_round_endpoint(req: ScoreRoundRequest, background_tasks: Backgro
         "expected_agents": len(req.solutions),
         "rubric": req.rubric,
         "solution_key": req.solution_key,
+        "sponsor_address": req.sponsor_address,
         "solutions": {
             s.agent_id: {"encrypted": s.encrypted_solution, "commit_hash": s.commit_hash}
             for s in req.solutions
@@ -709,7 +720,7 @@ async def health():
     phala_key = os.environ.get("PHALA_API_KEY", "")
     return {
         "status": "healthy",
-        "scoring_model": os.environ.get("SCORING_MODEL", "deepseek/deepseek-chat-v3-0324"),
+        "scoring_model": "configured" if os.environ.get("SCORING_MODEL") or os.environ.get("PHALA_API_KEY") else "not configured",
         "phala_api": "configured" if phala_key else "not configured",
         "active_rounds": len(_rounds),
         "rounds_scoring": sum(1 for r in _rounds.values() if r["status"] == "scoring"),
