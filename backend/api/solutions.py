@@ -225,6 +225,15 @@ async def submit_solution(req: SubmitSolutionRequest):
         log.error("Scoring service unreachable at %s", SCORING_SERVICE_URL)
         raise HTTPException(503, "Scoring service temporarily unavailable")
 
+    # Record participation in bounty index for agent dashboard
+    try:
+        from services.bounty_index import record_participation, find_by_round
+        bounty = find_by_round(req.round_address)
+        bounty_id = bounty["bounty_id"] if bounty else None
+        record_participation(req.round_address, req.agent_address, req.agent_id, bounty_id, "submitted")
+    except Exception as e:
+        log.warning(f"Failed to record participation: {e}")  # non-blocking
+
     return SubmitSolutionResponse(
         status="accepted",
         message=f"Solution received ({scoring_resp.get('solutions_received', '?')}/{scoring_resp.get('solutions_expected', '?')} for this round).",

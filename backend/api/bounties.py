@@ -316,6 +316,71 @@ async def list_bounties(
         return []
 
 
+@router.get("/agent/{agent_address}")
+async def get_agent_bounties(agent_address: str, limit: int = Query(50, ge=1, le=100)):
+    """Get all bounties an agent has participated in (submitted solutions to).
+
+    Returns bounty info with on-chain phase refresh for active bounties.
+    Used by the agent dashboard to show active submissions and history.
+    """
+    try:
+        bounties = bounty_index.get_agent_bounties(agent_address, limit=limit)
+        chain = get_chain_service()
+
+        results = []
+        for b in bounties:
+            # Refresh on-chain phase for active bounties
+            ra = b.get("round_address")
+            if ra and b.get("phase") not in ("SETTLED", "CANCELLED"):
+                try:
+                    details = chain.get_round_details(ra)
+                    b["phase"] = details["phase"]
+                    b["agent_count"] = details["agent_count"]
+                    b["deposit_eth"] = details["deposit_eth"]
+                except Exception:
+                    pass
+
+            # Try to get agent's score if settled
+            score = None
+            rank = None
+            if b.get("phase") == "SETTLED" and ra:
+                try:
+                    agent_ids, scores = chain.get_scores(ra)
+                    # Find this agent's score
+                    for i, (aid, s) in enumerate(zip(agent_ids, scores)):
+                        # Match by agent_id from participation record
+                        if aid == b.get("agent_id", -1):
+                            score = s
+                            # Rank = position in descending score order
+                            sorted_scores = sorted(scores, reverse=True)
+                            rank = sorted_scores.index(s) + 1
+                            break
+                except Exception:
+                    pass
+
+            results.append({
+                "bounty_id": b.get("bounty_id"),
+                "title": b.get("title", "Untitled"),
+                "phase": b.get("phase", "CREATED"),
+                "bounty_eth": b.get("deposit_eth", b.get("bounty_eth", 0)),
+                "entry_fee_eth": b.get("entry_fee_eth", 0.003),
+                "agent_count": b.get("agent_count", 0),
+                "max_agents": b.get("max_agents", 0),
+                "round_address": ra,
+                "is_private": bool(b.get("is_private", 0)),
+                "agent_action": b.get("agent_action", "submitted"),
+                "participated_at": b.get("participated_at"),
+                "score": score,
+                "rank": rank,
+                "total_agents": len(agent_ids) if b.get("phase") == "SETTLED" and ra else b.get("agent_count", 0),
+            })
+
+        return results
+    except Exception as e:
+        logger.warning(f"Failed to get agent bounties: {e}")
+        return []
+
+
 @router.get("/by-round/{round_address}")
 async def get_bounty_by_round(round_address: str):
     """Look up a bounty by its round contract address.

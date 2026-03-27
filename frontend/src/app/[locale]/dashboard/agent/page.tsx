@@ -8,6 +8,7 @@ import { useState, useCallback, useEffect } from "react";
 import { formatEther } from "viem";
 import { CONTRACTS, API_URL } from "@/lib/contracts";
 import { ArenaRegistryABI } from "@/lib/abis/ArenaRegistry";
+import { getAgentBounties } from "@/lib/api";
 
 /* ═══════════════════════════════════════════════════════════
  * Agent Dashboard
@@ -130,8 +131,48 @@ export default function AgentDashboard() {
   const chainAgent = parseAgentData(agentData, firstAgentId);
 
   const agent = chainAgent || MOCK_AGENT;
-  const active = MOCK_ACTIVE;
-  const history = MOCK_HISTORY;
+
+  // ── Fetch agent's bounty participations from API ──
+  const [active, setActive] = useState<ActiveSubmission[]>([]);
+  const [history, setHistory] = useState<HistoryEntry[]>([]);
+
+  useEffect(() => {
+    if (!address) return;
+    getAgentBounties(address)
+      .then((bounties) => {
+        const activePhases = ["FUNDED", "COMMIT", "SCORING"];
+        const activeBounties: ActiveSubmission[] = bounties
+          .filter((b) => activePhases.includes(b.phase))
+          .map((b) => ({
+            bountyId: b.bounty_id,
+            title: b.title,
+            prize: `${b.bounty_eth} ETH`,
+            phase: b.phase,
+            timeLeft: b.phase === "COMMIT" ? "Active" : b.phase === "SCORING" ? "Scoring..." : "—",
+            yourStatus: b.agent_action === "submitted" ? "committed" : "pending",
+          }));
+        setActive(activeBounties);
+
+        const historyBounties: HistoryEntry[] = bounties
+          .filter((b) => b.phase === "SETTLED" || b.phase === "CANCELLED")
+          .map((b) => ({
+            bountyId: b.bounty_id,
+            title: b.title,
+            prize: `${b.bounty_eth} ETH`,
+            rank: b.rank || 0,
+            totalAgents: b.total_agents || b.agent_count,
+            score: b.score || 0,
+            earned: "0.000", // TODO: read claimable from chain
+            date: b.participated_at
+              ? new Date(b.participated_at * 1000).toISOString().split("T")[0]
+              : "—",
+          }));
+        setHistory(historyBounties);
+      })
+      .catch(() => {
+        // Silent — show empty state
+      });
+  }, [address]);
 
   return (
     <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-10">
@@ -184,16 +225,16 @@ export default function AgentDashboard() {
           <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden">
             <div className="divide-y divide-slate-100">
               {active.map((s) => (
-                <div key={s.bountyId} className="flex items-center justify-between px-6 py-4 hover:bg-slate-50/50 transition-colors">
+                <Link key={s.bountyId} href={`/bounties/${s.bountyId}`} className="flex items-center justify-between px-6 py-4 hover:bg-slate-50/50 transition-colors">
                   <div>
                     <div className="text-sm font-semibold text-slate-900">{s.title}</div>
-                    <div className="text-xs text-slate-400 mt-0.5">{s.prize} · {s.timeLeft} left</div>
+                    <div className="text-xs text-slate-400 mt-0.5">{s.prize} · {s.timeLeft}</div>
                   </div>
                   <div className="flex items-center gap-3">
                     <PhaseTag phase={s.phase} />
                     <StatusTag status={s.yourStatus} />
                   </div>
-                </div>
+                </Link>
               ))}
             </div>
           </div>

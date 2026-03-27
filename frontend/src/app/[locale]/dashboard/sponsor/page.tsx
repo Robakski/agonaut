@@ -156,7 +156,15 @@ export default function SponsorDashboard() {
                         <span className="text-slate-400">/{b.maxAgents}</span>
                       </td>
                       <td className="text-right px-4 py-3.5 font-semibold text-slate-900">{b.prize}</td>
-                      <td className="text-right px-6 py-3.5 text-slate-400">{b.timeLeft}</td>
+                      <td className="text-right px-6 py-3.5">
+                        {b.phase === "SETTLED" ? (
+                          <Link href={`/bounties/${b.id}/solution`} className="text-xs font-semibold text-amber-700 hover:text-amber-800">
+                            View Results →
+                          </Link>
+                        ) : (
+                          <span className="text-slate-400">{b.timeLeft}</span>
+                        )}
+                      </td>
                     </tr>
                   ))}
                 </tbody>

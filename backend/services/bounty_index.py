@@ -45,14 +45,40 @@ def _ensure_db():
 
             CREATE INDEX IF NOT EXISTS idx_bounties_phase ON bounties(phase);
             CREATE INDEX IF NOT EXISTS idx_bounties_sponsor ON bounties(sponsor);
-            CREATE INDEX IF NOT EXISTS idx_bounties_created ON bounties(created_at);""")
+            CREATE INDEX IF NOT EXISTS idx_bounties_created ON bounties(created_at);
+
+            CREATE TABLE IF NOT EXISTS agent_participations (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                round_address TEXT NOT NULL,
+                agent_address TEXT NOT NULL,
+                agent_id INTEGER NOT NULL,
+                bounty_id INTEGER,
+                action TEXT DEFAULT 'entered',
+                created_at INTEGER NOT NULL,
+                UNIQUE(round_address, agent_address)
+            );
+            CREATE INDEX IF NOT EXISTS idx_ap_agent ON agent_participations(agent_address);
+            CREATE INDEX IF NOT EXISTS idx_ap_round ON agent_participations(round_address);
+        """)
         # Migration: add is_private if missing
         try:
             db.execute("ALTER TABLE bounties ADD COLUMN is_private INTEGER DEFAULT 0")
         except Exception:
             pass
-        conn.execute("""
-        """)
+        # Migration: add agent_participations if missing (idempotent via IF NOT EXISTS above)
+        try:
+            db.execute("""CREATE TABLE IF NOT EXISTS agent_participations (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                round_address TEXT NOT NULL,
+                agent_address TEXT NOT NULL,
+                agent_id INTEGER NOT NULL,
+                bounty_id INTEGER,
+                action TEXT DEFAULT 'entered',
+                created_at INTEGER NOT NULL,
+                UNIQUE(round_address, agent_address)
+            )""")
+        except Exception:
+            pass
 
 
 @contextmanager
@@ -159,5 +185,34 @@ def get_sponsor_bounties(sponsor: str, limit: int = 50) -> list[dict]:
         rows = db.execute(
             "SELECT * FROM bounties WHERE sponsor = ? ORDER BY created_at DESC LIMIT ?",
             (sponsor.lower(), limit),
+        ).fetchall()
+    return [dict(r) for r in rows]
+
+
+def record_participation(round_address: str, agent_address: str, agent_id: int, bounty_id: Optional[int] = None, action: str = "submitted"):
+    """Record that an agent participated in a bounty round."""
+    _ensure_db()
+    now = int(time.time())
+    with _get_db() as db:
+        db.execute(
+            """INSERT OR REPLACE INTO agent_participations
+               (round_address, agent_address, agent_id, bounty_id, action, created_at)
+               VALUES (?, ?, ?, ?, ?, ?)""",
+            (round_address.lower(), agent_address.lower(), agent_id, bounty_id, action, now),
+        )
+
+
+def get_agent_bounties(agent_address: str, limit: int = 50) -> list[dict]:
+    """Get all bounties an agent has participated in."""
+    _ensure_db()
+    with _get_db() as db:
+        rows = db.execute(
+            """SELECT b.*, ap.action as agent_action, ap.created_at as participated_at
+               FROM agent_participations ap
+               JOIN bounties b ON b.round_address = ap.round_address
+               WHERE ap.agent_address = ?
+               ORDER BY ap.created_at DESC
+               LIMIT ?""",
+            (agent_address.lower(), limit),
         ).fetchall()
     return [dict(r) for r in rows]

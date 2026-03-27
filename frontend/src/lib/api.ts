@@ -170,6 +170,28 @@ export async function registerSponsorPublicKey(data: {
   });
 }
 
+/**
+ * Get bounties an agent has participated in (for agent dashboard).
+ */
+export async function getAgentBounties(agentAddress: string, limit = 50) {
+  return fetchApi<Array<{
+    bounty_id: number;
+    title: string;
+    phase: string;
+    bounty_eth: number;
+    entry_fee_eth: number;
+    agent_count: number;
+    max_agents: number;
+    round_address: string;
+    is_private: boolean;
+    agent_action: string;
+    participated_at: number;
+    score: number | null;
+    rank: number | null;
+    total_agents: number;
+  }>>(`/bounties/agent/${agentAddress}?limit=${limit}`);
+}
+
 export async function submitSolution(data: {
   round_address: string;
   agent_id: number;
