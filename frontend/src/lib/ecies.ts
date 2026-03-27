@@ -71,6 +71,75 @@ export function derivePublicKey(signature: string): string {
 }
 
 /**
+ * Encrypt a solution for the sponsor using ECIES.
+ *
+ * V2 Architecture: Solutions are encrypted with the sponsor's derived ECIES public key.
+ * Only the sponsor (who has the derived private key) can decrypt.
+ * The platform and TEE CANNOT decrypt solutions.
+ *
+ * Flow:
+ * 1. Sponsor's public key is already registered (from key registration)
+ * 2. We generate a new ephemeral secp256k1 keypair
+ * 3. ECDH(ephemeral_private, sponsor_public) → shared secret
+ * 4. HKDF-SHA256 derives AES key from shared secret
+ * 5. AES-256-GCM encrypts the solution
+ * 6. Return: {ephemeral_pubkey, iv, ciphertext, mac}
+ */
+export async function encryptSolution(
+  plaintext: string,
+  sponsorPublicKey: string, // hex, from registration
+): Promise<EncryptedSolution> {
+  try {
+    // Step 1: Generate ephemeral keypair
+    const ephemeralPrivateKey = secp256k1.utils.randomPrivateKey();
+    const ephemeralPublicKey = secp256k1.getPublicKey(ephemeralPrivateKey, false); // uncompressed
+
+    // Step 2: ECDH with sponsor's public key
+    const sponsorPubBytes = hexToBytes(sponsorPublicKey.replace("0x", ""));
+    const sharedPoint = secp256k1.getSharedSecret(ephemeralPrivateKey, sponsorPubBytes);
+    // Extract x-coordinate (first 32 bytes after the 0x04 prefix)
+    const sharedSecret = sharedPoint.slice(1, 33);
+
+    // Step 3: HKDF to derive AES key — MUST match backend ecies_encrypt.py
+    const info = new TextEncoder().encode("agonaut-ecies-v1");
+    const aesKeyBytes = hkdf(sha256, sharedSecret, undefined, info, 32);
+
+    // Step 4: Generate random IV and encrypt
+    const iv = crypto.getRandomValues(new Uint8Array(16));
+    const plaintextBytes = new TextEncoder().encode(plaintext);
+
+    const aesKey = await crypto.subtle.importKey(
+      "raw",
+      aesKeyBytes.buffer as ArrayBuffer,
+      { name: "AES-GCM" },
+      false,
+      ["encrypt"],
+    );
+
+    const encryptedAndTag = await crypto.subtle.encrypt(
+      { name: "AES-GCM", iv: iv.buffer as ArrayBuffer },
+      aesKey,
+      plaintextBytes.buffer as ArrayBuffer,
+    );
+
+    // Split ciphertext and GCM tag (tag is last 16 bytes)
+    const encData = new Uint8Array(encryptedAndTag);
+    const ciphertext = encData.slice(0, encData.length - 16);
+    const mac = encData.slice(encData.length - 16);
+
+    return {
+      ephemeral_pubkey: "0x" + bytesToHex(ephemeralPublicKey),
+      iv: "0x" + bytesToHex(iv),
+      ciphertext: "0x" + bytesToHex(ciphertext),
+      mac: "0x" + bytesToHex(mac),
+    };
+  } catch (error) {
+    console.error("ECIES solution encryption failed:", error);
+    throw new Error("Failed to encrypt solution. Check your wallet connection.");
+  }
+}
+
+/**
  * Decrypt an ECIES-encrypted solution using the sponsor's wallet.
  *
  * 1. Signs the deterministic message to re-derive the private key

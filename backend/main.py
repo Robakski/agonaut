@@ -76,7 +76,9 @@ app.include_router(admin_email.router)
 app.include_router(admin_dashboard.router)
 
 from api import private_bounties
+from api import sponsor_keys_v2
 app.include_router(private_bounties.router, prefix="/api/v1")
+app.include_router(sponsor_keys_v2.router)
 
 
 # ── Startup Validation (BUG-12, BUG-13, BUG-14) ──

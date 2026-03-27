@@ -89,6 +89,25 @@ export async function searchAgents(q: string) {
 
 // ── Solutions ──
 
+/**
+ * Register sponsor's ECIES public key (V2 ZK architecture).
+ *
+ * Called during private bounty creation. The sponsor has signed a deterministic
+ * message and derived an ECIES keypair from the signature. We register the public
+ * key so the TEE can encrypt results with it (only sponsor can decrypt).
+ */
+export async function registerSponsorPublicKey(data: {
+  sponsor_address: string;
+  public_key: string; // hex, derived from wallet signature
+  signature: string;  // the signature used to derive the key (for verification)
+  message: string;    // the deterministic message signed
+}) {
+  return fetchApi<any>("/sponsor-keys/register", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
 export async function submitSolution(data: {
   round_address: string;
   agent_id: number;
