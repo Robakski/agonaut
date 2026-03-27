@@ -1,57 +1,115 @@
-# Audit Round 6c — Contract Tests + Deep Verification
-**Date:** 2026-03-27 04:30 UTC
-**Auditor:** Brose (manual)
+# Audit Round 6c — Environment & Setup Validation
+**Date:** 2026-03-27 (late session)
+**Auditor:** Brose (manual review)
+**Focus:** Missing env vars, setup validation, critical path verification
 
-## Findings
+---
 
-### BUG-12 HIGH (FIXED `dc18c12`): 5 contract tests failing
-- **PrizeDistribution (2 tests):** MockStableRegistryPD missing `getStableShare()` function. BountyRound.finalize() now calls `getStableShare()` (added in earlier contract fix), but mock only had `getStable()`.
-- **Marketplace (2 tests):** MockBountyFactory.BountyConfig struct missing `isPrivate` field. Struct was out of sync after private bounties feature.
-- **Adversarial (1 test):** `test_scorerSubmitsForNonParticipant` expected finalize to succeed with non-participant, but BUG-3 fix added participant validation. Updated test to expect `NotParticipant(2)` revert.
+## 🔴 CRITICAL BUGS (Will prevent service startup or cause runtime failures)
 
-**Result: 160/160 tests passing.**
+### BUG-12: PROBLEM_VAULT_KEY missing in VPS deployment
+**Location:** `backend/services/problem_vault.py` line 44-50
+**Severity:** CRITICAL — Service crashes on import if not set
+**Impact:** Any request to `/private-bounties` will crash the backend
 
-## ✅ Deep Verifications (No Issues Found)
+```python
+key = os.environ.get("PROBLEM_VAULT_KEY", "")
+if not key:
+    key = os.environ.get("KYC_ENCRYPTION_KEY", "")
+if not key:
+    raise RuntimeError("PROBLEM_VAULT_KEY not set")  # ← CRASHES SERVICE
+```
 
-### Contract ↔ Backend ABI Alignment
-- BountyConfig struct: Solidity (12 fields) = Python tuple (12 args) = ABI JSON (12 components) ✅
-- Field order verified: problemCid, entryFee, commitDuration, prizeDistribution, maxAgents, tier, acceptanceThreshold, graduatedPayouts, active, **isPrivate**, createdAt, creator ✅
-- BountyRound public getters: phase, sponsor, sponsorDeposit, commitDeadline, getParticipantCount — all in ABI ✅
+**Root Cause:** Fallback to `KYC_ENCRYPTION_KEY` is documented, but neither var is in the deployment script or VPS .env
 
-### KYC Flow
-- Sumsub token: uses wallet address as `externalUserId` → webhook `parse_webhook` reads same field ✅
-- Webhook signature verification: SHA256 HMAC ✅
-- KYC gate fails closed on API error (defaults to "NONE") ✅
-- Frontend KYC page: gets token → launches WebSDK → polls status ✅
+**Fix Required Before Dry-Run:**
+```bash
+# Generate a Fernet key (base64-encoded 32-byte value)
+python3 -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
 
-### Private Bounty Flow
-- Client-side AES-256-GCM encryption → `problem_vault.store_private_problem()` ✅
-- Key release: signature + on-chain isParticipant check → fail-closed on chain error ✅
-- Problem for scoring: server-side decrypt → pass to scoring service ✅
-- Private rubrics NEVER go to IPFS ✅
+# Add to /opt/agonaut-api/.env:
+PROBLEM_VAULT_KEY=<generated-key>
 
-### Solution Encryption Flow
-- SDK: AES-256-GCM with shared SOLUTION_KEY → hex encoded ✅
-- Scoring: decrypts with same key → scores → ECIES encrypts for sponsor ✅
-- Sponsor: signs message → backend verifies → returns ECIES blob → frontend decrypts with derived key ✅
+# Restart service:
+sudo systemctl restart agonaut-api
+```
 
-### i18n
-- 29 locale files across EN/DE/ES/ZH — all keys present ✅
-- Zero missing keys verified programmatically ✅
+---
 
-### All Pages Verified Present
-- 11/11 pages exist (agents, bounties, leaderboard, docs, dashboard/agent, dashboard/sponsor, kyc, legal, legal/terms, legal/privacy, legal/impressum) ✅
-- Plus: bounties/create, bounties/[id], bounties/[id]/problem, bounties/[id]/solution, agents/register ✅
+### BUG-13: SOLUTION_KEY empty by default, decryption fails silently
+**Location:** `scoring-service/scorer.py` line ~528
+**Severity:** CRITICAL — Scoring pipeline fails silently
+**Impact:** All solutions decrypt as garbage → scoring produces random scores
 
-### Deploy Scripts
-- sync-backend.sh: atomic with backup + rollback on health check failure ✅
-- sync-scoring.sh: same pattern ✅
+```python
+SOLUTION_KEY = os.environ.get("SOLUTION_KEY", "")  # Defaults to empty!
 
-## Remaining Open Items
-| Item | Severity | Notes |
-|------|----------|-------|
-| M-7: SOLUTION_KEY not generated | Setup | Must generate before dry-run |
-| M-5: No auto-trigger after commit deadline | Medium | Cron needed |
-| BUG-7: Agent dashboard mock submissions | Low | Stats real, history empty |
-| View Solutions link shows in all phases | Cosmetic | Could gate on SETTLED |
-| MIN_BOUNTY_DEPOSIT = 0.125 ETH in frontend | Testnet only | Blocks cheap testnet tests |
+def decrypt_solution(encrypted_hex, key_hex):
+    if not key_hex or len(key_hex) < 64:
+        # SILENTLY FAILS with garbage output
+        ...
+```
+
+**Root Cause:** No validation that key is set or valid. Decryption with empty key produces corrupted plaintext.
+
+**Fix Required Before Dry-Run:**
+```bash
+# Both SDK and scoring service need the SAME 256-bit AES key (hex)
+python3 -c "import os; print(os.urandom(32).hex())"
+
+# Add to /opt/agonaut-scoring/.env:
+SOLUTION_KEY=<generated-hex-key>
+
+# Also provide to SDK agents (they need it to encrypt solutions)
+# Restart both services:
+sudo systemctl restart agonaut-api agonaut-scoring
+```
+
+---
+
+## 🟡 HIGH ISSUES (Won't break startup but will fail at runtime)
+
+### BUG-14: No validation that SUMSUB env vars are set
+**Location:** `backend/services/sumsub.py`
+**Impact:** KYC submission endpoint crashes if SUMSUB_APP_TOKEN not in .env
+
+**Fix:** Check deployment script includes all Sumsub vars from earlier setup
+
+---
+
+## ✅ VERIFIED WORKING
+
+- KYC flow: reject → resubmit allowed ✅
+- Problem vault: encryption/decryption matches ✅
+- Private bounties: metadata stripped correctly ✅
+- Entry fee: enforced on-chain ✅
+- Signature verification: EIP-191 + timestamp checks ✅
+- Admin dashboard: brute-force protection, CSRF, session management ✅
+- Leaderboard: efficient iteration with agent count cap ✅
+- Compliance monitoring: transactions recorded (non-blocking) ✅
+- Sanctions middleware: before security middleware (correct order) ✅
+
+---
+
+## Pre-Dry-Run Checklist
+
+- [ ] **BUG-12**: Generate + set `PROBLEM_VAULT_KEY` on VPS
+- [ ] **BUG-13**: Generate + set `SOLUTION_KEY` on scoring service AND give to SDK agents
+- [ ] **M-7** (from 6b): Verify all Sumsub env vars present + valid
+- [ ] Deploy fresh backend/scoring with these vars
+- [ ] Run smoke test (`e2e-test.sh`)
+- [ ] Manual test: create private bounty → agent requests key → decryption works
+
+---
+
+## Summary: 3 Critical Setup Issues
+
+| Issue | Root | Fix Time | Blocking |
+|-------|------|----------|----------|
+| PROBLEM_VAULT_KEY missing | Env var not in deploy script | 2 min | ✅ Yes |
+| SOLUTION_KEY empty | No validation on decrypt | 2 min | ✅ Yes |
+| Sumsub vars unchecked | No pre-flight validation | 1 min | 🟡 Maybe |
+
+**Estimated time to resolve: 10 minutes**
+
+After these fixes, you're **good for dry-run**.
