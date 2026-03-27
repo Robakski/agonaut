@@ -76,6 +76,7 @@ class BountyResponse(BaseModel):
     commit_deadline: Optional[int] = None
     rubric: Optional[list[RubricCriterion]] = None
     created_at: int
+    is_private: bool = False
 
 
 # ── Routes ──
@@ -214,6 +215,7 @@ async def create_bounty_relay(req: CreateBountyRequest):
             round_address=result.round_address,
             problem_cid=result.problem_cid,
             rubric_cid=ipfs_cid,
+            is_private=req.isPrivate,
         )
 
         # ── Compliance monitoring ──
@@ -305,6 +307,7 @@ async def list_bounties(
                 max_agents=b.get("max_agents", 0),
                 phase=b.get("phase", "CREATED"),
                 created_at=b.get("created_at", 0),
+                is_private=bool(b.get("is_private", 0)),
             )
             for b in bounties
         ]
@@ -326,6 +329,8 @@ async def get_bounty_by_round(round_address: str):
     bounty_id = bounty_data["bounty_id"]
     stored = load_rubric(bounty_id)
     result = {"bounty_id": bounty_id, **(stored or bounty_data)}
+    # Always include the round_address (frontend needs it for on-chain reads)
+    result["round_address"] = round_address
 
     # Strip private fields
     if result.get("is_private"):

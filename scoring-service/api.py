@@ -161,10 +161,16 @@ def _get_scoring_db() -> sqlite3.Connection:
             agent_id INTEGER NOT NULL,
             encrypted_solution TEXT NOT NULL,
             commit_hash TEXT,
+            agent_address TEXT DEFAULT '',
             received_at REAL,
             UNIQUE(round_address, agent_id)
         )
     """)
+    # Migration: add agent_address if missing
+    try:
+        conn.execute("ALTER TABLE round_solutions ADD COLUMN agent_address TEXT DEFAULT ''")
+    except Exception:
+        pass
     conn.execute("CREATE INDEX IF NOT EXISTS idx_rs_round ON round_solutions(round_address)")
     conn.commit()
     return conn
@@ -188,15 +194,15 @@ def _persist_round(round_address: str, rnd: dict):
         log.warning(f"Failed to persist round state: {e}")
 
 
-def _persist_solution(round_address: str, agent_id: int, encrypted: str, commit_hash: str):
+def _persist_solution(round_address: str, agent_id: int, encrypted: str, commit_hash: str, agent_address: str = ""):
     """Save a received solution to SQLite."""
     try:
         conn = _get_scoring_db()
         conn.execute(
             """INSERT OR REPLACE INTO round_solutions
-               (round_address, agent_id, encrypted_solution, commit_hash, received_at)
-               VALUES (?, ?, ?, ?, ?)""",
-            (round_address, agent_id, encrypted, commit_hash, time.time())
+               (round_address, agent_id, encrypted_solution, commit_hash, agent_address, received_at)
+               VALUES (?, ?, ?, ?, ?, ?)""",
+            (round_address, agent_id, encrypted, commit_hash, agent_address, time.time())
         )
         conn.commit()
         conn.close()
@@ -214,7 +220,7 @@ def _recover_rounds():
         for row in rows:
             addr = row["round_address"]
             sols = conn.execute(
-                "SELECT agent_id, encrypted_solution, commit_hash FROM round_solutions WHERE round_address = ?",
+                "SELECT agent_id, encrypted_solution, commit_hash, agent_address FROM round_solutions WHERE round_address = ?",
                 (addr,)
             ).fetchall()
             _rounds[addr] = {
@@ -225,7 +231,11 @@ def _recover_rounds():
                 "solution_key": row["solution_key"] or "",
                 "sponsor_address": row["sponsor_address"] if "sponsor_address" in row.keys() else "",
                 "solutions": {
-                    s["agent_id"]: {"encrypted": s["encrypted_solution"], "commit_hash": s["commit_hash"]}
+                    s["agent_id"]: {
+                        "encrypted": s["encrypted_solution"],
+                        "commit_hash": s["commit_hash"],
+                        "agent_address": s["agent_address"] if "agent_address" in s.keys() else "",
+                    }
                     for s in sols
                 },
                 "results": None,
@@ -362,7 +372,7 @@ async def receive_solution(req: ReceiveSolutionRequest, background_tasks: Backgr
         "commit_hash": req.commit_hash,
         "agent_address": req.agent_address,
     }
-    _persist_solution(req.round_address, req.agent_id, req.encrypted_solution, req.commit_hash)
+    _persist_solution(req.round_address, req.agent_id, req.encrypted_solution, req.commit_hash, req.agent_address)
 
     received = len(rnd["solutions"])
     expected = rnd["expected_agents"]
@@ -562,21 +572,55 @@ async def score_round_endpoint(req: ScoreRoundRequest, background_tasks: Backgro
     Alternative to init-round + receive-solution flow.
     Pass all solutions at once for immediate scoring.
     """
-    if req.round_address in _rounds and _rounds[req.round_address]["status"] == "scoring":
+    existing = _rounds.get(req.round_address)
+    if existing and existing["status"] == "scoring":
         raise HTTPException(400, "Scoring already in progress for this round")
 
-    # Initialize round state
+    # Build new solutions from request
+    new_solutions = {
+        s.agent_id: {"encrypted": s.encrypted_solution, "commit_hash": s.commit_hash}
+        for s in req.solutions
+    }
+
+    # Merge with any previously received solutions (from receive-solution endpoint)
+    # This ensures trigger-scoring with solutions=[] doesn't wipe stored solutions
+    if existing and existing.get("solutions"):
+        merged_solutions = {**existing["solutions"], **new_solutions}
+    else:
+        merged_solutions = new_solutions
+
+    # Also recover solutions from SQLite if we have none
+    if not merged_solutions:
+        try:
+            conn = _get_scoring_db()
+            db_sols = conn.execute(
+                "SELECT agent_id, encrypted_solution, commit_hash, agent_address FROM round_solutions WHERE round_address = ?",
+                (req.round_address,)
+            ).fetchall()
+            for s in db_sols:
+                merged_solutions[s["agent_id"]] = {
+                    "encrypted": s["encrypted_solution"],
+                    "commit_hash": s["commit_hash"],
+                    "agent_address": s["agent_address"] if "agent_address" in s.keys() else "",
+                }
+            conn.close()
+            if merged_solutions:
+                log.info(f"Recovered {len(merged_solutions)} solutions from SQLite for scoring")
+        except Exception as e:
+            log.warning(f"Failed to recover solutions from SQLite: {e}")
+
+    if not merged_solutions:
+        raise HTTPException(400, "No solutions available for scoring")
+
+    # Initialize/update round state
     _rounds[req.round_address] = {
         "status": "scoring",
-        "problem_text": req.problem_text,
-        "expected_agents": len(req.solutions),
-        "rubric": req.rubric,
-        "solution_key": req.solution_key,
-        "sponsor_address": req.sponsor_address,
-        "solutions": {
-            s.agent_id: {"encrypted": s.encrypted_solution, "commit_hash": s.commit_hash}
-            for s in req.solutions
-        },
+        "problem_text": req.problem_text or (existing.get("problem_text", "") if existing else ""),
+        "expected_agents": len(merged_solutions),
+        "rubric": req.rubric or (existing.get("rubric") if existing else None),
+        "solution_key": req.solution_key or (existing.get("solution_key", "") if existing else ""),
+        "sponsor_address": req.sponsor_address or (existing.get("sponsor_address", "") if existing else ""),
+        "solutions": merged_solutions,
         "results": None,
         "scoring_started_at": time.time(),
         "scoring_completed_at": None,

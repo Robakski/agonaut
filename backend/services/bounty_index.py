@@ -38,13 +38,20 @@ def _ensure_db():
                 phase TEXT DEFAULT 'CREATED',
                 agent_count INTEGER DEFAULT 0,
                 deposit_eth REAL DEFAULT 0,
+                is_private INTEGER DEFAULT 0,
                 created_at INTEGER NOT NULL,
                 updated_at INTEGER NOT NULL
             );
 
             CREATE INDEX IF NOT EXISTS idx_bounties_phase ON bounties(phase);
             CREATE INDEX IF NOT EXISTS idx_bounties_sponsor ON bounties(sponsor);
-            CREATE INDEX IF NOT EXISTS idx_bounties_created ON bounties(created_at);
+            CREATE INDEX IF NOT EXISTS idx_bounties_created ON bounties(created_at);""")
+        # Migration: add is_private if missing
+        try:
+            db.execute("ALTER TABLE bounties ADD COLUMN is_private INTEGER DEFAULT 0")
+        except Exception:
+            pass
+        conn.execute("""
         """)
 
 
@@ -73,6 +80,7 @@ def index_bounty(
     round_address: str,
     problem_cid: str,
     rubric_cid: Optional[str] = None,
+    is_private: bool = False,
 ):
     """Write a new bounty to the index."""
     _ensure_db()
@@ -83,11 +91,11 @@ def index_bounty(
             """INSERT OR REPLACE INTO bounties
                (bounty_id, title, description, tags, sponsor, bounty_eth,
                 max_agents, commit_hours, threshold, graduated, round_address,
-                problem_cid, rubric_cid, phase, created_at, updated_at)
-               VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                problem_cid, rubric_cid, phase, is_private, created_at, updated_at)
+               VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
             (bounty_id, title, description, json.dumps(tags), sponsor.lower(),
              bounty_eth, max_agents, commit_hours, threshold, int(graduated),
-             round_address, problem_cid, rubric_cid, "CREATED", now, now),
+             round_address, problem_cid, rubric_cid, "CREATED", int(is_private), now, now),
         )
 
 
