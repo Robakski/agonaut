@@ -39,8 +39,18 @@ from scorer import (
     DEFAULT_SPONSOR_CHECKS,
 )
 
+import threading
+
 logging.basicConfig(level=logging.INFO, format="%(name)s | %(message)s")
 log = logging.getLogger("scoring-api")
+
+# ── Concurrency Control ──
+# Max rounds scoring simultaneously. Each round uses ~1 LLM call per solution.
+# On a 4-core VPS with thread pool, 3 concurrent rounds is safe.
+MAX_CONCURRENT_SCORING = 3
+_scoring_semaphore = threading.Semaphore(MAX_CONCURRENT_SCORING)
+_active_scoring_count = 0
+_scoring_count_lock = threading.Lock()
 
 app = FastAPI(
     title="Agonaut Scoring Service",
@@ -508,6 +518,13 @@ async def _score_round_async(round_address: str):
 
     ⚠️ DEPRECATED: _score_round_v2_async is the unified path.
     """
+    import asyncio
+    loop = asyncio.get_event_loop()
+    await loop.run_in_executor(None, _score_round_sync, round_address)
+
+
+def _score_round_sync(round_address: str):
+    """[DEPRECATED — V1] Synchronous scoring — runs in thread pool."""
     rnd = _rounds.get(round_address)
     if not rnd:
         return
@@ -963,10 +980,35 @@ async def score_round_v2(req: ScoreV2Request, background_tasks: BackgroundTasks)
 
 
 async def _score_round_v2_async(round_address: str):
-    """V2 background scoring — decrypt with TEE key, encrypt results for sponsor."""
+    """V2 background scoring — decrypt with TEE key, encrypt results for sponsor.
+
+    Runs the blocking LLM scoring in a thread pool to avoid blocking the event loop.
+    This allows the API to continue serving requests (solution submissions, TEE
+    problem requests, health checks) while scoring is in progress.
+    """
+    import asyncio
+    loop = asyncio.get_event_loop()
+    await loop.run_in_executor(None, _score_round_v2_sync, round_address)
+
+
+def _score_round_v2_sync(round_address: str):
+    """Synchronous V2 scoring — runs in thread pool with concurrency control."""
+    global _active_scoring_count
     rnd = _rounds.get(round_address)
     if not rnd:
         return
+
+    # Acquire semaphore — blocks if MAX_CONCURRENT_SCORING rounds are already scoring
+    acquired = _scoring_semaphore.acquire(timeout=120)  # Wait up to 2 min for a slot
+    if not acquired:
+        log.error(f"V2 Round {round_address[:10]}...: timed out waiting for scoring slot")
+        rnd["status"] = "error"
+        rnd["error"] = "Scoring queue full — too many concurrent rounds. Will retry."
+        return
+
+    with _scoring_count_lock:
+        _active_scoring_count += 1
+        log.info(f"Scoring slot acquired ({_active_scoring_count}/{MAX_CONCURRENT_SCORING} active)")
 
     try:
         from scorer import parse_sponsor_rubric, score_round
@@ -1036,6 +1078,12 @@ async def _score_round_v2_async(round_address: str):
         log.error(f"V2 Round {round_address[:10]}...: scoring failed: {e}")
         rnd["status"] = "error"
         rnd["error"] = str(e)
+    finally:
+        # Always release the scoring slot
+        _scoring_semaphore.release()
+        with _scoring_count_lock:
+            _active_scoring_count -= 1
+            log.info(f"Scoring slot released ({_active_scoring_count}/{MAX_CONCURRENT_SCORING} active)")
 
 
 def _store_solutions_v2(round_address: str, rnd: dict, payload: dict, sponsor_pubkey: str):
@@ -1085,6 +1133,7 @@ async def health():
         "rounds_scoring": sum(1 for r in _rounds.values() if r["status"] == "scoring"),
         "rounds_completed": sum(1 for r in _rounds.values() if r["status"] == "completed"),
         "tee_problems_held": get_active_problem_count(),
+        "scoring_slots": f"{_active_scoring_count}/{MAX_CONCURRENT_SCORING}",
         "v2_enabled": True,
     }
 
