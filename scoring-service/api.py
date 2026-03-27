@@ -765,6 +765,266 @@ async def submit_onchain(req: SubmitOnchainRequest):
 #  HEALTH & INFO
 # ═══════════════════════════════════════════════════════════════
 
+# ═══════════════════════════════════════════════════════════════
+#  V2 ZERO-KNOWLEDGE ENDPOINTS
+# ═══════════════════════════════════════════════════════════════
+
+from tee_keypair import get_tee_public_key_hex
+from tee_vault import (
+    store_problem,
+    get_problem_for_agent,
+    get_problem_for_scoring,
+    delete_problem,
+    get_active_problem_count,
+)
+from ecies_encrypt import encrypt_for_wallet, decrypt_with_private_key
+
+
+@app.get("/tee/public-key")
+async def tee_public_key():
+    """Return TEE's ECIES public key.
+
+    Clients use this to encrypt data FOR the TEE.
+    Only the TEE can decrypt (private key sealed in enclave).
+    """
+    return {"public_key": get_tee_public_key_hex()}
+
+
+class StoreProblemRequest(BaseModel):
+    round_address: str
+    encrypted_problem: dict  # ECIES blob {ephemeral_pubkey, iv, ciphertext, mac}
+    encrypted_rubric: dict | None = None
+    sponsor_public_key: str
+    problem_window_hours: int = 48
+
+
+@app.post("/tee/store-problem")
+async def store_problem_endpoint(req: StoreProblemRequest):
+    """Receive an ECIES-encrypted problem from the backend.
+
+    The problem is encrypted with TEE's public key.
+    TEE decrypts and holds plaintext in secure enclave memory.
+    """
+    success = store_problem(
+        round_address=req.round_address,
+        encrypted_problem=req.encrypted_problem,
+        encrypted_rubric=req.encrypted_rubric,
+        sponsor_public_key=req.sponsor_public_key,
+        problem_window_hours=req.problem_window_hours,
+    )
+    if not success:
+        raise HTTPException(500, "Failed to store problem in TEE")
+    return {"status": "stored", "round_address": req.round_address}
+
+
+class AgentProblemRequest(BaseModel):
+    round_address: str
+    agent_public_key: str
+    agent_address: str
+
+
+@app.post("/tee/agent-problem")
+async def agent_problem_endpoint(req: AgentProblemRequest):
+    """Re-encrypt problem for a specific agent.
+
+    Agent provides their ECIES public key.
+    TEE re-encrypts the problem so only that agent can decrypt.
+    Each agent gets a different encrypted copy.
+    """
+    result = get_problem_for_agent(
+        round_address=req.round_address,
+        agent_public_key=req.agent_public_key,
+        agent_address=req.agent_address,
+    )
+    if result is None:
+        raise HTTPException(404, "Problem not found, expired, or access denied")
+    return result
+
+
+class ScoreV2Request(BaseModel):
+    """V2 scoring request — solutions encrypted with TEE's public key."""
+    round_address: str
+    solutions: list[SolutionInput]
+    rubric: dict | None = None
+
+
+@app.post("/score/round-v2")
+async def score_round_v2(req: ScoreV2Request, background_tasks: BackgroundTasks):
+    """V2 Scoring — Solutions encrypted with TEE's ECIES public key.
+
+    TEE decrypts solutions using its own private key.
+    Problem already in TEE memory (from store-problem).
+    Results encrypted for sponsor (using stored sponsor public key).
+    """
+    # Get problem from TEE vault
+    problem_data = get_problem_for_scoring(req.round_address)
+    if not problem_data:
+        raise HTTPException(400, "Problem not found in TEE vault. Was it stored?")
+
+    existing = _rounds.get(req.round_address)
+    if existing and existing["status"] == "scoring":
+        raise HTTPException(400, "Scoring already in progress")
+
+    # Get TEE private key for solution decryption
+    from tee_keypair import get_tee_private_key
+    tee_priv = get_tee_private_key()
+    priv_numbers = tee_priv.private_numbers()
+    tee_priv_hex = format(priv_numbers.private_value, '064x')
+
+    # Build solutions
+    new_solutions = {
+        s.agent_id: {"encrypted": s.encrypted_solution, "commit_hash": s.commit_hash}
+        for s in req.solutions
+    }
+
+    # Merge with previously received solutions
+    if existing and existing.get("solutions"):
+        merged = {**existing["solutions"], **new_solutions}
+    else:
+        merged = new_solutions
+
+    if not merged:
+        raise HTTPException(400, "No solutions available")
+
+    # Store round state with V2 flags
+    _rounds[req.round_address] = {
+        "status": "scoring",
+        "problem_text": problem_data["problem_text"],
+        "expected_agents": len(merged),
+        "rubric": req.rubric or None,
+        "solution_key": "",  # Not used in V2
+        "sponsor_address": "",
+        "sponsor_private_key": tee_priv_hex,  # TEE uses its own key
+        "use_ecies": True,  # V2 mode
+        "sponsor_public_key": problem_data["sponsor_public_key"],
+        "solutions": merged,
+        "results": None,
+        "scoring_started_at": time.time(),
+        "scoring_completed_at": None,
+        "error": None,
+    }
+
+    _persist_round(req.round_address, _rounds[req.round_address])
+    background_tasks.add_task(_score_round_v2_async, req.round_address)
+
+    return {
+        "status": "scoring_started",
+        "round_address": req.round_address,
+        "solutions_count": len(merged),
+    }
+
+
+async def _score_round_v2_async(round_address: str):
+    """V2 background scoring — decrypt with TEE key, encrypt results for sponsor."""
+    rnd = _rounds.get(round_address)
+    if not rnd:
+        return
+
+    try:
+        from scorer import parse_sponsor_rubric, score_round
+
+        sponsor_checks = None
+        if rnd.get("rubric"):
+            sponsor_checks = parse_sponsor_rubric(rnd["rubric"])
+
+        solutions = [
+            {"agent_id": aid, "encrypted": sol["encrypted"]}
+            for aid, sol in rnd["solutions"].items()
+        ]
+
+        # Score using TEE's private key for ECIES decryption
+        results = score_round(
+            problem_text=rnd["problem_text"],
+            encrypted_solutions=solutions,
+            sponsor_checks=sponsor_checks,
+            solution_key="",
+            sponsor_private_key=rnd.get("sponsor_private_key", ""),
+            use_ecies=True,
+        )
+
+        from scorer import to_onchain_payload
+        payload = to_onchain_payload(results)
+
+        # Re-encrypt winning solutions FOR the sponsor
+        sponsor_pubkey = rnd.get("sponsor_public_key", "")
+        if sponsor_pubkey:
+            rnd["decrypted_solutions_by_id"] = {
+                r.agent_id: r.plaintext for r in results if r.plaintext and r.final_score > 0
+            }
+
+        rnd["results"] = payload
+        rnd["status"] = "completed"
+        rnd["scoring_completed_at"] = time.time()
+
+        duration = rnd["scoring_completed_at"] - rnd["scoring_started_at"]
+        log.info(f"V2 Round {round_address[:10]}...: scoring complete in {duration:.1f}s")
+
+        # Auto-submit on-chain
+        try:
+            from onchain import submit_scores
+            result = submit_scores(
+                round_address=round_address,
+                agent_ids=payload["agent_ids"],
+                scores=payload["scores"],
+            )
+            if result["status"] == "success":
+                rnd["status"] = "submitted"
+                log.info(f"V2 Round {round_address[:10]}...: on-chain tx={result['tx_hash']}")
+                _track_winners(round_address, payload, result["tx_hash"])
+
+                # Store ECIES-encrypted winning solutions for sponsor
+                if sponsor_pubkey and rnd.get("decrypted_solutions_by_id"):
+                    _store_solutions_v2(round_address, rnd, payload, sponsor_pubkey)
+        except Exception as e:
+            log.error(f"V2 Round {round_address[:10]}...: auto-submit failed: {e}")
+
+        # Clean up: delete problem from TEE memory
+        delete_problem(round_address)
+
+        # Overwrite TEE private key reference in round state
+        rnd["sponsor_private_key"] = ""
+
+    except Exception as e:
+        log.error(f"V2 Round {round_address[:10]}...: scoring failed: {e}")
+        rnd["status"] = "error"
+        rnd["error"] = str(e)
+
+
+def _store_solutions_v2(round_address: str, rnd: dict, payload: dict, sponsor_pubkey: str):
+    """Store winning solutions encrypted FOR the sponsor (ECIES)."""
+    try:
+        from services_bridge import store_winning_solution_remote
+    except ImportError:
+        log.warning("services_bridge not available — storing solutions locally")
+        return
+
+    decrypted = rnd.get("decrypted_solutions_by_id", {})
+    agents = payload.get("agent_ids", [])
+    scores = payload.get("scores", [])
+
+    stored = 0
+    for i, agent_id in enumerate(agents):
+        if agent_id in decrypted and scores[i] > 0:
+            # ECIES encrypt solution FOR the sponsor
+            encrypted_for_sponsor = encrypt_for_wallet(
+                decrypted[agent_id],
+                sponsor_pubkey,
+            )
+            try:
+                store_winning_solution_remote(
+                    round_address=round_address,
+                    agent_id=agent_id,
+                    score=scores[i],
+                    encrypted_solution=encrypted_for_sponsor,
+                    sponsor_address="",  # Not needed — sponsor identified by pubkey
+                )
+                stored += 1
+            except Exception as e:
+                log.error(f"Failed to store solution for agent {agent_id}: {e}")
+
+    log.info(f"Stored {stored} ECIES-encrypted winning solutions (only sponsor can decrypt)")
+
+
 @app.get("/health")
 async def health():
     """Health check."""
@@ -776,6 +1036,8 @@ async def health():
         "active_rounds": len(_rounds),
         "rounds_scoring": sum(1 for r in _rounds.values() if r["status"] == "scoring"),
         "rounds_completed": sum(1 for r in _rounds.values() if r["status"] == "completed"),
+        "tee_problems_held": get_active_problem_count(),
+        "v2_enabled": True,
     }
 
 

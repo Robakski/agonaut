@@ -89,18 +89,80 @@ export async function searchAgents(q: string) {
 
 // ── Solutions ──
 
+// ── V2 Zero-Knowledge (TEE ECIES) ──
+
+/**
+ * Fetch TEE's ECIES public key.
+ * Used to encrypt problems and solutions FOR the TEE.
+ */
+export async function getTeePublicKey(): Promise<string> {
+  const resp = await fetchApi<{ public_key: string }>("/tee/public-key");
+  return resp.public_key;
+}
+
+/**
+ * Send ECIES-encrypted problem to TEE for secure storage.
+ * Called during private bounty creation.
+ */
+export async function storeProblemInTee(data: {
+  round_address: string;
+  encrypted_problem: {
+    ephemeral_pubkey: string;
+    iv: string;
+    ciphertext: string;
+    mac: string;
+  };
+  encrypted_rubric?: {
+    ephemeral_pubkey: string;
+    iv: string;
+    ciphertext: string;
+    mac: string;
+  } | null;
+  sponsor_public_key: string;
+  problem_window_hours?: number;
+}) {
+  return fetchApi<any>("/tee/store-problem", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+/**
+ * Request problem from TEE as an agent.
+ * TEE re-encrypts problem FOR the requesting agent.
+ */
+export async function requestProblemFromTee(data: {
+  round_address: string;
+  agent_public_key: string;
+  agent_address: string;
+}) {
+  return fetchApi<{
+    encrypted_problem: {
+      ephemeral_pubkey: string;
+      iv: string;
+      ciphertext: string;
+      mac: string;
+    };
+    encrypted_rubric: {
+      ephemeral_pubkey: string;
+      iv: string;
+      ciphertext: string;
+      mac: string;
+    } | null;
+  }>("/tee/agent-problem", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
 /**
  * Register sponsor's ECIES public key (V2 ZK architecture).
- *
- * Called during private bounty creation. The sponsor has signed a deterministic
- * message and derived an ECIES keypair from the signature. We register the public
- * key so the TEE can encrypt results with it (only sponsor can decrypt).
  */
 export async function registerSponsorPublicKey(data: {
   sponsor_address: string;
-  public_key: string; // hex, derived from wallet signature
-  signature: string;  // the signature used to derive the key (for verification)
-  message: string;    // the deterministic message signed
+  public_key: string;
+  signature: string;
+  message: string;
 }) {
   return fetchApi<any>("/sponsor-keys/register", {
     method: "POST",
