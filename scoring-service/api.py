@@ -274,8 +274,10 @@ class ScoreRoundRequest(BaseModel):
     problem_text: str
     solutions: list[SolutionInput]
     rubric: Optional[dict] = None  # Sponsor rubric JSON, or None for defaults
-    solution_key: str = ""         # AES key (hex), or uses env var
+    solution_key: str = ""         # V1: AES key (hex), or uses env var
     sponsor_address: str = ""      # BUG-5 fix: needed for ECIES solution storage
+    sponsor_private_key: str = ""  # V2: Sponsor's derived ECIES private key (hex) for ECIES decryption
+    use_ecies: bool = False        # V2: Use ECIES decryption instead of AES
 
 
 class ScoreSingleRequest(BaseModel):
@@ -519,11 +521,14 @@ async def _score_round_async(round_address: str):
         ]
 
         # Run scoring (this calls the LLM via Phala TEE)
+        # V2: Pass sponsor_private_key and use_ecies if available
         results = score_round(
             problem_text=rnd["problem_text"],
             encrypted_solutions=solutions,
             sponsor_checks=sponsor_checks,
             solution_key=rnd.get("solution_key", ""),
+            sponsor_private_key=rnd.get("sponsor_private_key", ""),
+            use_ecies=rnd.get("use_ecies", False),
         )
 
         # Store results + decrypted solutions for vault storage
@@ -620,6 +625,8 @@ async def score_round_endpoint(req: ScoreRoundRequest, background_tasks: Backgro
         "rubric": req.rubric or (existing.get("rubric") if existing else None),
         "solution_key": req.solution_key or (existing.get("solution_key", "") if existing else ""),
         "sponsor_address": req.sponsor_address or (existing.get("sponsor_address", "") if existing else ""),
+        "sponsor_private_key": req.sponsor_private_key or (existing.get("sponsor_private_key", "") if existing else ""),
+        "use_ecies": req.use_ecies or (existing.get("use_ecies", False) if existing else False),
         "solutions": merged_solutions,
         "results": None,
         "scoring_started_at": time.time(),

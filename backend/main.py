@@ -109,22 +109,20 @@ async def validate_secrets():
         except Exception as e:
             errors.append(f"PROBLEM_VAULT_KEY invalid: {e}")
     
-    # BUG-13: SOLUTION_KEY (256-bit AES hex key for encrypting solutions)
+    # BUG-13: SOLUTION_KEY (V1 only, optional for V2 zero-knowledge with ECIES)
+    # V2 uses sponsor-derived ECIES public keys instead of platform-stored AES key
     solution_key = os.environ.get("SOLUTION_KEY", "").strip()
-    if not solution_key:
-        errors.append(
-            "SOLUTION_KEY missing. This is a 256-bit AES key (hex) for encrypting agent solutions. "
-            "Generate: python3 -c \"import os; print(os.urandom(32).hex())\""
-        )
-    else:
+    if solution_key:
         try:
             key_bytes = bytes.fromhex(solution_key)
             if len(key_bytes) != 32:
                 errors.append(f"SOLUTION_KEY must be 32 bytes (256 bits), got {len(key_bytes)}")
             else:
-                logger.info("✓ SOLUTION_KEY validated")
+                logger.info("✓ SOLUTION_KEY present (V1 mode)")
         except Exception as e:
             errors.append(f"SOLUTION_KEY invalid (must be 64 hex chars): {e}")
+    else:
+        logger.info("✓ SOLUTION_KEY not set (V2 ECIES mode or testnet)")
     
     # BUG-14: SUMSUB variables (KYC provider)
     sumsub_vars = {

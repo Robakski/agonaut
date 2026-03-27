@@ -47,6 +47,10 @@ except ImportError:
 
 try:
     from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+    from cryptography.hazmat.primitives.asymmetric import ec
+    from cryptography.hazmat.primitives.hashes import SHA256
+    from cryptography.hazmat.primitives.kdf.hkdf import HKDF
+    from cryptography.hazmat.backends import default_backend
 except ImportError:
     raise ImportError("pip install cryptography")
 
@@ -178,7 +182,10 @@ def build_full_rubric(sponsor_checks: Optional[list[Check]] = None) -> list[Chec
 # ═══════════════════════════════════════════════════════════════
 
 def decrypt_solution(encrypted_hex: str, key_hex: str) -> str:
-    """Decrypt AES-256-GCM encrypted solution inside the TEE."""
+    """Decrypt AES-256-GCM encrypted solution inside the TEE.
+    
+    DEPRECATED: Use decrypt_ecies_solution for V2 zero-knowledge architecture.
+    """
     try:
         raw = bytes.fromhex(encrypted_hex)
         key = bytes.fromhex(key_hex)
@@ -189,6 +196,54 @@ def decrypt_solution(encrypted_hex: str, key_hex: str) -> str:
         return plaintext.decode("utf-8")
     except Exception as e:
         raise ValueError(f"Solution decryption failed: {e}")
+
+
+def decrypt_ecies_solution(encrypted_blob: dict, sponsor_private_key_hex: str) -> str:
+    """
+    Decrypt an ECIES-encrypted solution using the sponsor's private key.
+    
+    V2 Zero-Knowledge Architecture:
+    - Agent encrypted with: ECDH(ephemeral_private, sponsor_public) → shared secret → HKDF → AES
+    - TEE decrypts with: ECDH(sponsor_private, ephemeral_public) → shared secret → HKDF → AES
+    - Same process, sponsor_private_key is released to TEE only during SCORING phase, then deleted
+    
+    Args:
+        encrypted_blob: {"ephemeral_pubkey": "0x...", "iv": "0x...", "ciphertext": "0x...", "mac": "0x..."}
+        sponsor_private_key_hex: Sponsor's derived private key (hex, 32 bytes)
+    """
+    try:
+        # Parse ephemeral public key
+        ephem_pubkey_hex = encrypted_blob.get("ephemeral_pubkey", "").replace("0x", "")
+        ephem_pubkey_bytes = bytes.fromhex(ephem_pubkey_hex)
+        
+        # Parse sponsor private key and create EC private key object
+        priv_key_int = int(sponsor_private_key_hex, 16)
+        sponsor_privkey = ec.derive_private_key(priv_key_int, ec.SECP256K1(), backend=default_backend())
+        
+        # ECDH with ephemeral public key to get shared secret
+        ephem_pubkey_obj = ec.EllipticCurvePublicKey.from_encoded_point(ec.SECP256K1(), ephem_pubkey_bytes)
+        shared_key = sponsor_privkey.exchange(ec.ECDH(), ephem_pubkey_obj)
+        
+        # HKDF to derive AES key (MUST match frontend ecies.ts)
+        info = b"agonaut-ecies-v1"
+        hkdf = HKDF(algorithm=SHA256(), length=32, salt=None, info=info, backend=default_backend())
+        aes_key = hkdf.derive(shared_key)
+        
+        # Decrypt with AES-256-GCM
+        iv = bytes.fromhex(encrypted_blob.get("iv", "").replace("0x", ""))
+        ciphertext = bytes.fromhex(encrypted_blob.get("ciphertext", "").replace("0x", ""))
+        mac = bytes.fromhex(encrypted_blob.get("mac", "").replace("0x", ""))
+        
+        # Combine ciphertext + tag for AES-GCM
+        combined = ciphertext + mac
+        aesgcm = AESGCM(aes_key)
+        plaintext_bytes = aesgcm.decrypt(iv, combined, None)
+        plaintext = plaintext_bytes.decode("utf-8")
+        
+        return plaintext
+    except Exception as e:
+        log.error(f"ECIES solution decryption failed: {e}")
+        raise ValueError(f"ECIES decryption failed: {e}")
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -523,12 +578,14 @@ class ScoredSolution:
 class ScoringEngine:
     """TEE-native scoring engine with advanced rubric + deep reasoning."""
 
-    def __init__(self, solution_key: str = ""):
+    def __init__(self, solution_key: str = "", sponsor_private_key: str = "", use_ecies: bool = False):
         self.client = OpenAI(
             api_key=PHALA_API_KEY,
             base_url=PHALA_API_URL,
         )
         self.solution_key = solution_key or SOLUTION_KEY
+        self.sponsor_private_key = sponsor_private_key
+        self.use_ecies = use_ecies
 
     def score_solution(
         self,
@@ -541,7 +598,7 @@ class ScoringEngine:
 
         Args:
             agent_id: On-chain agent ID
-            encrypted_solution: Hex-encoded AES-256-GCM encrypted solution
+            encrypted_solution: Hex-encoded AES-256-GCM (V1) or ECIES blob dict (V2)
             problem_text: Bounty problem description (from IPFS)
             sponsor_checks: Custom sponsor checks (or None for defaults)
         """
@@ -551,7 +608,18 @@ class ScoringEngine:
 
         # ── Decrypt inside TEE ──
         try:
-            solution_text = decrypt_solution(encrypted_solution, self.solution_key)
+            if self.use_ecies and self.sponsor_private_key:
+                # V2 ECIES decryption
+                if isinstance(encrypted_solution, dict):
+                    solution_text = decrypt_ecies_solution(encrypted_solution, self.sponsor_private_key)
+                else:
+                    # Encrypted solution is JSON string, parse it
+                    import json
+                    encrypted_blob = json.loads(encrypted_solution)
+                    solution_text = decrypt_ecies_solution(encrypted_blob, self.sponsor_private_key)
+            else:
+                # V1 AES decryption (backward compatible)
+                solution_text = decrypt_solution(encrypted_solution, self.solution_key)
         except ValueError as e:
             log.error(f"Agent {agent_id}: {e}")
             return ScoredSolution(agent_id=agent_id, commit_hash="",
@@ -721,19 +789,23 @@ def score_round(
     encrypted_solutions: list[dict],
     sponsor_checks: Optional[list[Check]] = None,
     solution_key: str = "",
+    sponsor_private_key: str = "",
+    use_ecies: bool = False,
 ) -> list[ScoredSolution]:
     """Score all encrypted solutions for a bounty round.
 
     Args:
         problem_text: Problem description from IPFS
-        encrypted_solutions: [{"agent_id": int, "encrypted": str}, ...]
+        encrypted_solutions: [{"agent_id": int, "encrypted": str or dict (ECIES)}, ...]
         sponsor_checks: Custom checks or None for defaults
-        solution_key: AES key (or uses env var)
+        solution_key: V1: AES key (or uses env var)
+        sponsor_private_key: V2: Sponsor's derived ECIES private key (hex)
+        use_ecies: V2: If True, use ECIES decryption instead of AES
 
     Returns:
         List of ScoredSolution sorted by final_score descending
     """
-    engine = ScoringEngine(solution_key=solution_key)
+    engine = ScoringEngine(solution_key=solution_key, sponsor_private_key=sponsor_private_key, use_ecies=use_ecies)
     results = []
 
     for sol in encrypted_solutions:
