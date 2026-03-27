@@ -129,7 +129,12 @@ class SecurityMiddleware(BaseHTTPMiddleware):
                     )
 
         # ── 3. Rate limiting ──
-        client_ip = get_remote_address(request)
+        # Use CF-Connecting-IP (Cloudflare real client IP), fallback to X-Forwarded-For, then request.client
+        client_ip = (
+            request.headers.get("cf-connecting-ip")
+            or request.headers.get("x-forwarded-for", "").split(",")[0].strip()
+            or get_remote_address(request)
+        )
         limit_str = None
         for endpoint, limit in RATE_LIMITS.items():
             if path.startswith(endpoint):
