@@ -87,6 +87,10 @@ contract MockStableRegistryPD {
         return (stableOwner[stableId], stableRevenueShareBps[stableId]);
     }
 
+    function getStableShare(uint16 stableId) external view returns (address, uint16) {
+        return (stableOwner[stableId], stableRevenueShareBps[stableId]);
+    }
+
     function distributeRevenue(uint16, uint256, uint256) external payable {}
 
     receive() external payable {}

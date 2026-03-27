@@ -492,9 +492,9 @@ contract AdversarialTest is Test {
         vm.prank(scorer);
         oracle.submitScores(address(round), ids, scores);
 
-        // This should still finalize — scorer is trusted
+        // BUG-3 fix: finalize now validates participants — non-participant agent2 causes revert
+        vm.expectRevert(abi.encodeWithSignature("NotParticipant(uint256)", agent2));
         round.finalize();
-        assertEq(uint256(round.phase()), 4, "Should settle");
     }
 
     function test_unauthorizedScorerCantSubmit() public {

@@ -41,6 +41,7 @@ contract MockBountyFactory {
         uint16   acceptanceThreshold;
         bool     graduatedPayouts;
         bool     active;
+        bool     isPrivate;
         uint64   createdAt;
         address  creator;
     }
