@@ -66,6 +66,30 @@ def _get_client_ip(request: Request) -> str:
     return "unknown"
 
 
+@router.get("/tee/attestation")
+async def get_tee_attestation():
+    """Proxy: Return TEE remote attestation report.
+
+    This is the root of trust for zero-knowledge claims. Anyone can verify:
+    1. mode = "tdx" → hardware TEE (cryptographically guaranteed)
+    2. mode = "development" → VPS (trust-the-operator, NOT zero-knowledge)
+    3. For "tdx": submit tdx_quote to Phala Trust Center for full verification
+    """
+    try:
+        async with httpx.AsyncClient() as client:
+            resp = await client.get(f"{SCORING_URL}/tee/attestation", timeout=10)
+            if resp.status_code != 200:
+                raise HTTPException(503, "TEE attestation unavailable")
+            return resp.json()
+    except httpx.ConnectError:
+        raise HTTPException(503, "TEE service not running")
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to fetch TEE attestation: {e}")
+        raise HTTPException(503, f"TEE service error: {str(e)}")
+
+
 @router.get("/tee/public-key")
 async def get_tee_public_key():
     """Proxy: Return TEE's ECIES public key.

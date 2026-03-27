@@ -12,8 +12,14 @@ ECIES encryption/decryption:
 The private key NEVER leaves the TEE enclave.
 The public key is served via API for anyone to fetch.
 
-Storage: Encrypted persistent file at /opt/agonaut-scoring/data/tee_keypair.json
-         If file doesn't exist, generates new keypair on first run.
+Security model:
+- TEE mode (Phala CVM): Key sealed in enclave, bound to RTMR measurements.
+  Even if the disk is cloned, the key cannot be extracted outside the enclave.
+  The public key is included in the TDX attestation report (reportData field).
+- Dev mode (VPS): Key stored in JSON file with chmod 600. Operator CAN access.
+  This is clearly marked as development mode in the attestation endpoint.
+
+Storage: /opt/agonaut-scoring/data/tee_keypair.json (or /app/data/ in Docker)
 """
 
 import json

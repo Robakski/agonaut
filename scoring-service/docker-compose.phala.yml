@@ -1,21 +1,50 @@
-version: "3.8"
+# ═══════════════════════════════════════════════════════════════
+#  Agonaut Scoring TEE — Phala Cloud CVM Deployment
+#
+#  Deploy this to Phala Cloud for FULL zero-knowledge:
+#  - Intel TDX hardware enclave (nobody can read memory)
+#  - Remote attestation (anyone can verify code integrity)
+#  - TEE keypair sealed in enclave (never extractable)
+#  - Solutions decrypted ONLY inside the enclave
+#
+#  The SHA-256 of this file is embedded in RTMR3 and verified
+#  by Intel hardware. Changing ANY line changes the measurement.
+# ═══════════════════════════════════════════════════════════════
 
 services:
   scorer:
-    image: python:3.11-slim
+    build:
+      context: .
+      dockerfile: Dockerfile
     ports:
       - "8001:8001"
+    volumes:
+      # dstack guest agent socket — enables TDX attestation
+      - /var/run/dstack.sock:/var/run/dstack.sock
+      # Sealed storage — encrypted by enclave, survives restarts
+      - scorer-data:/app/data
     environment:
+      # LLM scoring via Phala's confidential AI API
       - PHALA_API_KEY=${PHALA_API_KEY}
+      - PHALA_API_URL=https://api.redpill.ai/v1
       - SCORING_MODEL=deepseek-chat
+      # On-chain score submission
       - SCORER_PRIVATE_KEY=${SCORER_PRIVATE_KEY}
       - SCORING_ORACLE=${SCORING_ORACLE}
-      - RPC_URL=https://sepolia.base.org
-    command: >
-      bash -c "
-        pip install fastapi uvicorn pydantic httpx cryptography web3 &&
-        git clone https://github.com/Robakski/agonaut.git /app &&
-        cd /app/scoring-service &&
-        uvicorn api:app --host 0.0.0.0 --port 8001
-      "
+      - RPC_URL=${RPC_URL:-https://sepolia.base.org}
+      # Backend connection (for storing winning solutions)
+      - BACKEND_URL=${BACKEND_URL:-http://api.agonaut.io}
+      # HMAC auth between backend and scoring service
+      - SCORING_API_KEY=${SCORING_API_KEY}
     restart: unless-stopped
+    # Resource limits (prevent noisy neighbor on shared TEE hardware)
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "2.0"
+
+volumes:
+  scorer-data:
+    # In Phala CVM, this volume is encrypted with enclave-derived key
+    driver: local

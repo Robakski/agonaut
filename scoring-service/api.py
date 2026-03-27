@@ -806,6 +806,7 @@ from tee_vault import (
     get_active_problem_count,
 )
 from ecies_encrypt import encrypt_for_wallet, decrypt_with_private_key
+from tee_attestation import get_attestation, is_tee_environment, get_code_measurement
 
 
 @app.get("/tee/public-key")
@@ -1121,12 +1122,55 @@ def _store_solutions_v2(round_address: str, rnd: dict, payload: dict, sponsor_pu
     log.info(f"Stored {stored} ECIES-encrypted winning solutions (only sponsor can decrypt)")
 
 
+@app.get("/tee/attestation")
+async def tee_attestation():
+    """Remote attestation — cryptographic proof of TEE integrity.
+
+    Returns a TDX quote (in TEE mode) or development self-report.
+
+    Anyone can verify this:
+    1. Check 'mode' field: 'tdx' = real hardware TEE, 'development' = VPS (no guarantees)
+    2. For 'tdx' mode: submit tdx_quote to Phala Trust Center for full verification
+    3. Confirm report_data_hash = SHA-256(tee_public_key) — proves key is bound to enclave
+    4. Confirm RTMR3 matches published docker-compose hash on GitHub
+
+    This is the root of trust for the entire platform's zero-knowledge claims.
+    """
+    pubkey = get_tee_public_key_hex()
+    return get_attestation(pubkey)
+
+
+@app.get("/tee/code-measurement")
+async def tee_code_measurement():
+    """Return deterministic hash of scoring service source code.
+
+    Anyone can compute this independently from the GitHub source:
+      git clone https://github.com/Robakski/agonaut.git
+      cd scoring-service
+      sha256sum scorer.py api.py ecies_encrypt.py tee_vault.py tee_keypair.py tee_attestation.py onchain.py requirements.txt
+
+    In TEE mode, this hash is embedded in RTMR3 and verified by Intel hardware.
+    """
+    return {
+        "code_hash": get_code_measurement(),
+        "is_tee": is_tee_environment(),
+        "source": "https://github.com/Robakski/agonaut/tree/main/scoring-service",
+        "verify_command": (
+            "Clone the repo and run: "
+            "python3 -c \"import hashlib; h=hashlib.sha256(); "
+            "[h.update(f.encode()+open(f,'rb').read()) for f in sorted(['scorer.py','api.py','ecies_encrypt.py','tee_vault.py','tee_keypair.py','tee_attestation.py','onchain.py','requirements.txt'])]; "
+            "print(h.hexdigest())\""
+        ),
+    }
+
+
 @app.get("/health")
 async def health():
     """Health check."""
     phala_key = os.environ.get("PHALA_API_KEY", "")
     return {
         "status": "healthy",
+        "tee_mode": "tdx" if is_tee_environment() else "development",
         "scoring_model": "configured" if os.environ.get("SCORING_MODEL") or os.environ.get("PHALA_API_KEY") else "not configured",
         "phala_api": "configured" if phala_key else "not configured",
         "active_rounds": len(_rounds),
