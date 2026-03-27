@@ -50,78 +50,8 @@ class LeaderboardEntry(BaseModel):
 
 
 # ── Routes ──
-
-@router.post("/register", response_model=dict)
-async def register_agent(req: RegisterAgentRequest):
-    """Register a new AI agent.
-
-    Requires:
-    - Sanctions screening passed on owner wallet
-    - Registration fee: 0.0015 ETH
-
-    Returns unsigned transaction data for the owner to sign in their wallet.
-    """
-    if not req.owner_address or len(req.owner_address) != 42:
-        raise HTTPException(status_code=400, detail="Invalid owner address")
-
-    try:
-        from services.chain import get_chain_service
-        from services.ipfs import get_pinata_client
-
-        chain = get_chain_service()
-
-        # Upload agent metadata to IPFS
-        metadata = {
-            "name": req.name,
-            "description": req.description,
-            "owner": req.owner_address,
-            "platform": "agonaut",
-            "version": "1",
-        }
-        pinata = get_pinata_client()
-        metadata_cid = pinata.upload_json(f"agent-{req.name}", metadata)
-        if not metadata_cid:
-            metadata_cid = "pending"  # Fallback — metadata stored locally
-
-        # Build the unsigned transaction
-        tx_data = chain.build_register_agent_tx(
-            owner_address=req.owner_address,
-            name=req.name,
-            metadata_cid=metadata_cid,
-        )
-
-        return {
-            "status": "ready_to_sign",
-            "message": f"Sign the transaction to register '{req.name}' ({tx_data['ethEntryFeeEth']} ETH)",
-            "transaction": tx_data,
-            "metadataCid": metadata_cid,
-        }
-
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.exception("Failed to build registration transaction")
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to prepare registration: {str(e)}"
-        )
-
-
-@router.get("/{agent_id}", response_model=AgentProfile)
-async def get_agent(agent_id: int):
-    """Get full profile for an agent."""
-    # TODO: Read from ArenaRegistry + EloSystem
-    raise HTTPException(status_code=404, detail="Agent not found")
-
-
-@router.get("/{agent_id}/history")
-async def get_agent_history(
-    agent_id: int,
-    limit: int = Query(20, ge=1, le=100),
-):
-    """Get round history for an agent (past bounties, scores, earnings)."""
-    # TODO: Read from on-chain events
-    return []
+# NOTE: Static routes (/leaderboard, /check-role, /search) MUST come before
+# parameterized routes (/{agent_id}) or FastAPI matches "leaderboard" as agent_id.
 
 
 @router.get("/leaderboard", response_model=list[LeaderboardEntry])
@@ -218,3 +148,78 @@ async def check_wallet_role(wallet: str = Query(..., min_length=42, max_length=4
         # Fail closed — if we can't verify, treat as potential agent
         # Backend bounty creation will do its own check anyway
         return {"wallet": wallet, "is_agent": False, "check_failed": True}
+
+
+# ── Parameterized routes (MUST come after static routes) ──
+
+@router.post("/register", response_model=dict)
+async def register_agent(req: RegisterAgentRequest):
+    """Register a new AI agent.
+
+    Requires:
+    - Sanctions screening passed on owner wallet
+    - Registration fee: 0.0015 ETH
+
+    Returns unsigned transaction data for the owner to sign in their wallet.
+    """
+    if not req.owner_address or len(req.owner_address) != 42:
+        raise HTTPException(status_code=400, detail="Invalid owner address")
+
+    try:
+        from services.chain import get_chain_service
+        from services.ipfs import get_pinata_client
+
+        chain = get_chain_service()
+
+        # Upload agent metadata to IPFS
+        metadata = {
+            "name": req.name,
+            "description": req.description,
+            "owner": req.owner_address,
+            "platform": "agonaut",
+            "version": "1",
+        }
+        pinata = get_pinata_client()
+        metadata_cid = pinata.upload_json(f"agent-{req.name}", metadata)
+        if not metadata_cid:
+            metadata_cid = "pending"  # Fallback — metadata stored locally
+
+        # Build the unsigned transaction
+        tx_data = chain.build_register_agent_tx(
+            owner_address=req.owner_address,
+            name=req.name,
+            metadata_cid=metadata_cid,
+        )
+
+        return {
+            "status": "ready_to_sign",
+            "message": f"Sign the transaction to register '{req.name}' ({tx_data['ethEntryFeeEth']} ETH)",
+            "transaction": tx_data,
+            "metadataCid": metadata_cid,
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.exception("Failed to build registration transaction")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to prepare registration: {str(e)}"
+        )
+
+
+@router.get("/{agent_id}", response_model=AgentProfile)
+async def get_agent(agent_id: int):
+    """Get full profile for an agent."""
+    # TODO: Read from ArenaRegistry + EloSystem
+    raise HTTPException(status_code=404, detail="Agent not found")
+
+
+@router.get("/{agent_id}/history")
+async def get_agent_history(
+    agent_id: int,
+    limit: int = Query(20, ge=1, le=100),
+):
+    """Get round history for an agent (past bounties, scores, earnings)."""
+    # TODO: Read from on-chain events
+    return []
