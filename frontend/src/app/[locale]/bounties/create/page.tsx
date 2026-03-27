@@ -297,69 +297,79 @@ export default function CreateBountyPage() {
         }).catch(() => {});
       }
 
-      // Step 1b: If private bounty, ECIES-encrypt problem + rubric for TEE (V2 ZK)
-      if (visibility !== "PUBLIC" && result.roundAddress) {
+      // Step 1b: Register sponsor ECIES key (ALL bounties — unified crypto pipeline)
+      // This ensures winning solutions are always encrypted for the sponsor.
+      // For private bounties, we also encrypt the problem for the TEE.
+      if (result.roundAddress) {
         try {
-          const { encryptForRecipient } = await import("@/lib/ecies");
-          const { getTeePublicKey, storeProblemInTee, registerSponsorPublicKey } = await import("@/lib/api");
           const { getEncryptionMessage, derivePublicKey } = await import("@/lib/ecies");
+          const { registerSponsorPublicKey } = await import("@/lib/api");
 
-          // 1. Fetch TEE's public key
-          const teePublicKey = await getTeePublicKey();
-
-          // 2. ECIES-encrypt problem + rubric FOR the TEE
-          const sensitivePayload = JSON.stringify({
-            description,
-            rubric: {
-              criteria: criteria.map((c) => ({
-                name: c.name,
-                checks: c.checks.map((ch) => ({
-                  description: ch.description,
-                  weight: ch.weight,
-                  required: ch.required,
-                })),
-              })),
-            },
-          });
-          const encryptedProblem = await encryptForRecipient(sensitivePayload, teePublicKey);
-
-          // 3. Get sponsor's derived public key (for result encryption later)
+          // Register sponsor's derived ECIES public key (needed for result decryption)
           const encMessage = getEncryptionMessage(address);
           const encSignature = await walletClient!.signMessage({ account: address, message: encMessage });
           const sponsorPubKey = derivePublicKey(encSignature);
 
-          // 4. Send encrypted blob to TEE via backend proxy
-          await storeProblemInTee({
-            round_address: result.roundAddress,
-            encrypted_problem: encryptedProblem,
-            encrypted_rubric: null, // Rubric is included in the problem payload
-            sponsor_public_key: sponsorPubKey,
-            problem_window_hours: 48,
+          await registerSponsorPublicKey({
+            sponsor_address: address,
+            public_key: sponsorPubKey,
+            signature: encSignature,
+            message: encMessage,
           });
 
-          // 5. Also store metadata for public listing (V1 compatible)
-          const safeSummary = visibility === "PRIVATE"
-            ? ""
-            : description.slice(0, 200).replace(/[^\s\w.,!?-]/g, "").trim() + "...";
+          // Step 1c: For private bounties, ECIES-encrypt problem + rubric for TEE
+          if (visibility !== "PUBLIC") {
+            const { encryptForRecipient } = await import("@/lib/ecies");
+            const { getTeePublicKey, storeProblemInTee } = await import("@/lib/api");
 
-          // Store V1 metadata too (for bounty listing, non-encrypted fields)
-          await fetch(`${API_URL}/private-bounties/store`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
+            const teePublicKey = await getTeePublicKey();
+
+            const sensitivePayload = JSON.stringify({
+              description,
+              rubric: {
+                criteria: criteria.map((c) => ({
+                  name: c.name,
+                  checks: c.checks.map((ch) => ({
+                    description: ch.description,
+                    weight: ch.weight,
+                    required: ch.required,
+                  })),
+                })),
+              },
+            });
+            const encryptedProblem = await encryptForRecipient(sensitivePayload, teePublicKey);
+
+            await storeProblemInTee({
               round_address: result.roundAddress,
-              visibility,
-              title,
-              summary: safeSummary,
-              tags,
-              encrypted_problem: "", // V2: problem is in TEE, not in backend
-              problem_key: "",       // V2: no platform-custodied key
-              sponsor_address: address,
-            }),
-          });
+              encrypted_problem: encryptedProblem,
+              encrypted_rubric: null, // Rubric included in problem payload
+              sponsor_public_key: sponsorPubKey,
+              problem_window_hours: 48,
+            });
+
+            // Store listing metadata (non-encrypted fields for public listing)
+            const safeSummary = visibility === "PRIVATE"
+              ? ""
+              : description.slice(0, 200).replace(/[^\s\w.,!?-]/g, "").trim() + "...";
+
+            await fetch(`${API_URL}/private-bounties/store`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                round_address: result.roundAddress,
+                visibility,
+                title,
+                summary: safeSummary,
+                tags,
+                encrypted_problem: "",
+                problem_key: "",
+                sponsor_address: address,
+              }),
+            });
+          }
         } catch (encErr) {
-          console.warn("Failed to store encrypted problem in TEE:", encErr);
-          // Non-blocking — bounty still created on-chain, just problem not in TEE yet
+          console.warn("Failed to register sponsor key or encrypt problem:", encErr);
+          // Non-blocking — bounty still created on-chain
         }
       }
 

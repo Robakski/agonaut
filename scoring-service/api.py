@@ -395,7 +395,11 @@ async def receive_solution(req: ReceiveSolutionRequest, background_tasks: Backgr
 
 # ── Solution vault helper (zero-knowledge ECIES) ──
 def _store_solutions(round_address: str, rnd: dict, payload: dict):
-    """Encrypt winning solutions with sponsor's public key and store.
+    """[DEPRECATED — V1] Encrypt winning solutions with sponsor's public key and store.
+
+    ⚠️ DEPRECATED: _store_solutions_v2 is the unified path.
+    This V1 version fetches the sponsor key from backend at scoring time.
+    V2 already has the key from the TEE vault or request params.
 
     The TEE has access to the decrypted solution in memory. We encrypt it
     with the sponsor's secp256k1 public key using ECIES before storing.
@@ -500,7 +504,10 @@ def _track_winners(round_address: str, payload: dict, tx_hash: str):
 # ═══════════════════════════════════════════════════════════════
 
 async def _score_round_async(round_address: str):
-    """Background task: score all solutions for a round."""
+    """[DEPRECATED — V1] Background task: score all solutions for a round.
+
+    ⚠️ DEPRECATED: _score_round_v2_async is the unified path.
+    """
     rnd = _rounds.get(round_address)
     if not rnd:
         return
@@ -572,7 +579,11 @@ async def _score_round_async(round_address: str):
 
 @app.post("/score/round")
 async def score_round_endpoint(req: ScoreRoundRequest, background_tasks: BackgroundTasks):
-    """Score all solutions for a round (one-shot).
+    """[DEPRECATED — V1] Score all solutions for a round (one-shot).
+
+    ⚠️ DEPRECATED: Use POST /score/round-v2 instead.
+    V2 handles both public and private bounties with unified ECIES pipeline.
+    This endpoint is kept for backward compatibility only.
 
     Alternative to init-round + receive-solution flow.
     Pass all solutions at once for immediate scoring.
@@ -842,24 +853,50 @@ async def agent_problem_endpoint(req: AgentProblemRequest):
 
 
 class ScoreV2Request(BaseModel):
-    """V2 scoring request — solutions encrypted with TEE's public key."""
+    """V2 scoring request — solutions encrypted with TEE's public key.
+
+    For private bounties: TEE vault holds the problem (encrypted by sponsor).
+    For public bounties: problem_text and sponsor_public_key passed directly.
+    Solutions are ALWAYS ECIES-encrypted for the TEE regardless of bounty type.
+    """
     round_address: str
     solutions: list[SolutionInput]
     rubric: dict | None = None
+    # Fallback fields for public bounties (when TEE vault is empty)
+    problem_text: str = ""
+    sponsor_public_key: str = ""
 
 
 @app.post("/score/round-v2")
 async def score_round_v2(req: ScoreV2Request, background_tasks: BackgroundTasks):
     """V2 Scoring — Solutions encrypted with TEE's ECIES public key.
 
-    TEE decrypts solutions using its own private key.
-    Problem already in TEE memory (from store-problem).
-    Results encrypted for sponsor (using stored sponsor public key).
+    Unified scoring for BOTH public and private bounties:
+    - Solutions are always ECIES-encrypted for the TEE
+    - TEE decrypts solutions using its own private key
+    - Results encrypted for sponsor using sponsor's ECIES public key
+
+    Problem source:
+    - Private bounties: TEE vault (sponsor encrypted problem for TEE)
+    - Public bounties: problem_text passed in request (from bounty index)
     """
-    # Get problem from TEE vault
+    # Get problem — try TEE vault first (private bounties), then request params (public)
     problem_data = get_problem_for_scoring(req.round_address)
     if not problem_data:
-        raise HTTPException(400, "Problem not found in TEE vault. Was it stored?")
+        if req.problem_text and req.sponsor_public_key:
+            # Public bounty: problem text and sponsor key passed directly
+            problem_data = {
+                "problem_text": req.problem_text,
+                "rubric_text": None,
+                "sponsor_public_key": req.sponsor_public_key,
+            }
+            log.info(f"Public bounty scoring: using provided problem_text ({len(req.problem_text)} chars)")
+        else:
+            raise HTTPException(
+                400,
+                "Problem not available. For private bounties, store via /tee/store-problem first. "
+                "For public bounties, provide problem_text and sponsor_public_key."
+            )
 
     existing = _rounds.get(req.round_address)
     if existing and existing["status"] == "scoring":
@@ -886,6 +923,9 @@ async def score_round_v2(req: ScoreV2Request, background_tasks: BackgroundTasks)
     if not merged:
         raise HTTPException(400, "No solutions available")
 
+    # Resolve sponsor public key: request override > TEE vault
+    sponsor_pubkey = req.sponsor_public_key or problem_data.get("sponsor_public_key", "")
+
     # Store round state with V2 flags
     _rounds[req.round_address] = {
         "status": "scoring",
@@ -896,7 +936,7 @@ async def score_round_v2(req: ScoreV2Request, background_tasks: BackgroundTasks)
         "sponsor_address": "",
         "sponsor_private_key": tee_priv_hex,  # TEE uses its own key
         "use_ecies": True,  # V2 mode
-        "sponsor_public_key": problem_data["sponsor_public_key"],
+        "sponsor_public_key": sponsor_pubkey,
         "solutions": merged,
         "results": None,
         "scoring_started_at": time.time(),

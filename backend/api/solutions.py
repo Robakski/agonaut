@@ -289,71 +289,77 @@ async def scoring_status(round_address: str):
 
 @router.post("/trigger-scoring/{round_address}")
 async def trigger_scoring(round_address: str):
-    """Manually trigger scoring for a round (admin/operator only).
+    """Trigger scoring for a round — ALWAYS uses V2 unified pipeline.
 
-    Normally scoring starts automatically when commit phase closes.
-    This endpoint is for retries or manual intervention.
+    Unified pipeline for BOTH public and private bounties:
+    - Solutions are always ECIES-encrypted for the TEE
+    - TEE decrypts solutions using its own private key
+    - Results re-encrypted for sponsor using their ECIES public key
+
+    For private bounties: TEE vault already holds the problem (nothing extra needed).
+    For public bounties: We pass problem_text + sponsor_public_key to V2 endpoint.
     """
     try:
         async with httpx.AsyncClient() as client:
-            # Fetch problem text
-            # SECURITY: Private bounties ONLY use the problem vault (encrypted at rest).
-            # IPFS/local storage contain PLAINTEXT — using them for private bounties
-            # would be a data breach. IPFS is public and immutable.
+            # ── Resolve problem text (public bounties only — private is in TEE vault) ──
             problem_text = ""
-            is_private = False
-
-            # Step 1: Check if this is a private bounty (problem vault has it)
-            try:
-                from services.problem_vault import get_problem_for_scoring
-                vault_result = get_problem_for_scoring(round_address)
-                if vault_result and isinstance(vault_result, dict):
-                    problem_text = vault_result.get("problem_text", "")
-                    is_private = True
-                    log.info(f"Loaded private problem for scoring: {len(problem_text)} chars")
-            except Exception as e:
-                log.error(f"Failed to load problem from vault: {e}")
-
-            # Step 2: ONLY for PUBLIC bounties — fall back to IPFS/local
-            if not problem_text and not is_private:
-                try:
-                    from services.storage import load_rubric
-                    from services import bounty_index
-                    bounty_data = bounty_index.find_by_round(round_address)
-                    if bounty_data:
-                        rubric = load_rubric(bounty_data["bounty_id"])
-                        if rubric:
-                            problem_text = rubric.get("description", "")
-                except Exception:
-                    pass
-
-            # Get sponsor address for ECIES solution storage
+            sponsor_public_key = ""
             sponsor_address = ""
+
+            # Get bounty metadata from index
             try:
-                chain_svc = get_chain_service()
-                rd = chain_svc.get_round_details(round_address)
-                sponsor_address = rd.get("sponsor", "")
+                from services import bounty_index
+                bounty_data = bounty_index.find_by_round(round_address)
+                if bounty_data:
+                    sponsor_address = bounty_data.get("sponsor", "")
             except Exception:
                 pass
+
+            # Fallback: get sponsor from chain
             if not sponsor_address:
                 try:
-                    from services import bounty_index
-                    bd = bounty_index.find_by_round(round_address)
-                    if bd:
-                        sponsor_address = bd.get("sponsor", "")
+                    chain_svc = get_chain_service()
+                    rd = chain_svc.get_round_details(round_address)
+                    sponsor_address = rd.get("sponsor", "")
                 except Exception:
                     pass
 
-            # Solutions already stored in scoring service via receive-solution endpoint
+            # Get sponsor's ECIES public key (needed for result encryption)
+            if sponsor_address:
+                try:
+                    from services.sponsor_keys import get_public_key
+                    sponsor_public_key = get_public_key(sponsor_address) or ""
+                except Exception as e:
+                    log.warning(f"Failed to get sponsor public key: {e}")
+
+            # For public bounties: load problem text from local storage
+            # (Private bounties: TEE vault has the problem, V2 endpoint will find it there)
+            if bounty_data and not bounty_data.get("is_private"):
+                try:
+                    from services.storage import load_rubric
+                    rubric = load_rubric(bounty_data["bounty_id"])
+                    if rubric:
+                        problem_text = rubric.get("description", "")
+                except Exception:
+                    pass
+
+            if not sponsor_public_key:
+                log.warning(
+                    f"No sponsor ECIES key for round {round_address[:10]}... "
+                    f"(sponsor: {sponsor_address[:10]}...). "
+                    "Winning solutions will not be encrypted for sponsor."
+                )
+
+            # ── Call unified V2 scoring endpoint ──
             import json as _json
             trigger_body = _json.dumps({
                 "round_address": round_address,
-                "problem_text": problem_text,
-                "solutions": [],
-                "sponsor_address": sponsor_address,
+                "solutions": [],  # Already stored via receive-solution
+                "problem_text": problem_text,  # Public bounty fallback
+                "sponsor_public_key": sponsor_public_key,  # For result encryption
             }).encode()
             resp = await client.post(
-                f"{SCORING_SERVICE_URL}/score/round",
+                f"{SCORING_SERVICE_URL}/score/round-v2",
                 content=trigger_body,
                 timeout=10.0,
                 headers={**_scoring_headers(trigger_body), "Content-Type": "application/json"},
