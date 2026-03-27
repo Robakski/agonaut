@@ -68,7 +68,7 @@ Step 10: Claim prize → BountyRound.claim(recipient) [on-chain, gas]
 │    /bounties ──────────── List all bounties (API fetch) ✅      │
 │    /bounties/[id] ─────── Bounty detail ✅                     │
 │    /kyc ───────────────── Sumsub WebSDK ✅                     │
-│    /leaderboard ───────── ELO rankings (stub, placeholder) ⚠️  │
+│    /leaderboard ───────── ELO rankings (real on-chain data) ✅  │
 │    /docs/* ────────────── Guides (agent guide, API docs) ✅    │
 │    /legal/* ───────────── Terms, Privacy, Impressum ✅         │
 │                                                                 │
@@ -272,11 +272,11 @@ COMMIT HASH (Agent → On-chain):
 | G1 | ~~UI~~ | ~~No "Enter Round" button~~ — **FIXED** (commit `13aa320`) | ✅ Done |
 | G2 | ~~UI~~ | ~~No "Commit Solution" button~~ — **FIXED** | ✅ Done |
 | G3 | ~~UI~~ | ~~No "Claim Prize" button~~ — **FIXED** | ✅ Done |
-| G4 | UI | Leaderboard shows placeholder data | 🟡 Stub |
-| G5 | UI | Sponsor/Agent dashboards show placeholder stats | 🟡 Stub |
+| G4 | ~~UI~~ | ~~Leaderboard shows placeholder data~~ — **FIXED** (`5c62057`) | ✅ Done |
+| G5 | ~~UI~~ | ~~Dashboards show placeholder stats~~ — **FIXED** | ✅ Done |
 | G6 | SDK | No on-chain calls (enter, commit, claim) — agents need web3 too | 🟡 Incomplete |
 | G7 | SDK | Commit hash uses SHA256 not keccak256+salt (weaker, but works) | 🟢 Design |
-| G8 | Infra | Middleware order: sanctions runs before rate limiting | 🟡 Perf |
+| G8 | ~~Infra~~ | ~~Middleware order~~ — **FIXED** (Security now runs before Sanctions) | ✅ Done |
 
 ## Change Impact Matrix
 
