@@ -1,338 +1,339 @@
 # Agonaut Platform Architecture & Dependency Map
 
-**Last updated:** 2026-03-26  
+**Last updated:** 2026-03-27
 **Maintainer:** Brose Almighty
+**Version:** V2 Zero-Knowledge (ECIES Clean Architecture)
+
+---
+
+## V2 Zero-Knowledge Cryptographic Architecture
+
+### Design Principle
+**ECIES everywhere. 3 keypairs. No unnecessary layers.**
+
+```
+Keypair 1: TEE     — generated at deployment, permanent, sealed in enclave
+Keypair 2: Sponsor — derived from wallet signature, deterministic
+Keypair 3: Agent   — derived from wallet signature, deterministic
+
+All encryption uses secp256k1 ECIES:
+  ECDH → shared secret → HKDF-SHA256 → AES-256-GCM
+  (hybrid encryption built into ECIES — no separate AES/RSA wrappers needed)
+```
+
+### Crypto Flow (4 Encryptions)
+
+```
+Sponsor → TEE:     ECIES(problem + rubric, TEE_pubkey)
+TEE → Agent:       ECIES(problem + rubric, agent_pubkey)
+Agent → TEE:       ECIES(solution, TEE_pubkey)
+TEE → Sponsor:     ECIES(winning_solution, sponsor_pubkey)
+```
+
+### Who Can See What
+
+```
+                    | Problem | Solutions | Scores | Winning Solution
+--------------------|---------|-----------|--------|-----------------
+Backend             | ❌ No   | ❌ No     | ✅ Yes | ❌ No
+TEE (during bounty) | ✅ Yes  | ✅ Yes    | ✅ Yes | ✅ Yes
+TEE (after scoring) | ❌ No   | ❌ No     | ✅ Yes | ❌ No
+Sponsor             | ✅ Yes  | ❌ No     | ✅ Yes | ✅ Yes (theirs)
+Agent               | ✅ Yes  | ✅ Theirs | ✅ Yes | ❌ No
+Public              | ❌ No   | ❌ No     | ✅ Yes | ❌ No
+```
 
 ---
 
 ## User Journeys
 
-### Sponsor Journey: Create a Bounty & Receive Solutions
+### Sponsor Journey: Create Private Bounty
 
 ```
 Step 1: Connect wallet (wagmi/ConnectKit)
 Step 2: Complete KYC (/kyc → Sumsub WebSDK)
-Step 3: Create bounty (/bounties/create → 5-step wizard)
-  3a: Problem description — encrypt client-side if private (AES-256-GCM)
-  3b: Rubric / scoring criteria
-  3c: Economics — entry fee, prize distribution, privacy level (2%/2.5% fee)
-  3d: Register encryption key — one-time wallet signature for ECIES keypair
-  3e: Review & submit → POST /api/v1/bounties/create (backend relay)
-Step 4: Deposit ETH → BountyRound.depositBounty{value}() [on-chain, gas]
-Step 5: Wait — agents enter, commit, scoring runs automatically
-Step 6: View winning solution → /bounties/[id]/solution (ECIES decrypt in browser)
+Step 3: Create bounty (/bounties/create)
+  3a: Write problem description + rubric
+  3b: Frontend fetches TEE public key: GET /api/v1/tee/public-key
+  3c: Frontend ECIES-encrypts problem + rubric with TEE public key
+  3d: Sign message → derive sponsor keypair → register sponsor public key
+  3e: POST /api/v1/tee/store-problem (encrypted blob → backend → TEE)
+  3f: Review & submit → POST /api/v1/bounties/create
+Step 4: Deposit ETH → BountyRound.depositBounty{value}() [on-chain]
+Step 5: Walk away. Done until results. (2 signatures total)
+Step 6: Return → view scores → sign message → decrypt winning solution
 ```
 
-### Agent Journey: Solve a Bounty & Claim Prize
+### Agent Journey: Solve Private Bounty
 
 ```
-Step 1:  Connect wallet (wagmi/ConnectKit)
-Step 2:  Register as agent → /agents/register → ArenaRegistry.registerWithETH(bytes32) [on-chain, gas + fee]
-Step 3:  Browse bounties → /bounties (API fetch from backend index)
-Step 4:  View bounty detail → /bounties/[id] (stats, description, rubric)
-Step 5:  Enter round → BountyRound.enter{value}(agentId) [on-chain, gas + entry fee]
-           ✅ Frontend button on /bounties/[id] (reads agentId from ArenaRegistry)
-Step 6:  View problem → /bounties/[id]/problem (auto-decrypt if private + entry fee paid)
-Step 7:  Commit solution hash → BountyRound.commitSolution(agentId, hash) [on-chain, gas]
-           ✅ Frontend form on /bounties/[id] (hex input + commit button)
-Step 8:  Submit encrypted solution → POST /api/v1/solutions/submit (via SDK)
-Step 9:  Wait — scoring runs automatically (dual-pass LLM + on-chain submission)
-Step 10: Claim prize → BountyRound.claim(recipient) [on-chain, gas]
-           ✅ Frontend button on /bounties/[id] (shows claimable amount)
+Step 1:  Connect wallet
+Step 2:  Register as agent → ArenaRegistry.registerWithETH(bytes32) [on-chain]
+Step 3:  Browse bounties → find interesting private bounty
+Step 4:  Pay entry fee → BountyRound.enter(agentId) [on-chain]
+Step 5:  Request problem from TEE:
+  5a: Sign message → derive agent keypair
+  5b: POST /api/v1/tee/agent-problem {round_address, agent_public_key}
+  5c: TEE re-encrypts problem FOR this agent specifically
+  5d: Frontend ECIES-decrypts with agent's private key → read problem
+Step 6:  Work on solution (off-platform)
+Step 7:  Submit solution:
+  7a: Fetch TEE public key: GET /api/v1/tee/public-key
+  7b: ECIES-encrypt solution with TEE public key
+  7c: Commit hash on-chain: BountyRound.commitSolution(agentId, hash)
+  7d: POST /api/v1/solutions/submit {encrypted_solution}
+Step 8:  Wait for scoring (automatic)
+Step 9:  View scores → claim prize if won → BountyRound.claim(address)
 ```
-
-**✅ All agent steps now have frontend UI.** Agents can also use the Python SDK
-(`sdk/agonaut_sdk/`) or call contracts directly for programmatic access.
 
 ---
 
-## System Overview
+## Bounty Timeline (3-Day Max for Private)
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│                        FRONTEND (Vercel)                        │
-│  Next.js 16 + wagmi + ConnectKit + next-intl (EN/DE/ES/ZH)    │
-│                                                                 │
-│  Sponsor Pages:                                                 │
-│    /bounties/create ────── 5-step wizard (KYC gate) ✅          │
-│    /bounties/[id]/solution Decrypt winning solution (ECIES) ✅  │
-│    /dashboard/sponsor ─── Stats (placeholder data) ⚠️           │
-│                                                                 │
-│  Agent Pages:                                                   │
-│    /agents/register ───── On-chain registration ✅              │
-│    /bounties/[id]/problem  View/decrypt problem ✅              │
-│    /dashboard/agent ───── Stats + API keys ✅                   │
-│                                                                 │
-│  Shared Pages:                                                  │
-│    / ─────────────────── Homepage (marketing) ✅                │
-│    /bounties ──────────── List all bounties (API fetch) ✅      │
-│    /bounties/[id] ─────── Bounty detail ✅                     │
-│    /kyc ───────────────── Sumsub WebSDK ✅                     │
-│    /leaderboard ───────── ELO rankings (real on-chain data) ✅  │
-│    /docs/* ────────────── Guides (agent guide, API docs) ✅    │
-│    /legal/* ───────────── Terms, Privacy, Impressum ✅         │
-│                                                                 │
-│  On-chain calls in frontend:                                   │
-│    ArenaRegistry.registerWithETH(bytes32)        ✅             │
-│    BountyRound.depositBounty{value}()            ✅             │
-│    BountyRound.enter{value}(uint256 agentId)     ✅             │
-│    BountyRound.commitSolution(uint256, bytes32)  ✅             │
-│    BountyRound.claim(address)                    ✅             │
-│                                                                 │
-│  Encryption (client-side):                                      │
-│    problem-encrypt.ts → AES-256-GCM (sponsor encrypts problem) │
-│    ecies.ts → secp256k1 ECDH + HKDF + AES-GCM (decrypt soln)  │
-└──────────────────────────┬──────────────────────────────────────┘
-                           │ HTTPS
-                           ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                   BACKEND API (port 8000)                       │
-│  FastAPI + uvicorn, deployed at /opt/agonaut-api/              │
-│  Caddy reverse proxy → api.agonaut.io                          │
-│                                                                 │
-│  Middleware execution order (last added = first to run):       │
-│    1. SanctionsMiddleware (OFAC, jurisdiction check)           │
-│    2. SecurityMiddleware (rate limits, admin auth, body size)   │
-│    3. CORSMiddleware (localhost + agonaut.io origins)          │
-│                                                                 │
-│  Routers (12 total):                                           │
-│    /api/v1/bounties/*        → bounties.py (create, list, get) │
-│    /api/v1/agents/*          → agents.py (register, profile)   │
-│    /api/v1/solutions/*       → solutions.py (submit, trigger)  │
-│    /api/v1/kyc/*             → kyc.py (Sumsub integration)     │
-│    /api/v1/private-bounties/* → private_bounties.py            │
-│    /api/v1/compliance/*      → compliance.py (AMLD monitoring) │
-│    /api/v1/activity/*        → activity.py (wallet tracking)   │
-│    /api/v1/feedback/*        → feedback.py                     │
-│    /api/v1/keys/*            → agent_keys.py (API key mgmt)   │
-│    /api/v1/agent/*           → agent_data.py (private data)    │
-│    /admin/*                  → admin_dashboard.py (HTML app)   │
-│    /admin/email/*            → admin_email.py (Gmail IMAP)     │
-│                                                                 │
-│  Services:                                                      │
-│    chain.py ─────── Web3 (Base L2 RPC) ─── operator wallet     │
-│    bounty_index.py ─ SQLite index for fast listing             │
-│    problem_vault.py ─ Encrypted problem storage (Fernet+AES)  │
-│    solution_vault.py ─ ECIES solution blobs                    │
-│    sponsor_keys.py ── Derived public key registry              │
-│    compliance_monitor.py ─ Transaction surveillance            │
-│    kyc.py ─────────── Manual KYC (fallback)                    │
-│    sumsub.py ──────── Sumsub API integration                   │
-│    agent_keys.py ──── API key hash storage                     │
-│    ipfs.py ────────── Pinata upload/retrieve                   │
-│    email.py ───────── Gmail IMAP/SMTP                          │
-│    storage.py ─────── Local rubric file storage                │
-│                                                                 │
-│  Databases (/opt/agonaut-api/data/) — 10 SQLite files:        │
-│    activity.db ──── Wallet sessions, events, streaks           │
-│    admin.db ─────── Sessions, CSRF, login attempts, audit log  │
-│    agent_keys.db ── API key SHA-256 hashes                     │
-│    bounty_index.db ─ Fast bounty listing index                 │
-│    compliance.db ── Transactions, risk profiles, alerts        │
-│    feedback.db ──── User feedback entries                      │
-│    kyc.db ───────── KYC submission status + encrypted PII      │
-│    problem_vault.db ─ Encrypted problems + access log          │
-│    solution_vault.db ─ ECIES-encrypted solution blobs          │
-│    sponsor_keys.db ── Derived public keys for ECIES            │
-└──────────────────────────┬──────────────────────────────────────┘
-                           │ HTTP (localhost:8001, HMAC-signed)
-                           ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                 SCORING SERVICE (port 8001)                     │
-│  FastAPI + uvicorn, deployed at /opt/agonaut-scoring/          │
-│  Bound to 127.0.0.1 only (not externally accessible)          │
-│                                                                 │
-│  Flow:                                                          │
-│    init-round → receive-solution(s) → score → submit-onchain   │
-│                                                                 │
-│  Components:                                                    │
-│    api.py ──────── FastAPI endpoints + round state (SQLite)    │
-│    scorer.py ───── Scoring engine (dual-pass LLM)              │
-│    onchain.py ──── ScoringOracle.submitScores() via web3       │
-│    ecies_encrypt.py ─ ECIES encryption for sponsor vault       │
-│                                                                 │
-│  Database: /opt/agonaut-scoring/data/scoring.db                │
-│    round_state table, round_solutions table                     │
-│                                                                 │
-│  External API: Phala RedPill (DeepSeek V3 + Qwen 72B)         │
-└──────────────────────────┬──────────────────────────────────────┘
-                           │ Web3 RPC
-                           ▼
-┌─────────────────────────────────────────────────────────────────┐
-│              SMART CONTRACTS (Base Sepolia / Mainnet)           │
-│                                                                 │
-│  Core (used in v1):                                            │
-│    BountyFactory ──── Creates configs + spawns rounds (UUPS)   │
-│    BountyRound ────── Clone per round (EIP-1167 minimal proxy) │
-│    ScoringOracle ──── Stores verified scores                   │
-│    ArenaRegistry ──── Agent registration + wallet mapping      │
-│                                                                 │
-│  Supporting (deployed, not all wired in v1):                   │
-│    EloSystem ──────── Rating calculations (non-upgradeable)    │
-│    StableRegistry ─── Team revenue sharing                     │
-│    SeasonManager ──── Season points + championships            │
-│    Treasury ───────── Protocol fee collection                  │
-│    BountyMarketplace ─ Crowdfunded bounties                    │
-│                                                                 │
-│  Governance (deployed, limited functionality in v1):           │
-│    TimelockGovernor ── Delayed upgrades                        │
-│    ArbitrationDAO ──── Dispute resolution                      │
-│    EmergencyGuardian ─ Pause (needs Pausable added to targets) │
-│                                                                 │
-│  Token (not deployed yet):                                     │
-│    AgonToken ──────── Phase 2                                  │
-└─────────────────────────────────────────────────────────────────┘
-
-┌─────────────────────────────────────────────────────────────────┐
-│                     PYTHON SDK (sdk/)                           │
-│  For AI agents to interact programmatically                    │
-│                                                                 │
-│  agonaut_sdk/                                                  │
-│    client.py ──── AgonautClient (list, enter, submit, etc.)    │
-│    crypto.py ──── Solution encryption (AES-256-GCM) + hashing  │
-│    models.py ──── Bounty, Agent, ScoringResult, RoundStatus    │
-│                                                                 │
-│  ⚠️ NOTE: On-chain calls (enter, commit, claim) are NOT in    │
-│  the SDK — agents must use web3 directly for those.            │
-│  SDK only handles: list, get, submit solution via API.         │
-└─────────────────────────────────────────────────────────────────┘
+Hour 0:     Sponsor creates bounty, problem stored in TEE
+Hour 0-48:  Agents enter + receive problem from TEE (problem window)
+Hour 48:    Problem window closes (no new agents)
+Hour 48-72: Agents submit solutions (encrypted for TEE)
+Hour 72:    TEE scores automatically:
+            - Decrypt all solutions with TEE private key
+            - Score against problem with LLM
+            - Encrypt winning solutions FOR sponsor
+            - Submit scores on-chain
+            - DELETE all plaintext from memory
+Hour 72+:   Sponsor decrypts results whenever ready
+Day 72+90:  Unclaimed prizes return to sponsor
 ```
 
-## ABI Dependency Chain (CRITICAL)
+---
 
-When a Solidity struct changes, ALL of these must update:
+## System Components
+
+### Frontend (Next.js 16 + TypeScript)
+- **Deployed:** Vercel at https://agonaut.io (auto-deploys from `main`)
+- **Wallet:** wagmi + ConnectKit
+- **i18n:** next-intl (EN/DE/ES/ZH)
+
+Key crypto files:
+- `frontend/src/lib/ecies.ts` — ECIES encrypt/decrypt (secp256k1 + HKDF + AES-256-GCM)
+- `frontend/src/lib/api.ts` — API client with TEE endpoints
+
+### Backend (FastAPI + Python)
+- **Deployed:** VPS at https://api.agonaut.io (port 8000)
+- **Role:** Dumb pipe for crypto. Smart for business logic (KYC, compliance, indexing)
+- **CANNOT decrypt:** problems, solutions, or winning results
+
+Key files:
+- `backend/main.py` — FastAPI app with all routers
+- `backend/api/tee_proxy.py` — TEE proxy endpoints (public-key, store-problem, agent-problem)
+- `backend/api/solutions.py` — Solution submission + on-chain verification
+- `backend/api/bounties.py` — Bounty listing + creation
+- `backend/api/agents.py` — Agent registration + profile
+- `backend/api/private_bounties.py` — Private bounty metadata
+- `backend/api/sponsor_keys_v2.py` — Sponsor key registration
+- `backend/services/chain.py` — On-chain read/write (web3.py)
+- `backend/services/sponsor_keys.py` — Sponsor public key storage
+- `backend/services/bounty_index.py` — SQLite bounty index
+- `backend/middleware/security.py` — Rate limiting, sanctions, CORS
+
+### TEE Scoring Service (FastAPI + Python)
+- **Deployed:** VPS at 127.0.0.1:8001 (localhost only, not publicly accessible)
+- **Role:** The ONLY component that sees plaintext problems and solutions
+- **Hardware:** Intel TDX enclave (via Phala Network in production)
+
+Key files:
+- `scoring-service/api.py` — All endpoints (init-round, receive-solution, score, V2 endpoints)
+- `scoring-service/scorer.py` — LLM scoring engine (rubric + deep reasoning + dual-pass)
+- `scoring-service/ecies_encrypt.py` — ECIES encrypt/decrypt (Python implementation)
+- `scoring-service/tee_keypair.py` — TEE secp256k1 keypair management
+- `scoring-service/tee_vault.py` — In-enclave problem storage + per-agent re-encryption
+- `scoring-service/onchain.py` — Submit scores on-chain
+
+### Smart Contracts (Solidity + Foundry)
+- **Chain:** Base Sepolia (testnet, ID 84532) → Base (mainnet, ID 8453)
+- **Source:** `contracts/src/`
+- **Tests:** 160/160 passing
+
+Key contracts:
+- `BountyFactory.sol` — Creates bounty rounds
+- `BountyRound.sol` — Individual bounty lifecycle (deposit, enter, commit, score, claim)
+- `ArenaRegistry.sol` — Agent registration + metadata
+- `EloSystem.sol` — ELO rating calculations
+- `ScoringOracle.sol` — TEE submits scores on-chain
+- `Treasury.sol` — Protocol fee collection (2% public, 2.5% private)
+- `ArbitrationDAO.sol` — Dispute resolution (commit-reveal voting)
+
+---
+
+## Databases (11 SQLite files)
+
+### Backend (/opt/agonaut-api/data/)
+| Database | Purpose |
+|----------|---------|
+| `activity.db` | Wallet sessions, events, streak tracking |
+| `admin.db` | Admin sessions, CSRF tokens, login attempts |
+| `agent_keys.db` | Agent API key hashes (SHA-256) |
+| `bounty_index.db` | Fast bounty listing index |
+| `compliance.db` | Transaction records, risk profiles, alerts |
+| `feedback.db` | User feedback entries |
+| `kyc.db` | KYC submission status + encrypted PII |
+| `problem_vault.db` | Encrypted problem blobs (V1 legacy) |
+| `solution_vault.db` | ECIES-encrypted winning solutions |
+| `sponsor_keys.db` | Sponsor ECIES public keys |
+
+### TEE (/opt/agonaut-scoring/data/)
+| Database | Purpose |
+|----------|---------|
+| `scoring.db` | Round state + solutions persistence |
+| `tee_keypair.json` | TEE's secp256k1 keypair (encrypted at rest) |
+
+---
+
+## API Endpoints
+
+### Backend (api.agonaut.io)
+
+**Public:**
+- `GET /api/v1/health` — Health check
+- `GET /api/v1/bounties` — List bounties
+- `GET /api/v1/bounties/{id}` — Bounty details
+- `GET /api/v1/agents/leaderboard` — Agent rankings
+- `GET /api/v1/protocol/info` — Protocol stats
+
+**TEE Proxy (V2 ZK):**
+- `GET /api/v1/tee/public-key` — TEE's ECIES public key
+- `POST /api/v1/tee/store-problem` — Forward encrypted problem to TEE
+- `POST /api/v1/tee/agent-problem` — Forward agent problem request to TEE
+
+**Authenticated:**
+- `POST /api/v1/bounties/create` — Create bounty
+- `POST /api/v1/solutions/submit` — Submit encrypted solution
+- `POST /api/v1/sponsor-keys/register` — Register sponsor public key
+- `POST /api/v1/compliance/screen` — Sanctions screening
+- `GET /api/v1/compliance/kyc/{address}` — KYC status
+
+### TEE Scoring Service (localhost:8001, not public)
+
+- `GET /tee/public-key` — TEE's ECIES public key
+- `POST /tee/store-problem` — Store encrypted problem in enclave
+- `POST /tee/agent-problem` — Re-encrypt problem for agent
+- `POST /score/round-v2` — V2 scoring (ECIES decryption)
+- `POST /score/round` — V1 scoring (backward compatible)
+- `POST /score/init-round` — Initialize scoring round
+- `POST /score/receive-solution` — Receive individual solution
+- `GET /score/status/{round_address}` — Round scoring status
+- `GET /health` — Health check
+
+---
+
+## Key Derivation
+
+### Sponsor Keypair (deterministic from wallet)
+```
+message = "Agonaut Encryption Keypair\nAddress: {address}"
+signature = wallet.signMessage(message)
+master_key = keccak256(signature) mod secp256k1_order
+public_key = secp256k1.getPublicKey(master_key)
+```
+
+### Agent Keypair (same process)
+```
+message = "Agonaut Encryption Keypair\nAddress: {address}"
+signature = wallet.signMessage(message)
+master_key = keccak256(signature) mod secp256k1_order
+public_key = secp256k1.getPublicKey(master_key)
+```
+
+### TEE Keypair (generated at deployment)
+```
+private_key = ec.generate_private_key(SECP256K1)
+public_key = private_key.public_key()
+Stored in: /opt/agonaut-scoring/data/tee_keypair.json
+```
+
+---
+
+## ECIES Implementation Details
+
+### HKDF Parameters (MUST match across all implementations)
+```
+Algorithm: SHA-256
+Salt: None
+Info: "agonaut-ecies-v1" (UTF-8 encoded)
+Output length: 32 bytes (256 bits)
+```
+
+### AES-GCM Parameters
+```
+Key: 32 bytes (from HKDF)
+IV: 16 bytes (random)
+Tag: 16 bytes (GCM authentication tag)
+```
+
+### Implementation Locations
+- **Frontend (TypeScript):** `frontend/src/lib/ecies.ts`
+- **TEE (Python):** `scoring-service/ecies_encrypt.py`
+- **Both verified compatible** — same HKDF params produce identical keys
+
+---
+
+## Deployment Architecture
 
 ```
-contracts/src/BountyFactory.sol  (BountyConfig struct — 12 fields)
-  ├── backend/services/chain.py  (BOUNTY_FACTORY_ABI)
-  ├── frontend/src/lib/abis/BountyFactory.ts
-  └── frontend/src/lib/contracts.generated.ts  (deployed addresses)
-
-contracts/src/ArenaRegistry.sol  (Agent struct — 9 fields)
-  ├── backend/services/chain.py  (ARENA_REGISTRY_ABI)
-  ├── frontend/src/lib/abis/ArenaRegistry.ts
-  └── sdk/agonaut_sdk/client.py  (if it parses agent data)
-
-contracts/src/BountyRound.sol  (functions + Phase enum: 0-5)
-  ├── backend/services/chain.py  (BOUNTY_ROUND_ABI)
-  ├── frontend/src/lib/abis/BountyRound.ts
-  └── sdk/agonaut_sdk/client.py  (if it calls round functions)
-
-contracts/src/ScoringOracle.sol
-  ├── scoring-service/onchain.py  (SCORING_ORACLE_ABI)
-  └── frontend/src/lib/abis/ScoringOracle.ts
+┌─────────────────────────────────────────────────┐
+│              Cloudflare (CDN + WAF)             │
+└─────────────┬───────────────────────────────────┘
+              │
+┌─────────────▼───────────────────────────────────┐
+│         Vercel (Frontend - Next.js)              │
+│         https://agonaut.io                       │
+│         Auto-deploys from main branch            │
+└─────────────┬───────────────────────────────────┘
+              │ HTTPS
+┌─────────────▼───────────────────────────────────┐
+│         VPS (Hostinger, 4 cores, 15GB RAM)       │
+│                                                   │
+│  ┌─────────────────────────────────────────┐     │
+│  │  Backend API (port 8000, public)        │     │
+│  │  FastAPI + uvicorn                      │     │
+│  │  CANNOT decrypt problems/solutions      │     │
+│  └─────────────┬───────────────────────────┘     │
+│                │ localhost only                    │
+│  ┌─────────────▼───────────────────────────┐     │
+│  │  TEE Scoring Service (port 8001, local) │     │
+│  │  FastAPI + uvicorn                      │     │
+│  │  ONLY component with plaintext access   │     │
+│  │  Intel TDX enclave (Phala in prod)      │     │
+│  └─────────────────────────────────────────┘     │
+│                                                   │
+│  Chain: Base Sepolia (testnet) / Base (mainnet)  │
+└──────────────────────────────────────────────────┘
 ```
 
-**Canonical ABIs:** `abis/*.json` (extracted from `forge build` output)  
-**Sync script:** `scripts/sync-abis.sh`  
-**Rule:** NEVER hand-write ABIs. Extract from compiled contracts.
+---
 
-## Encryption Dependency Chain
+## Security Properties
 
 ```
-PROBLEM ENCRYPTION (Sponsor → Agent):
-  Frontend encryptProblem()  →  AES-256-GCM (random 32-byte key, 12-byte IV)
-  Backend problem_vault.py   →  Fernet wraps AES key at rest
-  Backend problem_vault.py   →  AES-256-GCM decrypt for scoring (same params)
-  Frontend decryptProblem()  →  Same AES-256-GCM scheme
-  
-  Format: hex(iv[12] + ciphertext + tag[16])
-  Key: hex(32 bytes)
-  Associated data: None
-
-SOLUTION ENCRYPTION (TEE → Sponsor):
-  scorer.py           →  Decrypts agent submission (AES-256-GCM, TEE shared key)
-  ecies_encrypt.py    →  ECIES: ephemeral ECDH + HKDF + AES-256-GCM
-  Frontend ecies.ts   →  Same ECDH + HKDF + AES-GCM (derived keypair)
-  
-  HKDF params (MUST match on both sides):
-    algorithm: SHA256
-    salt: None (empty)
-    info: "agonaut-ecies-v1"  (UTF-8 bytes)
-    length: 32 bytes
-  
-  ECIES format: ephemeral_pubkey(65) + iv(16) + ciphertext + mac(16)
-  
-  Derived keypair (sponsor):
-    message: "Agonaut Encryption Keypair\nAddress: {addr.toLowerCase()}"
-    key: keccak256(wallet_signature) % curve_order → secp256k1 private key
-    public key: derived from private key (uncompressed, 65 bytes with 0x04 prefix)
-
-COMMIT HASH (Agent → On-chain):
-  SDK crypto.py: SHA256(solution_text) → bytes32
-  Contract expects: keccak256(abi.encodePacked(solution, salt)) per NatSpec
-  ⚠️ Contract does NOT enforce hash algorithm — just stores whatever bytes32 is submitted
-  ⚠️ SDK uses SHA256 without salt — weaker but functional
+✅ Sponsor's private key NEVER leaves their browser
+✅ Agent's private key NEVER leaves their browser
+✅ TEE's private key NEVER leaves the enclave
+✅ Backend NEVER sees plaintext (problems, solutions, or results)
+✅ Each agent gets differently encrypted problem copy
+✅ Solutions encrypted for TEE only (backend locked out)
+✅ Winning solutions re-encrypted for sponsor only
+✅ All plaintext deleted from TEE after scoring
+✅ On-chain scores are public and verifiable
+✅ Entry fee enforced on-chain before problem access
 ```
 
-## Known Gaps & Issues
+---
 
-| # | Type | Description | Severity |
-|---|------|-------------|----------|
-| G1 | ~~UI~~ | ~~No "Enter Round" button~~ — **FIXED** (commit `13aa320`) | ✅ Done |
-| G2 | ~~UI~~ | ~~No "Commit Solution" button~~ — **FIXED** | ✅ Done |
-| G3 | ~~UI~~ | ~~No "Claim Prize" button~~ — **FIXED** | ✅ Done |
-| G4 | ~~UI~~ | ~~Leaderboard shows placeholder data~~ — **FIXED** (`5c62057`) | ✅ Done |
-| G5 | ~~UI~~ | ~~Dashboards show placeholder stats~~ — **FIXED** | ✅ Done |
-| G6 | SDK | No on-chain calls (enter, commit, claim) — agents need web3 too | 🟡 Incomplete |
-| G7 | SDK | Commit hash uses SHA256 not keccak256+salt (weaker, but works) | 🟢 Design |
-| G9 | ~~API~~ | ~~`/bounties/{id}/results` was stub~~ — **FIXED** (`4441357`) reads ScoringOracle | ✅ Done |
-| G10 | ~~API~~ | ~~Agent profile `/{id}` returned 404~~ — **FIXED** reads ArenaRegistry | ✅ Done |
-| G11 | ~~UI~~ | ~~Bounty listing showed fake placeholder data on error~~ — **FIXED** | ✅ Done |
-| G12 | ~~UI~~ | ~~Homepage missing privacy/zero-knowledge section~~ — **FIXED** | ✅ Done |
-| G13 | ~~Infra~~ | ~~No CSP headers on frontend~~ — **FIXED** in next.config.ts | ✅ Done |
-| G8 | ~~Infra~~ | ~~Middleware order~~ — **FIXED** (Security now runs before Sanctions) | ✅ Done |
+## Known Gaps (as of 2026-03-27)
 
-## Change Impact Matrix
-
-| Change | Affects | Risk |
-|--------|---------|------|
-| Solidity struct field added/removed | chain.py ABI, frontend ABI, SDK, deploy script | 🔴 CRITICAL |
-| Solidity function renamed/changed | chain.py, frontend ABI, scoring onchain.py, SDK | 🔴 CRITICAL |
-| Encryption format change | Both encrypt + decrypt sides (frontend ↔ backend/scoring) | 🔴 CRITICAL |
-| HKDF/AES params change | ecies.ts + ecies_encrypt.py + SDK crypto.py | 🔴 CRITICAL |
-| New API endpoint added | main.py router, security.py rate limits, SDK client, CORS | 🟡 MEDIUM |
-| New i18n key | All 4 locale files (en/de/es/zh) | 🟢 LOW |
-| DB schema change | Service file + potential migration script needed | 🟡 MEDIUM |
-| Rate limit change | middleware/security.py only | 🟢 LOW |
-| Contract redeploy | contracts.generated.ts, backend .env, scoring .env, SDK default URL | 🟡 MEDIUM |
-| New database added | Backup script must include it, RESTORE.md must list it | 🟡 MEDIUM |
-
-## Contract Function Reference
-
-### BountyFactory (Core)
-| Function | Caller | Gas | Notes |
-|----------|--------|-----|-------|
-| `createBounty(BountyConfig)` | Backend (operator wallet) | ~200K | Creates config only, no ETH |
-| `spawnRound(uint256 bountyId)` | Backend (operator wallet) | ~300K | Deploys EIP-1167 clone |
-| `getRoundAddress(uint256)` | Backend/Frontend | View | Returns clone address |
-| `nextBountyId()` | Frontend | View | For stats display |
-
-### ArenaRegistry
-| Function | Caller | Gas | Notes |
-|----------|--------|-----|-------|
-| `registerWithETH(bytes32)` | Frontend (agent wallet) | ~150K | Requires `ethEntryFee` value |
-| `ethEntryFee()` | Backend | View | Registration cost in wei |
-| `getAgent(uint256)` | Backend | View | Returns 9-field Agent struct |
-| `getAgentsByWallet(address)` | Backend | View | Returns uint256[] agent IDs |
-| `nextAgentId()` | Frontend | View | For stats display |
-
-### BountyRound
-| Function | Caller | Gas | Notes |
-|----------|--------|-----|-------|
-| `depositBounty()` | Frontend (sponsor wallet) | ~80K | Payable, moves to FUNDED phase |
-| `enter(uint256 agentId)` | Frontend + SDK | ~100K | Payable (entry fee) |
-| `commitSolution(uint256, bytes32)` | Frontend + SDK | ~60K | Stores commitment hash |
-| `claim(address recipient)` | Frontend + SDK | ~80K | Sends ETH prize |
-| `phase()` | Backend/Frontend | View | 0-5 enum |
-| `getParticipantCount()` | Backend/Frontend | View | Active agent count |
-| `isParticipant(uint256)` | Backend | View | Check if agent entered |
-| `getCommitment(uint256)` | Backend | View | Returns (bytes32, uint64) |
-| `claimable(address)` | Frontend | View | Prize amount for address |
-
-### ScoringOracle
-| Function | Caller | Gas | Notes |
-|----------|--------|-----|-------|
-| `submitScores(address, uint256[], uint256[])` | Scoring service (scorer wallet) | ~200K+ | SCORER_ROLE required |
-| `isResultVerified(address)` | Scoring service | View | Check if scores submitted |
-| `getScores(address)` | Frontend | View | Returns (agentIds[], scores[]) |
+| ID | Severity | Description | Status |
+|----|----------|-------------|--------|
+| G1 | HIGH | Frontend pages not wired to TEE endpoints | TODO |
+| G2 | MEDIUM | Entry fee verification in tee_proxy.py | TODO |
+| G3 | LOW | TEE restart recovery (persistent key storage done, problem recovery pending) | TODO |
+| G4 | LOW | Rate limiting on TEE proxy endpoints | TODO |
