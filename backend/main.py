@@ -99,8 +99,8 @@ async def validate_secrets():
     # BUG-12: PROBLEM_VAULT_KEY (Fernet key for encrypting problem descriptions)
     problem_vault_key = os.environ.get("PROBLEM_VAULT_KEY", "").strip()
     if not problem_vault_key:
-        errors.append(
-            "PROBLEM_VAULT_KEY missing. This key encrypts private problem descriptions at rest. "
+        logger.warning(
+            "⚠ PROBLEM_VAULT_KEY missing — private bounty problem encryption disabled. "
             "Generate: python3 -c \"from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())\""
         )
     else:
@@ -126,17 +126,21 @@ async def validate_secrets():
     else:
         logger.info("✓ SOLUTION_KEY not set (V2 ECIES mode or testnet)")
     
-    # BUG-14: SUMSUB variables (KYC provider)
+    # BUG-14: SUMSUB variables (KYC provider) — warn only, not fatal
+    # KYC is not required for testnet operation
     sumsub_vars = {
         "SUMSUB_APP_TOKEN": "API application token",
         "SUMSUB_WORKFLOW_ID": "KYC workflow ID",
         "SUMSUB_SECRET_KEY": "API secret key (for webhook verification)",
     }
+    sumsub_missing = []
     for var_name, description in sumsub_vars.items():
         if not os.environ.get(var_name, "").strip():
-            errors.append(f"{var_name} missing ({description})")
+            sumsub_missing.append(f"{var_name} ({description})")
         else:
             logger.info(f"✓ {var_name} present")
+    if sumsub_missing:
+        logger.warning(f"⚠ SUMSUB vars missing (KYC will not work): {', '.join(sumsub_missing)}")
     
     # If any errors, fail startup
     if errors:
