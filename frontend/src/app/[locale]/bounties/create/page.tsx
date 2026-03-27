@@ -300,7 +300,7 @@ export default function CreateBountyPage() {
       // Step 1b: If private bounty, ECIES-encrypt problem + rubric for TEE (V2 ZK)
       if (visibility !== "PUBLIC" && result.roundAddress) {
         try {
-          const { encryptSolution: eciesEncrypt } = await import("@/lib/ecies");
+          const { encryptForRecipient } = await import("@/lib/ecies");
           const { getTeePublicKey, storeProblemInTee, registerSponsorPublicKey } = await import("@/lib/api");
           const { getEncryptionMessage, derivePublicKey } = await import("@/lib/ecies");
 
@@ -321,7 +321,7 @@ export default function CreateBountyPage() {
               })),
             },
           });
-          const encryptedProblem = await eciesEncrypt(sensitivePayload, teePublicKey);
+          const encryptedProblem = await encryptForRecipient(sensitivePayload, teePublicKey);
 
           // 3. Get sponsor's derived public key (for result encryption later)
           const encMessage = getEncryptionMessage(address);

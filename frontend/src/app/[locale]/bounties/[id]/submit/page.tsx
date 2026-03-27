@@ -114,12 +114,12 @@ export default function SubmitSolutionPage() {
       // Step 2: Fetch TEE public key
       setState({ kind: "encrypting" });
       const { getTeePublicKey, submitSolution } = await import("@/lib/api");
-      const { encryptSolution } = await import("@/lib/ecies");
+      const { encryptForRecipient } = await import("@/lib/ecies");
 
       const teePublicKey = await getTeePublicKey();
 
       // Step 3: ECIES-encrypt solution FOR the TEE
-      const encrypted = await encryptSolution(solutionText, teePublicKey);
+      const encrypted = await encryptForRecipient(solutionText, teePublicKey);
 
       // Step 4: Submit encrypted solution to backend API
       setState({ kind: "submitting" });

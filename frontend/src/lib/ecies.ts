@@ -71,32 +71,32 @@ export function derivePublicKey(signature: string): string {
 }
 
 /**
- * Encrypt a solution for the sponsor using ECIES.
+ * ECIES-encrypt plaintext for a recipient's public key.
  *
- * V2 Architecture: Solutions are encrypted with the sponsor's derived ECIES public key.
- * Only the sponsor (who has the derived private key) can decrypt.
- * The platform and TEE CANNOT decrypt solutions.
+ * Used for:
+ * - Encrypting problems FOR the TEE (during bounty creation)
+ * - Encrypting solutions FOR the TEE (during solution submission)
+ * - Any ECIES encryption where we have the recipient's secp256k1 public key
  *
  * Flow:
- * 1. Sponsor's public key is already registered (from key registration)
- * 2. We generate a new ephemeral secp256k1 keypair
- * 3. ECDH(ephemeral_private, sponsor_public) → shared secret
- * 4. HKDF-SHA256 derives AES key from shared secret
- * 5. AES-256-GCM encrypts the solution
- * 6. Return: {ephemeral_pubkey, iv, ciphertext, mac}
+ * 1. Generate ephemeral secp256k1 keypair
+ * 2. ECDH(ephemeral_private, recipient_public) → shared secret
+ * 3. HKDF-SHA256 derives AES key from shared secret
+ * 4. AES-256-GCM encrypts the plaintext
+ * 5. Return: {ephemeral_pubkey, iv, ciphertext, mac}
  */
-export async function encryptSolution(
+export async function encryptForRecipient(
   plaintext: string,
-  sponsorPublicKey: string, // hex, from registration
+  recipientPublicKey: string, // hex, secp256k1 uncompressed public key
 ): Promise<EncryptedSolution> {
   try {
     // Step 1: Generate ephemeral keypair
     const ephemeralPrivateKey = secp256k1.utils.randomSecretKey();
     const ephemeralPublicKey = secp256k1.getPublicKey(ephemeralPrivateKey, false); // uncompressed
 
-    // Step 2: ECDH with sponsor's public key
-    const sponsorPubBytes = hexToBytes(sponsorPublicKey.replace("0x", ""));
-    const sharedPoint = secp256k1.getSharedSecret(ephemeralPrivateKey, sponsorPubBytes);
+    // Step 2: ECDH with recipient's public key
+    const recipientPubBytes = hexToBytes(recipientPublicKey.replace("0x", ""));
+    const sharedPoint = secp256k1.getSharedSecret(ephemeralPrivateKey, recipientPubBytes);
     // Extract x-coordinate (first 32 bytes after the 0x04 prefix)
     const sharedSecret = sharedPoint.slice(1, 33);
 
@@ -134,10 +134,13 @@ export async function encryptSolution(
       mac: "0x" + bytesToHex(mac),
     };
   } catch (error) {
-    console.error("ECIES solution encryption failed:", error);
-    throw new Error("Failed to encrypt solution. Check your wallet connection.");
+    console.error("ECIES encryption failed:", error);
+    throw new Error("Failed to encrypt data. Check your wallet connection.");
   }
 }
+
+/** @deprecated Use encryptForRecipient instead */
+export const encryptSolution = encryptForRecipient;
 
 /**
  * Decrypt an ECIES-encrypted solution using the sponsor's wallet.
