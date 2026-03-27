@@ -1,50 +1,37 @@
-# ═══════════════════════════════════════════════════════════════
-#  Agonaut Scoring TEE — Phala Cloud CVM Deployment
-#
-#  Deploy this to Phala Cloud for FULL zero-knowledge:
-#  - Intel TDX hardware enclave (nobody can read memory)
-#  - Remote attestation (anyone can verify code integrity)
-#  - TEE keypair sealed in enclave (never extractable)
-#  - Solutions decrypted ONLY inside the enclave
-#
-#  The SHA-256 of this file is embedded in RTMR3 and verified
-#  by Intel hardware. Changing ANY line changes the measurement.
-# ═══════════════════════════════════════════════════════════════
+# Agonaut Scoring TEE — Phala Cloud CVM Deployment
+# SHA-384 of this file is embedded in RTMR3 by Intel TDX hardware
 
 services:
   scorer:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: python:3.11-slim
     ports:
       - "8001:8001"
     volumes:
-      # dstack guest agent socket — enables TDX attestation
       - /var/run/dstack.sock:/var/run/dstack.sock
-      # Sealed storage — encrypted by enclave, survives restarts
       - scorer-data:/app/data
     environment:
-      # LLM scoring via Phala's confidential AI API
       - PHALA_API_KEY=${PHALA_API_KEY}
       - PHALA_API_URL=https://api.redpill.ai/v1
-      - SCORING_MODEL=deepseek-chat
-      # On-chain score submission
+      - SCORING_MODEL=deepseek/deepseek-chat-v3-0324
       - SCORER_PRIVATE_KEY=${SCORER_PRIVATE_KEY}
       - SCORING_ORACLE=${SCORING_ORACLE}
+      - SCORING_HMAC_SECRET=${SCORING_HMAC_SECRET}
       - RPC_URL=${RPC_URL:-https://sepolia.base.org}
-      # Backend connection (for storing winning solutions)
-      - BACKEND_URL=${BACKEND_URL:-http://api.agonaut.io}
-      # HMAC auth between backend and scoring service
-      - SCORING_API_KEY=${SCORING_API_KEY}
+      - SCORING_DB_PATH=/app/data/scoring.db
+    command: >
+      bash -c "
+        apt-get update -qq && apt-get install -y -qq git > /dev/null 2>&1 &&
+        pip install --no-cache-dir fastapi==0.115.12 'uvicorn[standard]==0.34.2' openai==1.68.2 cryptography==44.0.2 web3==7.9.0 pydantic==2.11.1 'httpx>=0.27.0' > /dev/null 2>&1 &&
+        git clone --depth 1 https://github.com/Robakski/agonaut.git /tmp/agonaut &&
+        cp /tmp/agonaut/scoring-service/*.py /app/ &&
+        cp /tmp/agonaut/scoring-service/requirements.txt /app/ &&
+        rm -rf /tmp/agonaut &&
+        cd /app &&
+        echo 'Starting Agonaut TEE Scoring Service...' &&
+        uvicorn api:app --host 0.0.0.0 --port 8001 --workers 1
+      "
     restart: unless-stopped
-    # Resource limits (prevent noisy neighbor on shared TEE hardware)
-    deploy:
-      resources:
-        limits:
-          memory: 512M
-          cpus: "2.0"
 
 volumes:
   scorer-data:
-    # In Phala CVM, this volume is encrypted with enclave-derived key
     driver: local

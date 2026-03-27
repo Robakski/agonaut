@@ -34,8 +34,7 @@ COPY --from=builder /install /usr/local
 WORKDIR /app
 COPY scorer.py api.py onchain.py ecies_encrypt.py \
      tee_keypair.py tee_vault.py tee_attestation.py \
-     services_bridge.py requirements.txt \
-     ARCHITECTURE.md ./
+     requirements.txt ./
 
 # Data directory for sealed keypair (mounted as encrypted volume in TEE)
 RUN mkdir -p /app/data && chown -R scorer:scorer /app
