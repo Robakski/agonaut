@@ -297,12 +297,17 @@ export default function CreateBountyPage() {
         }).catch(() => {});
       }
 
-      // Step 1b: If private bounty, encrypt problem + rubric and store
+      // Step 1b: If private bounty, ECIES-encrypt problem + rubric for TEE (V2 ZK)
       if (visibility !== "PUBLIC" && result.roundAddress) {
         try {
-          const { encryptProblem } = await import("@/lib/problem-encrypt");
-          // Encrypt EVERYTHING sensitive: description + rubric + check descriptions
-          // The rubric reveals the problem — "Must handle SQL injection" tells you it's a security audit
+          const { encryptSolution: eciesEncrypt } = await import("@/lib/ecies");
+          const { getTeePublicKey, storeProblemInTee, registerSponsorPublicKey } = await import("@/lib/api");
+          const { getEncryptionMessage, derivePublicKey } = await import("@/lib/ecies");
+
+          // 1. Fetch TEE's public key
+          const teePublicKey = await getTeePublicKey();
+
+          // 2. ECIES-encrypt problem + rubric FOR the TEE
           const sensitivePayload = JSON.stringify({
             description,
             rubric: {
@@ -316,13 +321,28 @@ export default function CreateBountyPage() {
               })),
             },
           });
-          const encrypted = await encryptProblem(sensitivePayload);
+          const encryptedProblem = await eciesEncrypt(sensitivePayload, teePublicKey);
 
-          // Summary for public listing: generic, reveals nothing sensitive
+          // 3. Get sponsor's derived public key (for result encryption later)
+          const encMessage = getEncryptionMessage(address);
+          const encSignature = await walletClient!.signMessage({ account: address, message: encMessage });
+          const sponsorPubKey = derivePublicKey(encSignature);
+
+          // 4. Send encrypted blob to TEE via backend proxy
+          await storeProblemInTee({
+            round_address: result.roundAddress,
+            encrypted_problem: encryptedProblem,
+            encrypted_rubric: null, // Rubric is included in the problem payload
+            sponsor_public_key: sponsorPubKey,
+            problem_window_hours: 48,
+          });
+
+          // 5. Also store metadata for public listing (V1 compatible)
           const safeSummary = visibility === "PRIVATE"
-            ? ""  // Fully private: no summary at all
-            : description.slice(0, 200).replace(/[^\s\w.,!?-]/g, "").trim() + "..."; // Summary-only: first 200 chars, sanitized
+            ? ""
+            : description.slice(0, 200).replace(/[^\s\w.,!?-]/g, "").trim() + "...";
 
+          // Store V1 metadata too (for bounty listing, non-encrypted fields)
           await fetch(`${API_URL}/private-bounties/store`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -332,13 +352,14 @@ export default function CreateBountyPage() {
               title,
               summary: safeSummary,
               tags,
-              encrypted_problem: encrypted.encrypted,
-              problem_key: encrypted.key,
+              encrypted_problem: "", // V2: problem is in TEE, not in backend
+              problem_key: "",       // V2: no platform-custodied key
               sponsor_address: address,
             }),
           });
         } catch (encErr) {
-          console.warn("Failed to store encrypted problem (non-blocking):", encErr);
+          console.warn("Failed to store encrypted problem in TEE:", encErr);
+          // Non-blocking — bounty still created on-chain, just problem not in TEE yet
         }
       }
 

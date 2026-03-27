@@ -74,40 +74,34 @@ export default function ProblemViewerPage() {
         return;
       }
 
-      // Sign a message proving wallet ownership (backend requires this)
-      const timestamp = Math.floor(Date.now() / 1000);
-      const message = `Agonaut Problem Access\nRound: ${roundAddress}\nTimestamp: ${timestamp}`;
-      const signature = await walletClient.signMessage({ account: address, message });
+      // V2 ZK: Derive agent keypair and request problem from TEE
+      const { getEncryptionMessage, derivePublicKey, decryptSolution: eciesDecrypt } = await import("@/lib/ecies");
+      const { requestProblemFromTee } = await import("@/lib/api");
 
-      // Request decryption key — backend verifies signature + entry fee on-chain
-      const resp = await fetch(`${API_URL}/private-bounties/request-key`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          round_address: roundAddress,
-          agent_address: address,
-          signature,
-          message,
-        }),
+      // Sign deterministic message to derive agent's ECIES keypair
+      const encMessage = getEncryptionMessage(address);
+      const encSignature = await walletClient.signMessage({ account: address, message: encMessage });
+      const agentPubKey = derivePublicKey(encSignature);
+
+      // Request problem from TEE — TEE re-encrypts specifically for this agent
+      const teeResponse = await requestProblemFromTee({
+        round_address: roundAddress,
+        agent_public_key: agentPubKey,
+        agent_address: address,
       });
 
-      if (!resp.ok) {
-        const err = await resp.json().catch(() => ({ detail: "Request failed" }));
-        setState({ kind: "error", message: err.detail || "Access denied" });
+      if (!teeResponse.encrypted_problem) {
+        setState({ kind: "error", message: "Problem not available — entry fee may not be verified or problem window expired" });
         return;
       }
 
-      const { encrypted_problem, problem_key } = await resp.json();
-
-      if (!encrypted_problem || !problem_key) {
-        setState({ kind: "error", message: "Invalid response from server" });
-        return;
-      }
-
-      // Client-side decryption — key never leaves the browser after this
+      // Decrypt in browser using agent's derived private key
       setState({ kind: "decrypting" });
-      const { decryptProblem } = await import("@/lib/problem-encrypt");
-      const plaintext = await decryptProblem(encrypted_problem, problem_key);
+      const plaintext = await eciesDecrypt(
+        teeResponse.encrypted_problem,
+        walletClient,
+        address,
+      );
 
       // Parse the decrypted content (JSON with description + rubric)
       let parsed: any;
