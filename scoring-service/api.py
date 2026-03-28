@@ -416,97 +416,18 @@ def _store_solutions(round_address: str, rnd: dict, payload: dict):
     After this function, the plaintext solution is gone — only the sponsor
     can decrypt it with their wallet's private key.
     """
-    import httpx as _httpx
-    try:
-        scores = payload.get("scores", [])
-        agent_ids = payload.get("agent_ids", [])
-
-        # Get wallet addresses from solution submission data
-        solutions = rnd.get("solutions", {})
-        # Build agent_id -> address mapping from received solutions
-        id_to_addr = {
-            aid: sol.get("agent_address", "") for aid, sol in solutions.items()
-        }
-        agents = [id_to_addr.get(aid, "") for aid in agent_ids]
-        decrypted_by_id = rnd.get("decrypted_solutions_by_id", {})
-        sponsor = rnd.get("sponsor_address", "")
-
-        if not agents or not decrypted_by_id or not sponsor:
-            log.warning(f"Cannot store solutions — agents={len(agents)}, decrypted={len(decrypted_by_id)}, sponsor={'yes' if sponsor else 'no'}")
-            return
-
-        # Fetch sponsor's public key from backend
-        resp = _httpx.get(
-            f"http://127.0.0.1:8000/api/v1/solutions/sponsor-key/{sponsor}",
-            timeout=5,
-        )
-        if resp.status_code != 200 or not resp.json().get("has_key"):
-            log.warning(f"Sponsor {sponsor[:10]}... has no registered public key — cannot encrypt solutions")
-            return
-
-        # Get full public key
-        key_resp = _httpx.get(
-            f"http://127.0.0.1:8000/api/v1/solutions/sponsor-pubkey-internal/{sponsor}",
-            timeout=5,
-        )
-        if key_resp.status_code != 200:
-            log.warning("Failed to fetch sponsor public key from backend")
-            return
-        sponsor_pubkey = key_resp.json().get("public_key")
-        if not sponsor_pubkey:
-            log.warning("Sponsor public key is empty")
-            return
-
-        # ECIES encrypt each winning solution with sponsor's public key
-        from ecies_encrypt import encrypt_for_wallet
-        stored = 0
-        for i, (addr, score) in enumerate(zip(agents, scores)):
-            agent_id = agent_ids[i] if i < len(agent_ids) else 0
-            if score > 0 and agent_id in decrypted_by_id:
-                solution_text = decrypted_by_id[agent_id]
-
-                # Encrypt — after this, we can't read it anymore
-                encrypted_blob = encrypt_for_wallet(solution_text, sponsor_pubkey)
-
-                _httpx.post(
-                    "http://127.0.0.1:8000/api/v1/solutions/store-winning",
-                    json={
-                        "round_address": round_address,
-                        "agent_address": addr,
-                        "agent_id": agent_id,
-                        "score": score,
-                        "encrypted_solution": encrypted_blob,
-                        "sponsor_address": sponsor,
-                    },
-                    timeout=10,
-                )
-                stored += 1
-
-        log.info(f"Stored {stored} ECIES-encrypted winning solutions (only sponsor can decrypt)")
-    except Exception as e:
-        log.warning(f"Solution vault storage failed (non-critical): {e}")
+    # DEPRECATED (V1): This path used localhost callbacks to store solutions.
+    # V2 uses pull-based architecture — backend pulls via GET /score/results/{round}.
+    # Kept as no-op for backward compatibility.
+    log.warning(f"V1 _store_solutions called for {round_address[:10]}... — deprecated, no-op")
 
 
-# ── Activity tracking helper ──
+# ── Activity tracking (V1 — DEPRECATED) ──
 def _track_winners(round_address: str, payload: dict, tx_hash: str):
-    """Fire-and-forget activity events for winning agents."""
-    import httpx as _httpx
-    try:
-        scores = payload.get("scores", [])
-        agents = payload.get("agent_addresses", [])
-        if not agents or len(agents) != len(scores):
-            return
-        for addr, score in zip(agents, scores):
-            if score > 0:
-                _httpx.post(
-                    "http://127.0.0.1:8000/api/v1/activity/track",
-                    json={"wallet": addr, "event": "bounty_won", "metadata": {
-                        "round": round_address, "score": score, "tx_hash": tx_hash
-                    }},
-                    timeout=5,
-                )
-    except Exception as e:
-        log.warning(f"Activity tracking failed (non-critical): {e}")
+    """[DEPRECATED] Activity tracking via localhost callback.
+    V2: Backend handles activity tracking after pulling results.
+    """
+    log.info(f"V1 _track_winners called for {round_address[:10]}... — deprecated, skipped")
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -1088,38 +1009,67 @@ def _score_round_v2_sync(round_address: str):
 
 
 def _store_solutions_v2(round_address: str, rnd: dict, payload: dict, sponsor_pubkey: str):
-    """Store winning solutions encrypted FOR the sponsor (ECIES)."""
-    try:
-        from services_bridge import store_winning_solution_remote
-    except ImportError:
-        log.warning("services_bridge not available — storing solutions locally")
-        return
+    """ECIES-encrypt winning solutions FOR the sponsor, store in TEE memory.
 
+    Pull-based architecture (Option B):
+    - Scoring service encrypts solutions and holds them in-memory
+    - Backend pulls via GET /score/results/{round_address} after scoring
+    - No outbound callbacks from TEE to backend needed
+    """
     decrypted = rnd.get("decrypted_solutions_by_id", {})
     agents = payload.get("agent_ids", [])
     scores = payload.get("scores", [])
 
-    stored = 0
+    encrypted_results = []
     for i, agent_id in enumerate(agents):
         if agent_id in decrypted and scores[i] > 0:
-            # ECIES encrypt solution FOR the sponsor
-            encrypted_for_sponsor = encrypt_for_wallet(
-                decrypted[agent_id],
-                sponsor_pubkey,
-            )
             try:
-                store_winning_solution_remote(
-                    round_address=round_address,
-                    agent_id=agent_id,
-                    score=scores[i],
-                    encrypted_solution=encrypted_for_sponsor,
-                    sponsor_address="",  # Not needed — sponsor identified by pubkey
+                encrypted_for_sponsor = encrypt_for_wallet(
+                    decrypted[agent_id],
+                    sponsor_pubkey,
                 )
-                stored += 1
+                encrypted_results.append({
+                    "agent_id": agent_id,
+                    "score": scores[i],
+                    "encrypted_solution": encrypted_for_sponsor,
+                })
             except Exception as e:
-                log.error(f"Failed to store solution for agent {agent_id}: {e}")
+                log.error(f"Failed to encrypt solution for agent {agent_id}: {e}")
 
-    log.info(f"Stored {stored} ECIES-encrypted winning solutions (only sponsor can decrypt)")
+    rnd["encrypted_winning_solutions"] = encrypted_results
+    log.info(f"Prepared {len(encrypted_results)} ECIES-encrypted solutions for sponsor retrieval")
+
+
+@app.get("/score/results/{round_address}")
+async def get_scoring_results(round_address: str):
+    """Pull encrypted winning solutions after scoring completes.
+
+    Backend calls this to retrieve ECIES-encrypted solutions that only
+    the sponsor can decrypt. Solutions are held in TEE memory until pulled.
+
+    Returns 404 if round not found, 202 if still scoring, 200 with results.
+    """
+    rnd = _rounds.get(round_address)
+    if not rnd:
+        raise HTTPException(404, "Round not found")
+
+    if rnd["status"] == "scoring":
+        return {"status": "scoring", "round_address": round_address, "message": "Scoring in progress"}
+
+    if rnd["status"] not in ("completed", "submitted"):
+        return {"status": rnd["status"], "round_address": round_address, "error": rnd.get("error")}
+
+    encrypted_solutions = rnd.get("encrypted_winning_solutions", [])
+    results = rnd.get("results", {})
+
+    return {
+        "status": rnd["status"],
+        "round_address": round_address,
+        "agent_ids": results.get("agent_ids", []),
+        "scores": results.get("scores", []),
+        "encrypted_solutions": encrypted_solutions,
+        "scoring_completed_at": rnd.get("scoring_completed_at"),
+    }
 
 
 @app.get("/tee/attestation")

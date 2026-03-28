@@ -364,9 +364,81 @@ async def trigger_scoring(round_address: str):
                 timeout=10.0,
                 headers={**_scoring_headers(trigger_body), "Content-Type": "application/json"},
             )
-            return resp.json()
+            result = resp.json()
+
+        # Start background task to pull results when scoring completes
+        import asyncio
+        asyncio.create_task(_pull_results_when_ready(round_address, sponsor_address))
+
+        return result
     except httpx.ConnectError:
         raise HTTPException(503, "Scoring service temporarily unavailable")
+
+
+async def _pull_results_when_ready(round_address: str, sponsor_address: str):
+    """Background: poll scoring service until results are ready, then pull and store.
+
+    Pull-based architecture — no callbacks from TEE to backend needed.
+    Polls every 15s for up to 10 minutes.
+    """
+    import asyncio
+    import json as _json
+
+    max_attempts = 40  # 40 × 15s = 10 minutes
+    for attempt in range(max_attempts):
+        await asyncio.sleep(15)
+
+        try:
+            async with httpx.AsyncClient() as client:
+                resp = await client.get(
+                    f"{SCORING_SERVICE_URL}/score/results/{round_address}",
+                    timeout=10.0,
+                    headers=_scoring_headers(),
+                )
+                if resp.status_code == 404:
+                    log.warning(f"Results pull: round {round_address[:10]}... not found")
+                    return
+
+                data = resp.json()
+                status = data.get("status")
+
+                if status == "scoring":
+                    continue  # Still in progress
+
+                if status in ("completed", "submitted"):
+                    encrypted_solutions = data.get("encrypted_solutions", [])
+                    if encrypted_solutions:
+                        from services.solution_vault import store_winning_solution as vault_store
+                        stored = 0
+                        for sol in encrypted_solutions:
+                            try:
+                                vault_store(
+                                    round_address=round_address,
+                                    agent_address="",  # Not tracked in V2
+                                    agent_id=sol["agent_id"],
+                                    score=sol["score"],
+                                    encrypted_solution=sol["encrypted_solution"],
+                                    sponsor_address=sponsor_address,
+                                )
+                                stored += 1
+                            except Exception as e:
+                                log.error(f"Failed to store solution for agent {sol['agent_id']}: {e}")
+                        log.info(
+                            f"Pulled and stored {stored} encrypted solutions for round "
+                            f"{round_address[:10]}... (sponsor: {sponsor_address[:10]}...)"
+                        )
+                    else:
+                        log.info(f"Round {round_address[:10]}... completed with no winning solutions")
+                    return
+
+                if status == "error":
+                    log.error(f"Scoring failed for round {round_address[:10]}...: {data.get('error')}")
+                    return
+
+        except Exception as e:
+            log.warning(f"Results pull attempt {attempt+1} failed: {e}")
+
+    log.error(f"Results pull timed out after 10 minutes for round {round_address[:10]}...")
 
 
 # ── Sponsor Public Key Registration ──

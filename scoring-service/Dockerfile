@@ -24,8 +24,9 @@ LABEL org.opencontainers.image.source="https://github.com/Robakski/agonaut"
 LABEL org.opencontainers.image.description="Agonaut TEE Scoring Service — Full ZK"
 LABEL org.opencontainers.image.version="2.0.0"
 
-# Security: run as non-root
-RUN groupadd -r scorer && useradd -r -g scorer -d /app -s /sbin/nologin scorer
+# Security: non-root scorer user
+RUN groupadd -r scorer && useradd -r -g scorer -d /app -s /sbin/nologin scorer \
+    && apt-get update && apt-get install -y --no-install-recommends gosu && rm -rf /var/lib/apt/lists/*
 
 # Copy installed packages from builder
 COPY --from=builder /install /usr/local
@@ -34,12 +35,14 @@ COPY --from=builder /install /usr/local
 WORKDIR /app
 COPY scorer.py api.py onchain.py ecies_encrypt.py \
      tee_keypair.py tee_vault.py tee_attestation.py \
-     requirements.txt ./
+     entrypoint.sh requirements.txt ./
+RUN chmod +x entrypoint.sh
 
 # Data directory for sealed keypair (mounted as encrypted volume in TEE)
 RUN mkdir -p /app/data && chown -R scorer:scorer /app
 
-USER scorer
+# Note: container starts as root for entrypoint (socket permissions),
+# then drops to scorer via gosu. See entrypoint.sh.
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=5s --retries=3 \
@@ -47,5 +50,5 @@ HEALTHCHECK --interval=30s --timeout=5s --retries=3 \
 
 EXPOSE 8001
 
-# Run with production settings
-CMD ["uvicorn", "api:app", "--host", "0.0.0.0", "--port", "8001", "--workers", "1"]
+# Entrypoint fixes socket permissions then drops to scorer user
+ENTRYPOINT ["/app/entrypoint.sh"]
