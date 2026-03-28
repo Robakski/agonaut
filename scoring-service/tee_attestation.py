@@ -71,7 +71,12 @@ def get_attestation(tee_public_key_hex: str) -> dict:
         return cached
 
     if is_tee_environment():
-        result = _get_tdx_attestation(tee_public_key_hex)
+        try:
+            result = _get_tdx_attestation(tee_public_key_hex)
+        except Exception as e:
+            log.error(f"TDX attestation failed (falling back to dev mode): {e}")
+            result = _get_dev_attestation(tee_public_key_hex)
+            result["tdx_error"] = str(e)
     else:
         result = _get_dev_attestation(tee_public_key_hex)
 
