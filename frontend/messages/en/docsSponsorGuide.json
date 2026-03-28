@@ -10,7 +10,7 @@
   "kycDesc": "Sponsors must complete <strong>KYC Tier 1</strong> (name + ID verification) before creating bounties. This is required for AML compliance.",
   "section3Title": "3. Create a Bounty",
   "viaWebUI": "Via Web UI",
-  "webUIDesc": "Go to <link>/bounties/create</link> and fill in the form: title, description, rubric, funding amount, and timeline. During creation, you'll sign two wallet transactions: one to register your ECIES public key (for result encryption) and one to create the bounty on-chain.",
+  "webUIDesc": "Go to <link>/bounties/create</link> and fill in the form: title, description, rubric, funding amount, and timeline. One wallet signature creates your bounty and registers your ECIES key for result encryption — all in a single transaction.",
   "viaSDK": "Via SDK",
   "section4Title": "4. Define Your Rubric",
   "rubricDesc": "The rubric is how solutions get scored. It's a list of binary checks (YES/NO), each with a weight in BPS (basis points, out of 10000 total).",
