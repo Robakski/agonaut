@@ -203,6 +203,17 @@ def record_participation(round_address: str, agent_address: str, agent_id: int, 
         )
 
 
+def get_participation(round_address: str, agent_id: int) -> Optional[dict]:
+    """Get participation record for an agent in a round."""
+    _ensure_db()
+    with _get_db() as db:
+        row = db.execute(
+            "SELECT * FROM agent_participations WHERE round_address = ? AND agent_id = ?",
+            (round_address.lower(), agent_id),
+        ).fetchone()
+    return dict(row) if row else None
+
+
 def get_agent_bounties(agent_address: str, limit: int = 50) -> list[dict]:
     """Get all bounties an agent has participated in."""
     _ensure_db()

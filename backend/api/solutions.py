@@ -407,6 +407,10 @@ async def _pull_results_when_ready(round_address: str, sponsor_address: str):
 
                 if status in ("completed", "submitted"):
                     encrypted_solutions = data.get("encrypted_solutions", [])
+                    agent_ids = data.get("agent_ids", [])
+                    scores = data.get("scores", [])
+                    tx_hash = data.get("tx_hash", "")
+
                     if encrypted_solutions:
                         from services.solution_vault import store_winning_solution as vault_store
                         stored = 0
@@ -414,7 +418,7 @@ async def _pull_results_when_ready(round_address: str, sponsor_address: str):
                             try:
                                 vault_store(
                                     round_address=round_address,
-                                    agent_address="",  # Not tracked in V2
+                                    agent_address="",
                                     agent_id=sol["agent_id"],
                                     score=sol["score"],
                                     encrypted_solution=sol["encrypted_solution"],
@@ -427,7 +431,11 @@ async def _pull_results_when_ready(round_address: str, sponsor_address: str):
                             f"Pulled and stored {stored} encrypted solutions for round "
                             f"{round_address[:10]}... (sponsor: {sponsor_address[:10]}...)"
                         )
-                    else:
+
+                    # Track activity events for airdrop eligibility
+                    _track_scoring_results(round_address, agent_ids, scores, tx_hash)
+
+                    if not encrypted_solutions:
                         log.info(f"Round {round_address[:10]}... completed with no winning solutions")
                     return
 
@@ -439,6 +447,55 @@ async def _pull_results_when_ready(round_address: str, sponsor_address: str):
             log.warning(f"Results pull attempt {attempt+1} failed: {e}")
 
     log.error(f"Results pull timed out after 10 minutes for round {round_address[:10]}...")
+
+
+def _track_scoring_results(round_address: str, agent_ids: list, scores: list, tx_hash: str):
+    """Track bounty_won activity events for airdrop eligibility.
+
+    Called by _pull_results_when_ready after scoring completes.
+    Previously done by scoring service callback — now backend-side.
+    """
+    if not agent_ids or len(agent_ids) != len(scores):
+        return
+
+    try:
+        from services import bounty_index
+        bounty = bounty_index.find_by_round(round_address)
+
+        # Resolve agent addresses from participation records
+        for i, agent_id in enumerate(agent_ids):
+            score = scores[i]
+            if score > 0:
+                # Look up agent address from participation index
+                agent_address = ""
+                try:
+                    participation = bounty_index.get_participation(round_address, agent_id)
+                    if participation:
+                        agent_address = participation.get("agent_address", "")
+                except Exception:
+                    pass
+
+                if agent_address:
+                    try:
+                        import httpx as _httpx
+                        _httpx.post(
+                            "http://127.0.0.1:8000/api/v1/activity/track",
+                            json={
+                                "wallet": agent_address,
+                                "event": "bounty_won",
+                                "metadata": {
+                                    "round": round_address,
+                                    "score": score,
+                                    "tx_hash": tx_hash,
+                                    "bounty_id": bounty.get("bounty_id", "") if bounty else "",
+                                },
+                            },
+                            timeout=5,
+                        )
+                    except Exception as e:
+                        log.warning(f"Failed to track bounty_won for {agent_address[:10]}...: {e}")
+    except Exception as e:
+        log.warning(f"Activity tracking failed (non-critical): {e}")
 
 
 # ── Sponsor Public Key Registration ──

@@ -38,8 +38,16 @@ _cache_ttl = 300
 
 
 def is_tee_environment() -> bool:
-    """Detect if we're running inside a real TEE (Phala CVM with dstack)."""
-    return os.path.exists(DSTACK_SOCK)
+    """Detect if we're running inside a real TEE (Phala CVM with dstack).
+
+    Checks for dstack socket OR tappd socket (older Phala versions).
+    Also checks DSTACK_APP_ID env var as fallback (set by prelaunch script).
+    """
+    return (
+        os.path.exists(DSTACK_SOCK)
+        or os.path.exists("/var/run/tappd.sock")
+        or bool(os.environ.get("DSTACK_APP_ID"))
+    )
 
 
 def get_attestation(tee_public_key_hex: str) -> dict:
@@ -106,11 +114,29 @@ def _get_tdx_attestation(tee_public_key_hex: str) -> dict:
                 self.sock.connect(self.socket_path)
 
         conn = UnixHTTPConnection(DSTACK_SOCK)
-        conn.request("POST", "/GetQuote", body=payload,
-                     headers={"Content-Type": "application/json"})
-        resp = conn.getresponse()
-        quote_data = json.loads(resp.read())
-        conn.close()
+
+        # Try dstack v2 API path first, then v1 (tappd) path
+        quote_data = None
+        for api_path in ["/GetQuote", "/prpc/Tappd.GetQuote"]:
+            try:
+                conn2 = UnixHTTPConnection(DSTACK_SOCK)
+                conn2.request("POST", api_path, body=payload,
+                              headers={"Content-Type": "application/json"})
+                resp = conn2.getresponse()
+                body = resp.read()
+                conn2.close()
+                if resp.status == 200:
+                    quote_data = json.loads(body)
+                    log.info(f"TDX quote obtained via {api_path}")
+                    break
+                else:
+                    log.debug(f"TDX quote path {api_path} returned {resp.status}")
+            except Exception as path_err:
+                log.debug(f"TDX quote path {api_path} failed: {path_err}")
+                continue
+
+        if not quote_data:
+            raise RuntimeError("All dstack API paths failed for GetQuote")
 
         log.info("TDX attestation generated successfully")
 
