@@ -84,33 +84,6 @@ def get_attestation(tee_public_key_hex: str) -> dict:
     return result
 
 
-async def get_attestation_async(tee_public_key_hex: str) -> dict:
-    """Async version of get_attestation for FastAPI endpoints.
-
-    Uses AsyncDstackClient for non-blocking TDX quote generation.
-    """
-    now = time.time()
-
-    # Return cached attestation if fresh
-    cached = _attestation_cache.get("latest")
-    if cached and (now - cached.get("generated_at", 0)) < _cache_ttl:
-        return cached
-
-    if is_tee_environment():
-        try:
-            result = await _get_tdx_attestation_async(tee_public_key_hex)
-        except Exception as e:
-            log.error(f"TDX attestation (async) failed (falling back to dev mode): {e}")
-            result = _get_dev_attestation(tee_public_key_hex)
-            result["tdx_error"] = str(e)
-    else:
-        result = _get_dev_attestation(tee_public_key_hex)
-
-    result["generated_at"] = now
-    _attestation_cache["latest"] = result
-    return result
-
-
 def _build_report_data(tee_public_key_hex: str) -> bytes:
     """Build reportData = SHA-256 of TEE public key (used to bind key to enclave)."""
     pubkey_bytes = bytes.fromhex(tee_public_key_hex.replace("0x", ""))
@@ -140,66 +113,52 @@ def _format_attestation_result(tee_public_key_hex: str, report_data_hex: str,
     }
 
 
-async def _get_tdx_attestation_async(tee_public_key_hex: str) -> dict:
-    """Get real TDX attestation using the official dstack-sdk (async).
-
-    Uses AsyncDstackClient which communicates via /var/run/dstack.sock.
-    """
-    from dstack_sdk import AsyncDstackClient
-
-    report_data = _build_report_data(tee_public_key_hex)
-    report_data_hex = report_data.hex()
-
-    client = AsyncDstackClient()
-
-    # get_quote takes bytes as reportData — the SDK handles the rest
-    quote_result = await client.get_quote(report_data)
-
-    quote_hex = quote_result.quote if isinstance(quote_result.quote, str) else quote_result.quote.hex()
-
-    # Extract RTMR values from the quote
-    rtmrs = []
-    try:
-        rtmrs = quote_result.replay_rtmrs()
-        if not isinstance(rtmrs, list):
-            rtmrs = list(rtmrs) if rtmrs else []
-    except Exception as e:
-        log.warning(f"Could not extract RTMRs from quote: {e}")
-        rtmrs = []
-
-    log.info("TDX attestation generated successfully via dstack-sdk (async)")
-    return _format_attestation_result(tee_public_key_hex, report_data_hex, quote_hex, rtmrs)
-
-
 def _get_tdx_attestation(tee_public_key_hex: str) -> dict:
-    """Get real TDX attestation using the official dstack-sdk (sync).
+    """Get real TDX attestation via dstack guest agent socket.
 
-    Uses DstackClient which communicates via /var/run/dstack.sock.
+    Communicates with /var/run/dstack.sock using raw HTTP over Unix socket.
+    Gracefully falls back to dev mode if unavailable.
     """
-    from dstack_sdk import DstackClient
-
-    report_data = _build_report_data(tee_public_key_hex)
-    report_data_hex = report_data.hex()
-
-    client = DstackClient()
-
-    # get_quote takes bytes as reportData
-    quote_result = client.get_quote(report_data)
-
-    quote_hex = quote_result.quote if isinstance(quote_result.quote, str) else quote_result.quote.hex()
-
-    # Extract RTMR values
-    rtmrs = []
     try:
-        rtmrs = quote_result.replay_rtmrs()
-        if not isinstance(rtmrs, list):
-            rtmrs = list(rtmrs) if rtmrs else []
-    except Exception as e:
-        log.warning(f"Could not extract RTMRs from quote: {e}")
-        rtmrs = []
+        import socket
+        import http.client
 
-    log.info("TDX attestation generated successfully via dstack-sdk (sync)")
-    return _format_attestation_result(tee_public_key_hex, report_data_hex, quote_hex, rtmrs)
+        report_data = _build_report_data(tee_public_key_hex)
+        report_data_hex = report_data.hex()
+
+        class UnixHTTPConnection(http.client.HTTPConnection):
+            def __init__(self, socket_path):
+                super().__init__("localhost")
+                self.socket_path = socket_path
+
+            def connect(self):
+                self.sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+                self.sock.connect(self.socket_path)
+
+        conn = UnixHTTPConnection(DSTACK_SOCK)
+        payload = json.dumps({"reportData": f"0x{report_data_hex}"}).encode()
+
+        # Try dstack v2 API path
+        conn.request("POST", "/GetQuote", body=payload,
+                     headers={"Content-Type": "application/json"})
+        resp = conn.getresponse()
+        body = resp.read()
+        conn.close()
+
+        if resp.status != 200:
+            log.warning(f"TDX quote request returned {resp.status}")
+            return _get_dev_attestation(tee_public_key_hex)
+
+        quote_data = json.loads(body)
+        quote_hex = quote_data.get("quote", "")
+        rtmrs = quote_data.get("rtmrs", [])
+
+        log.info("TDX attestation generated successfully (raw socket)")
+        return _format_attestation_result(tee_public_key_hex, report_data_hex, quote_hex, rtmrs)
+
+    except Exception as e:
+        log.error(f"TDX attestation failed: {e} — falling back to dev mode")
+        return _get_dev_attestation(tee_public_key_hex)
 
 
 def _get_dev_attestation(tee_public_key_hex: str) -> dict:

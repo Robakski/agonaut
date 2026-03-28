@@ -729,7 +729,7 @@ from tee_vault import (
     get_active_problem_count,
 )
 from ecies_encrypt import encrypt_for_wallet, decrypt_with_private_key
-from tee_attestation import get_attestation, get_attestation_async, is_tee_environment, get_code_measurement
+from tee_attestation import get_attestation, is_tee_environment, get_code_measurement
 
 
 @app.get("/tee/public-key")
@@ -1089,7 +1089,9 @@ async def tee_attestation():
     This is the root of trust for the entire platform's zero-knowledge claims.
     """
     pubkey = get_tee_public_key_hex()
-    return await get_attestation_async(pubkey)
+    # Run sync attestation in executor to avoid blocking event loop
+    loop = asyncio.get_event_loop()
+    return await loop.run_in_executor(None, get_attestation, pubkey)
 
 
 @app.get("/tee/code-measurement")
