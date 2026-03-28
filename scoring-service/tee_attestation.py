@@ -116,49 +116,45 @@ def _format_attestation_result(tee_public_key_hex: str, report_data_hex: str,
 def _get_tdx_attestation(tee_public_key_hex: str) -> dict:
     """Get real TDX attestation via dstack guest agent socket.
 
-    Communicates with /var/run/dstack.sock using raw HTTP over Unix socket.
+    Communicates with /var/run/dstack.sock using httpx Unix socket transport.
+    Protocol matches the official dstack-sdk: POST /GetQuote with JSON payload.
     Gracefully falls back to dev mode if unavailable.
     """
     try:
-        import socket
-        import http.client
+        import binascii
+        import httpx
 
         report_data = _build_report_data(tee_public_key_hex)
         report_data_hex = report_data.hex()
 
-        class UnixHTTPConnection(http.client.HTTPConnection):
-            def __init__(self, socket_path):
-                super().__init__("localhost")
-                self.socket_path = socket_path
+        # Use httpx with Unix socket transport (same as official dstack-sdk)
+        transport = httpx.HTTPTransport(uds=DSTACK_SOCK)
+        with httpx.Client(transport=transport, base_url="http://localhost", timeout=10) as client:
+            # dstack API: POST /GetQuote with {"report_data": "<hex>"}
+            # report_data must be hex-encoded bytes, max 64 bytes
+            hex_data = binascii.hexlify(report_data).decode()
+            response = client.post(
+                "/GetQuote",
+                json={"report_data": hex_data},
+                headers={
+                    "Content-Type": "application/json",
+                    "User-Agent": "agonaut-scorer/2.2.0",
+                },
+            )
+            response.raise_for_status()
+            quote_data = response.json()
 
-            def connect(self):
-                self.sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-                self.sock.connect(self.socket_path)
-
-        conn = UnixHTTPConnection(DSTACK_SOCK)
-        payload = json.dumps({"reportData": f"0x{report_data_hex}"}).encode()
-
-        # Try dstack v2 API path
-        conn.request("POST", "/GetQuote", body=payload,
-                     headers={"Content-Type": "application/json"})
-        resp = conn.getresponse()
-        body = resp.read()
-        conn.close()
-
-        if resp.status != 200:
-            log.warning(f"TDX quote request returned {resp.status}")
-            return _get_dev_attestation(tee_public_key_hex)
-
-        quote_data = json.loads(body)
         quote_hex = quote_data.get("quote", "")
         rtmrs = quote_data.get("rtmrs", [])
 
-        log.info("TDX attestation generated successfully (raw socket)")
+        log.info("TDX attestation generated successfully via dstack socket")
         return _format_attestation_result(tee_public_key_hex, report_data_hex, quote_hex, rtmrs)
 
     except Exception as e:
-        log.error(f"TDX attestation failed: {e} — falling back to dev mode")
-        return _get_dev_attestation(tee_public_key_hex)
+        log.error(f"TDX attestation failed: {e}")
+        result = _get_dev_attestation(tee_public_key_hex)
+        result["tdx_error"] = str(e)
+        return result
 
 
 def _get_dev_attestation(tee_public_key_hex: str) -> dict:
