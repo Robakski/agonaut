@@ -14,9 +14,8 @@ Verification flow (for anyone to check):
 4. Confirm reportData contains the TEE's ECIES public key
 5. Trust is now cryptographic, not operator-based
 
-Works in two modes:
-- TEE mode (Phala CVM): Real TDX attestation via dstack guest agent
-- Dev mode (VPS/local): Returns unverified self-report (clearly marked)
+Uses the official dstack-sdk for Phala CVM communication.
+Falls back to dev mode when not running in TEE.
 """
 
 import os
@@ -85,93 +84,122 @@ def get_attestation(tee_public_key_hex: str) -> dict:
     return result
 
 
-def _get_tdx_attestation(tee_public_key_hex: str) -> dict:
-    """Get real TDX attestation from dstack guest agent.
+async def get_attestation_async(tee_public_key_hex: str) -> dict:
+    """Async version of get_attestation for FastAPI endpoints.
 
-    The guest agent provides:
-    - TDX quote (signed by Intel hardware)
-    - RTMR values (code measurements)
-    - reportData binding (our public key hash)
+    Uses AsyncDstackClient for non-blocking TDX quote generation.
     """
-    import urllib.request
+    now = time.time()
 
-    # reportData = SHA-256 of TEE public key (32 bytes, hex-encoded, padded to 64 bytes)
+    # Return cached attestation if fresh
+    cached = _attestation_cache.get("latest")
+    if cached and (now - cached.get("generated_at", 0)) < _cache_ttl:
+        return cached
+
+    if is_tee_environment():
+        try:
+            result = await _get_tdx_attestation_async(tee_public_key_hex)
+        except Exception as e:
+            log.error(f"TDX attestation (async) failed (falling back to dev mode): {e}")
+            result = _get_dev_attestation(tee_public_key_hex)
+            result["tdx_error"] = str(e)
+    else:
+        result = _get_dev_attestation(tee_public_key_hex)
+
+    result["generated_at"] = now
+    _attestation_cache["latest"] = result
+    return result
+
+
+def _build_report_data(tee_public_key_hex: str) -> bytes:
+    """Build reportData = SHA-256 of TEE public key (used to bind key to enclave)."""
     pubkey_bytes = bytes.fromhex(tee_public_key_hex.replace("0x", ""))
-    report_data = hashlib.sha256(pubkey_bytes).hexdigest()
-    # Pad to 64 bytes (128 hex chars) as required by TDX
-    report_data_padded = report_data.ljust(128, '0')
+    return hashlib.sha256(pubkey_bytes).digest()
 
+
+def _format_attestation_result(tee_public_key_hex: str, report_data_hex: str,
+                                quote_hex: str, rtmrs: list) -> dict:
+    """Format TDX attestation into our standard response."""
+    return {
+        "mode": "tdx",
+        "verified": True,
+        "tee_public_key": tee_public_key_hex,
+        "report_data_hash": report_data_hex,
+        "tdx_quote": quote_hex,
+        "rtmr0": rtmrs[0] if len(rtmrs) > 0 else "",
+        "rtmr1": rtmrs[1] if len(rtmrs) > 1 else "",
+        "rtmr2": rtmrs[2] if len(rtmrs) > 2 else "",
+        "rtmr3": rtmrs[3] if len(rtmrs) > 3 else "",
+        "verification_url": "https://trust-center.phala.network/verify",
+        "how_to_verify": (
+            "1. Submit the tdx_quote to Phala Trust Center or Intel DCAP verifier. "
+            "2. Confirm report_data_hash matches SHA-256 of tee_public_key. "
+            "3. Confirm RTMR3 matches the published docker-compose hash on GitHub. "
+            "4. This proves the scoring service is running unmodified inside Intel TDX."
+        ),
+    }
+
+
+async def _get_tdx_attestation_async(tee_public_key_hex: str) -> dict:
+    """Get real TDX attestation using the official dstack-sdk (async).
+
+    Uses AsyncDstackClient which communicates via /var/run/dstack.sock.
+    """
+    from dstack_sdk import AsyncDstackClient
+
+    report_data = _build_report_data(tee_public_key_hex)
+    report_data_hex = report_data.hex()
+
+    client = AsyncDstackClient()
+
+    # get_quote takes bytes as reportData — the SDK handles the rest
+    quote_result = await client.get_quote(report_data)
+
+    quote_hex = quote_result.quote if isinstance(quote_result.quote, str) else quote_result.quote.hex()
+
+    # Extract RTMR values from the quote
+    rtmrs = []
     try:
-        # Call dstack guest agent via Unix socket
-        payload = json.dumps({"reportData": f"0x{report_data_padded}"}).encode()
-
-        # urllib doesn't support Unix sockets natively — use raw HTTP
-        import socket
-        import http.client
-
-        class UnixHTTPConnection(http.client.HTTPConnection):
-            def __init__(self, socket_path):
-                super().__init__("localhost")
-                self.socket_path = socket_path
-
-            def connect(self):
-                self.sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-                self.sock.connect(self.socket_path)
-
-        conn = UnixHTTPConnection(DSTACK_SOCK)
-
-        # Try dstack v2 API path first, then v1 (tappd) path
-        quote_data = None
-        for api_path in ["/GetQuote", "/prpc/Tappd.GetQuote"]:
-            try:
-                conn2 = UnixHTTPConnection(DSTACK_SOCK)
-                conn2.request("POST", api_path, body=payload,
-                              headers={"Content-Type": "application/json"})
-                resp = conn2.getresponse()
-                body = resp.read()
-                conn2.close()
-                if resp.status == 200:
-                    quote_data = json.loads(body)
-                    log.info(f"TDX quote obtained via {api_path}")
-                    break
-                else:
-                    log.debug(f"TDX quote path {api_path} returned {resp.status}")
-            except Exception as path_err:
-                log.debug(f"TDX quote path {api_path} failed: {path_err}")
-                continue
-
-        if not quote_data:
-            raise RuntimeError("All dstack API paths failed for GetQuote")
-
-        log.info("TDX attestation generated successfully")
-
-        return {
-            "mode": "tdx",
-            "verified": True,
-            "tee_public_key": tee_public_key_hex,
-            "report_data_hash": report_data,
-            "tdx_quote": quote_data.get("quote", ""),
-            "rtmr0": quote_data.get("rtmr0", ""),
-            "rtmr1": quote_data.get("rtmr1", ""),
-            "rtmr2": quote_data.get("rtmr2", ""),
-            "rtmr3": quote_data.get("rtmr3", ""),
-            "verification_url": "https://trust-center.phala.network/verify",
-            "how_to_verify": (
-                "1. Submit the tdx_quote to Phala Trust Center or Intel DCAP verifier. "
-                "2. Confirm report_data_hash matches SHA-256 of tee_public_key. "
-                "3. Confirm RTMR3 matches the published docker-compose hash on GitHub. "
-                "4. This proves the scoring service is running unmodified inside Intel TDX."
-            ),
-        }
-
+        rtmrs = quote_result.replay_rtmrs()
+        if not isinstance(rtmrs, list):
+            rtmrs = list(rtmrs) if rtmrs else []
     except Exception as e:
-        log.error(f"TDX attestation failed: {e}")
-        return {
-            "mode": "tdx_error",
-            "verified": False,
-            "error": str(e),
-            "tee_public_key": tee_public_key_hex,
-        }
+        log.warning(f"Could not extract RTMRs from quote: {e}")
+        rtmrs = []
+
+    log.info("TDX attestation generated successfully via dstack-sdk (async)")
+    return _format_attestation_result(tee_public_key_hex, report_data_hex, quote_hex, rtmrs)
+
+
+def _get_tdx_attestation(tee_public_key_hex: str) -> dict:
+    """Get real TDX attestation using the official dstack-sdk (sync).
+
+    Uses DstackClient which communicates via /var/run/dstack.sock.
+    """
+    from dstack_sdk import DstackClient
+
+    report_data = _build_report_data(tee_public_key_hex)
+    report_data_hex = report_data.hex()
+
+    client = DstackClient()
+
+    # get_quote takes bytes as reportData
+    quote_result = client.get_quote(report_data)
+
+    quote_hex = quote_result.quote if isinstance(quote_result.quote, str) else quote_result.quote.hex()
+
+    # Extract RTMR values
+    rtmrs = []
+    try:
+        rtmrs = quote_result.replay_rtmrs()
+        if not isinstance(rtmrs, list):
+            rtmrs = list(rtmrs) if rtmrs else []
+    except Exception as e:
+        log.warning(f"Could not extract RTMRs from quote: {e}")
+        rtmrs = []
+
+    log.info("TDX attestation generated successfully via dstack-sdk (sync)")
+    return _format_attestation_result(tee_public_key_hex, report_data_hex, quote_hex, rtmrs)
 
 
 def _get_dev_attestation(tee_public_key_hex: str) -> dict:

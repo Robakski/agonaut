@@ -646,49 +646,28 @@ class StoreWinningSolutionRequest(BaseModel):
     sponsor_address: str
 
 
-@router.post("/store-winning")
+# ── DEPRECATED V1 Endpoints ──────────────────────────────────────────────
+# These were used by the V1 push-based scoring pipeline where the TEE
+# scoring service would callback to the backend to store results.
+# In V2 (Architecture B / pull-based), the backend pulls results from
+# GET /score/results/{round_address} on the scoring service instead.
+# Kept for backward compatibility but should not be called.
+# TODO: Remove in v3.0
+
+@router.post("/store-winning", deprecated=True)
 async def store_winning_solution_endpoint(req: StoreWinningSolutionRequest, request: Request):
-    """Internal endpoint: scoring service stores ECIES-encrypted winning solutions.
+    """DEPRECATED: V1 push-based solution storage. Use pull-based flow instead.
 
-    The solution is already encrypted with the sponsor's public key by the TEE.
-    We store the opaque blob — we CANNOT decrypt it. Only the sponsor can.
-
-    Only accessible from localhost (scoring service on same machine).
+    V2 Architecture B: backend polls GET /score/results/{round} on scoring service.
+    This endpoint is no longer called by the scoring service.
     """
-    client_host = request.client.host if request.client else ""
-    if client_host not in ("127.0.0.1", "::1", "localhost"):
-        raise HTTPException(403, "Internal endpoint — localhost only")
-
-    from services.solution_vault import store_winning_solution as vault_store
-    success = vault_store(
-        round_address=req.round_address,
-        agent_address=req.agent_address,
-        agent_id=req.agent_id,
-        score=req.score,
-        encrypted_solution=req.encrypted_solution,
-        sponsor_address=req.sponsor_address,
-    )
-
-    if not success:
-        raise HTTPException(500, "Failed to store solution")
-
-    return {"status": "stored", "round_address": req.round_address, "agent_id": req.agent_id}
+    raise HTTPException(410, "Deprecated — V2 uses pull-based scoring (GET /score/results/{round})")
 
 
-@router.get("/sponsor-pubkey-internal/{wallet}")
+@router.get("/sponsor-pubkey-internal/{wallet}", deprecated=True)
 async def get_sponsor_pubkey_internal(wallet: str, request: Request):
-    """Internal endpoint: scoring service fetches sponsor public key for ECIES encryption.
+    """DEPRECATED: V1 endpoint for TEE to fetch sponsor keys. No longer needed.
 
-    Localhost only — the public key itself is not secret, but this endpoint
-    returns the full key (needed for encryption).
+    V2: Sponsor public key is passed directly in the /score/round-v2 request body.
     """
-    client_host = request.client.host if request.client else ""
-    if client_host not in ("127.0.0.1", "::1", "localhost"):
-        raise HTTPException(403, "Internal endpoint — localhost only")
-
-    from services.sponsor_keys import get_public_key
-    pubkey = get_public_key(wallet)
-    if not pubkey:
-        raise HTTPException(404, "No public key registered for this wallet")
-
-    return {"wallet": wallet, "public_key": pubkey}
+    raise HTTPException(410, "Deprecated — V2 passes sponsor key in scoring request body")
