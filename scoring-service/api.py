@@ -1088,10 +1088,22 @@ async def tee_attestation():
 
     This is the root of trust for the entire platform's zero-knowledge claims.
     """
-    pubkey = get_tee_public_key_hex()
-    # Run sync attestation in executor to avoid blocking event loop
-    loop = asyncio.get_event_loop()
-    return await loop.run_in_executor(None, get_attestation, pubkey)
+    try:
+        pubkey = get_tee_public_key_hex()
+        # Run sync attestation in executor to avoid blocking event loop
+        loop = asyncio.get_event_loop()
+        result = await loop.run_in_executor(None, get_attestation, pubkey)
+        return result
+    except Exception as e:
+        log.error(f"Attestation endpoint error: {type(e).__name__}: {e}")
+        import traceback
+        log.error(traceback.format_exc())
+        return {
+            "mode": "error",
+            "verified": False,
+            "error": f"{type(e).__name__}: {str(e)}",
+            "tee_environment_detected": is_tee_environment(),
+        }
 
 
 @app.get("/tee/code-measurement")
