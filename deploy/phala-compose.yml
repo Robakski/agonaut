@@ -1,0 +1,23 @@
+# Agonaut Scoring TEE — Phala Cloud CVM Deployment
+# SHA-384 of this file is embedded in RTMR3 by Intel TDX hardware
+
+services:
+  scorer:
+    image: ghcr.io/robakski/agonaut-scorer:latest
+    ports:
+      - "8001:8001"
+    volumes:
+      - /var/run/dstack.sock:/var/run/dstack.sock
+      - scorer-data:/app/data
+    environment:
+      - PHALA_API_KEY=${PHALA_API_KEY}
+      - PHALA_API_URL=https://api.redpill.ai/v1
+      - SCORING_MODEL=deepseek/deepseek-chat-v3-0324
+      - SCORER_PRIVATE_KEY=${SCORER_PRIVATE_KEY}
+      - SCORING_ORACLE=${SCORING_ORACLE}
+      - SCORING_HMAC_SECRET=${SCORING_HMAC_SECRET}
+      - RPC_URL=${RPC_URL:-https://sepolia.base.org}
+      - SCORING_DB_PATH=/app/data/scoring.db
+
+volumes:
+  scorer-data:

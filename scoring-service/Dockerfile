@@ -22,7 +22,7 @@ FROM python:3.11-slim AS production
 
 LABEL org.opencontainers.image.source="https://github.com/Robakski/agonaut"
 LABEL org.opencontainers.image.description="Agonaut TEE Scoring Service — Full ZK"
-LABEL org.opencontainers.image.version="2.0.0"
+LABEL org.opencontainers.image.version="2.3.0"
 
 # Security: non-root scorer user
 RUN groupadd -r scorer && useradd -r -g scorer -d /app -s /sbin/nologin scorer \
