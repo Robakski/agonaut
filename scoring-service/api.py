@@ -101,7 +101,9 @@ class ScoringAuthMiddleware(BaseHTTPMiddleware):
     """
 
     async def dispatch(self, request: Request, call_next):
-        if request.url.path == "/health":
+        # Public endpoints — no auth required (verification/transparency)
+        public_paths = ("/health", "/tee/attestation", "/tee/public-key", "/tee/code-measurement")
+        if request.url.path in public_paths:
             return await call_next(request)
 
         # Require at least one auth method configured
