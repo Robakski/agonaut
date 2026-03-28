@@ -15,7 +15,10 @@ Endpoints:
   POST /tee/agent-problem   → Forward agent's request to TEE, return encrypted problem
 """
 
+import hashlib
+import hmac as _hmac
 import logging
+import os
 import time
 from collections import defaultdict
 
@@ -26,7 +29,18 @@ from pydantic import BaseModel
 logger = logging.getLogger(__name__)
 router = APIRouter(tags=["tee"])
 
-SCORING_URL = "http://127.0.0.1:8001"
+SCORING_URL = os.environ.get("SCORING_SERVICE_URL", "http://127.0.0.1:8001")
+SCORING_HMAC_SECRET = os.environ.get("SCORING_HMAC_SECRET", "")
+
+
+def _sign_request(body: bytes = b"") -> dict:
+    """Generate HMAC-SHA256 auth headers for scoring service requests."""
+    if not SCORING_HMAC_SECRET:
+        return {}
+    timestamp = str(int(time.time()))
+    msg = timestamp.encode() + body
+    signature = _hmac.new(SCORING_HMAC_SECRET.encode(), msg, hashlib.sha256).hexdigest()
+    return {"X-Scoring-Timestamp": timestamp, "X-Scoring-Signature": signature}
 
 
 # ── G4: Simple in-memory rate limiting for TEE endpoints ──
@@ -77,7 +91,7 @@ async def get_tee_attestation():
     """
     try:
         async with httpx.AsyncClient() as client:
-            resp = await client.get(f"{SCORING_URL}/tee/attestation", timeout=10)
+            resp = await client.get(f"{SCORING_URL}/tee/attestation", timeout=10, headers=_sign_request())
             if resp.status_code != 200:
                 raise HTTPException(503, "TEE attestation unavailable")
             return resp.json()
@@ -98,7 +112,7 @@ async def get_tee_public_key():
     """
     try:
         async with httpx.AsyncClient() as client:
-            resp = await client.get(f"{SCORING_URL}/tee/public-key", timeout=5)
+            resp = await client.get(f"{SCORING_URL}/tee/public-key", timeout=5, headers=_sign_request())
             if resp.status_code != 200:
                 raise HTTPException(503, "TEE service unavailable")
             return resp.json()
@@ -151,9 +165,12 @@ async def store_problem_proxy(req: StoreProblemProxyRequest, request: Request):
 
     try:
         async with httpx.AsyncClient() as client:
+            import json as _json
+            body_bytes = _json.dumps(req.model_dump()).encode()
             resp = await client.post(
                 f"{SCORING_URL}/tee/store-problem",
-                json=req.model_dump(),
+                content=body_bytes,
+                headers={**_sign_request(body_bytes), "Content-Type": "application/json"},
                 timeout=10,
             )
             if resp.status_code != 200:
@@ -217,9 +234,12 @@ async def agent_problem_proxy(req: AgentProblemProxyRequest, request: Request):
     # Forward to TEE
     try:
         async with httpx.AsyncClient() as client:
+            import json as _json
+            body_bytes = _json.dumps(req.model_dump()).encode()
             resp = await client.post(
                 f"{SCORING_URL}/tee/agent-problem",
-                json=req.model_dump(),
+                content=body_bytes,
+                headers={**_sign_request(body_bytes), "Content-Type": "application/json"},
                 timeout=10,
             )
 

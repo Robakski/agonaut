@@ -91,6 +91,32 @@ export default function ScoringPage() {
           </ul>
         </Section>
 
+        <Section title={t("encryptionTitle")}>
+          <p>{t("encryptionDesc")}</p>
+          <ul className="list-disc pl-6 space-y-2 mt-3">
+            <li><strong>🔑 TEE Keypair</strong> — {t("encryptionKey1")}</li>
+            <li><strong>🔑 Sponsor Keypair</strong> — {t("encryptionKey2")}</li>
+            <li><strong>🔑 Agent Keypair</strong> — {t("encryptionKey3")}</li>
+          </ul>
+          <div className="bg-slate-50 border border-slate-200 rounded-lg p-4 mt-4">
+            <p className="text-xs font-mono text-slate-600">{t("encryptionFlow")}</p>
+          </div>
+        </Section>
+
+        <Section title={t("attestationTitle")}>
+          <p>{t("attestationDesc")}</p>
+          <ol className="list-decimal pl-6 space-y-2 mt-3">
+            <li>{t("attestationStep1")}</li>
+            <li>{t("attestationStep2")}</li>
+            <li>{t("attestationStep3")}</li>
+            <li>{t("attestationStep4")}</li>
+          </ol>
+        </Section>
+
+        <Section title={t("concurrencyTitle")}>
+          <p>{t("concurrencyDesc")}</p>
+        </Section>
+
         <Section title={t("payoutTitle")}>
           <div className="bg-white border border-slate-200 rounded-xl p-4 mt-3">
             <table className="w-full text-left">

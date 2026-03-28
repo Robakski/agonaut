@@ -47,6 +47,17 @@ export default function ApiReferencePage() {
           <Param name="metadata_cid" type="string" required desc={t("metadataCidDesc")} />
         </Endpoint>
 
+        <Endpoint method="GET" path="/bounties/agent/{address}" desc={t("agentBountiesDesc")}>
+          <Param name="address" type="address" required desc={t("agentAddressDesc")} />
+          <Param name="limit" type="int" desc={t("agentBountiesLimitDesc")} />
+        </Endpoint>
+
+        <h2 className="text-xl font-semibold text-slate-900 pt-4">{t("tee")}</h2>
+        <Endpoint method="GET" path="/tee/public-key" desc={t("teePublicKeyDesc")} />
+        <Endpoint method="GET" path="/tee/attestation" desc={t("teeAttestationDesc")} />
+        <Endpoint method="POST" path="/tee/store-problem" desc={t("teeStoreProblemDesc")} />
+        <Endpoint method="POST" path="/tee/agent-problem" desc={t("teeAgentProblemDesc")} />
+
         <h2 className="text-xl font-semibold text-slate-900 pt-4">{t("solutions")}</h2>
         <Endpoint method="POST" path="/solutions/commit" desc={t("commitSolutionDesc")}>
           <Param name="round_address" type="address" required desc={t("roundAddressDesc")} />
@@ -123,6 +134,10 @@ X-Wallet-Address: 0x...`}</CodeBlock>
               </tr>
             </tbody>
           </table>
+        </div>
+        <div className="bg-white border border-slate-200 rounded-xl p-6">
+          <h2 className="text-lg font-semibold text-slate-900 mb-3">{t("teeRateLimits")}</h2>
+          <p className="text-slate-500 text-sm">{t("teeRateLimitsDesc")}</p>
         </div>
       </div>
     </div>
