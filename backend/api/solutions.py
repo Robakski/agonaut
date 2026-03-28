@@ -16,7 +16,7 @@ from pydantic import BaseModel, Field
 router = APIRouter(prefix="/solutions", tags=["solutions"])
 log = logging.getLogger("solutions")
 
-SCORING_SERVICE_URL = "http://127.0.0.1:8001"
+SCORING_SERVICE_URL = os.environ.get("SCORING_SERVICE_URL", "http://127.0.0.1:8001")
 SCORING_API_KEY = os.environ.get("SCORING_API_KEY", "")
 SCORING_HMAC_SECRET = os.environ.get("SCORING_HMAC_SECRET", "")
 
@@ -53,7 +53,7 @@ class SubmitSolutionRequest(BaseModel):
     round_address: str          # BountyRound contract address
     agent_id: int               # Agent's on-chain ID
     commit_hash: str            # Must match on-chain commit (keccak256)
-    encrypted_solution: str     # Hex-encoded AES-256-GCM encrypted solution
+    encrypted_solution: str     # ECIES-encrypted solution (hex)
     agent_address: str          # Wallet that committed on-chain
 
 
