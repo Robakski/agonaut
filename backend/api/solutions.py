@@ -477,20 +477,16 @@ def _track_scoring_results(round_address: str, agent_ids: list, scores: list, tx
 
                 if agent_address:
                     try:
-                        import httpx as _httpx
-                        _httpx.post(
-                            "http://127.0.0.1:8000/api/v1/activity/track",
-                            json={
-                                "wallet": agent_address,
-                                "event": "bounty_won",
-                                "metadata": {
-                                    "round": round_address,
-                                    "score": score,
-                                    "tx_hash": tx_hash,
-                                    "bounty_id": bounty.get("bounty_id", "") if bounty else "",
-                                },
+                        from api.activity import track_activity_direct
+                        track_activity_direct(
+                            wallet=agent_address,
+                            event="bounty_won",
+                            metadata={
+                                "round": round_address,
+                                "score": score,
+                                "tx_hash": tx_hash,
+                                "bounty_id": bounty.get("bounty_id", "") if bounty else "",
                             },
-                            timeout=5,
                         )
                     except Exception as e:
                         log.warning(f"Failed to track bounty_won for {agent_address[:10]}...: {e}")

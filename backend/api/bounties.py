@@ -11,6 +11,7 @@ from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel, Field
 from typing import Optional
 
+import config
 from services.chain import get_chain_service
 from services.storage import store_rubric, load_rubric, compute_problem_cid
 from services.ipfs import get_pinata_client
@@ -226,7 +227,7 @@ async def create_bounty_relay(req: CreateBountyRequest):
                 tx_type="bounty_deposit",
                 amount_eth=float(req.bountyEth),
                 tx_hash=result.create_tx_hash,
-                chain_id=84532,  # Base Sepolia; update for mainnet
+                chain_id=config.CHAIN_ID,
                 round_address=result.round_address,
                 metadata={"bounty_id": result.bounty_id, "title": req.title},
             )

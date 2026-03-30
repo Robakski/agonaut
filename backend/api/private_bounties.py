@@ -163,28 +163,14 @@ async def request_problem_key(req: RequestProblemKeyRequest):
     }
 
 
-@router.get("/problem-for-scoring/{round_address}")
+@router.get("/problem-for-scoring/{round_address}", deprecated=True)
 async def get_problem_for_scoring(round_address: str, request: Request):
-    """Internal: scoring service requests problem key for scoring context.
+    """DEPRECATED: V1 endpoint for scoring service to fetch problems.
 
-    Localhost only — the scoring LLM needs the decrypted problem text
-    to understand what the solution is supposed to accomplish.
+    V2: Problems are sent directly in the /score/round-v2 request body.
+    This endpoint is no longer called by the scoring service.
     """
-    client_host = request.client.host if request.client else ""
-    if client_host not in ("127.0.0.1", "::1", "localhost"):
-        raise HTTPException(403, "Internal endpoint — localhost only")
-
-    from services.problem_vault import get_problem_for_scoring as vault_scoring
-
-    result = vault_scoring(round_address)
-    if not result:
-        return {"has_key": False}
-
-    return {
-        "has_key": True,
-        "problem_text": result.get("problem_text", ""),
-        "visibility": result.get("visibility", "PRIVATE"),
-    }
+    raise HTTPException(410, "Deprecated — V2 passes problems in scoring request body")
 
 
 @router.get("/access-log/{round_address}")

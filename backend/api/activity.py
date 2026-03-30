@@ -8,6 +8,10 @@ Stored in SQLite for simplicity (migrate to Postgres before mainnet).
 import sqlite3
 import time
 import os
+import json
+import logging
+
+log = logging.getLogger("activity")
 from contextlib import contextmanager
 from typing import Optional
 from fastapi import APIRouter, Query, HTTPException
@@ -106,6 +110,35 @@ class TrackEventRequest(BaseModel):
 
 class TrackEventResponse(BaseModel):
     ok: bool
+
+
+def track_activity_direct(wallet: str, event: str, metadata: dict = None):
+    """Direct function call for internal activity tracking (no HTTP round-trip)."""
+    try:
+        if event not in VALID_EVENTS:
+            log.warning(f"Invalid activity event: {event}")
+            return
+        _ensure_db()
+        now = int(time.time())
+        wallet = wallet.lower()
+        detail = json.dumps(metadata) if metadata else None
+
+        with _get_db() as db:
+            existing = db.execute("SELECT * FROM wallets WHERE address = ?", (wallet,)).fetchone()
+            if not existing:
+                db.execute(
+                    "INSERT INTO wallets (address, first_seen, last_seen) VALUES (?, ?, ?)",
+                    (wallet, now, now),
+                )
+            else:
+                db.execute("UPDATE wallets SET last_seen = ? WHERE address = ?", (now, wallet))
+            db.execute(
+                "INSERT INTO events (wallet, event, detail, page, ts, session_id) VALUES (?, ?, ?, ?, ?, ?)",
+                (wallet, event, detail, None, now, None),
+            )
+        log.info(f"Activity tracked: {wallet} → {event}")
+    except Exception as e:
+        log.warning(f"Activity tracking failed (non-blocking): {e}")
 
 
 @router.post("/track", response_model=TrackEventResponse)

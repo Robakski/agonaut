@@ -15,6 +15,7 @@ import logging
 from fastapi import APIRouter, Query, HTTPException, Request
 from pydantic import BaseModel
 from typing import Optional
+import config
 
 logger = logging.getLogger(__name__)
 
@@ -238,7 +239,7 @@ async def record_tx(req: RecordTxRequest, request: Request):
         tx_type=req.tx_type,
         amount_eth=req.amount_eth,
         tx_hash=req.tx_hash,
-        chain_id=84532,  # TODO: make configurable for mainnet
+        chain_id=config.CHAIN_ID,
         round_address=req.round_address,
         metadata=meta,
     )

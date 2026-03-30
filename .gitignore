@@ -29,3 +29,6 @@ backend/data/
 backup-data/env.backup
 backup-data/*.db-journal
 backup-data/
+
+# API keys
+**/keys.json
