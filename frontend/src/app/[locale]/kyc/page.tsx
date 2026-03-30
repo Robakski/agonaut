@@ -11,13 +11,6 @@ import SumsubWebSdk from "@sumsub/websdk-react";
 /* ─── Types ─── */
 type KycStatus = "NONE" | "PENDING" | "VERIFIED" | "REJECTED" | "loading";
 
-/* ─── In-app browser detection ─── */
-function isInAppBrowser(): boolean {
-  if (typeof window === "undefined") return false;
-  const ua = navigator.userAgent || "";
-  return /MetaMask|Coinbase|Trust\/|Rainbow|TokenPocket|imToken|OKX|Phantom|Rabby/i.test(ua);
-}
-
 export default function KycPage() {
   const t = useTranslations("kyc");
   const { isConnected, address: walletAddress } = useAccount();
@@ -26,22 +19,7 @@ export default function KycPage() {
   const [sumsubToken, setSumsubToken] = useState<string | null>(null);
   const [sdkLaunched, setSdkLaunched] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [inAppBrowser, setInAppBrowser] = useState(false);
-  const [urlWallet, setUrlWallet] = useState<string | null>(null);
-
-  // Detect in-app browser + read wallet from URL param
-  useEffect(() => {
-    setInAppBrowser(isInAppBrowser());
-    const params = new URLSearchParams(window.location.search);
-    const w = params.get("wallet");
-    if (w && /^0x[a-fA-F0-9]{40}$/.test(w)) {
-      setUrlWallet(w);
-    }
-  }, []);
-
-  // Use wallet from URL if no wallet connected (external browser flow)
-  const address = walletAddress || urlWallet;
-  const effectivelyConnected = isConnected || !!urlWallet;
+  const address = walletAddress;
 
   // Check Sumsub configuration
   useEffect(() => {
@@ -123,7 +101,7 @@ export default function KycPage() {
   }, []);
 
   /* ─── Not connected ─── */
-  if (!effectivelyConnected) {
+  if (!isConnected) {
     return (
       <div className="mx-auto max-w-2xl px-4 sm:px-6 lg:px-8 py-20">
         <div className="text-center py-16 bg-white border border-slate-200 rounded-2xl shadow-sm">
@@ -285,60 +263,20 @@ export default function KycPage() {
               </div>
             )}
 
-            {inAppBrowser ? (
-              <div className="space-y-4">
-                <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
-                  <div className="flex items-start gap-3">
-                    <span className="text-xl">🌐</span>
-                    <div>
-                      <p className="text-sm font-semibold text-amber-900">External browser required</p>
-                      <p className="text-xs text-amber-700 mt-1">
-                        Identity verification requires your phone&apos;s main browser (Safari or Chrome). 
-                        Wallet browsers don&apos;t support the verification widget.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-                <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 flex items-center gap-2">
-                  <code className="text-xs text-slate-600 truncate flex-1">agonaut.io/en/kyc</code>
-                  <button
-                    onClick={() => {
-                      navigator.clipboard.writeText(`https://agonaut.io/en/kyc?wallet=${address}`);
-                      const btn = document.getElementById("copy-btn");
-                      if (btn) { btn.textContent = "Copied! ✓"; setTimeout(() => { btn.textContent = "Copy Link"; }, 2000); }
-                    }}
-                    id="copy-btn"
-                    className="px-3 py-1.5 text-xs font-semibold bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition-all shrink-0"
-                  >
-                    Copy Link
-                  </button>
-                </div>
-                <p className="text-xs text-slate-400 text-center mt-3">
-                  1. Tap <strong>Copy Link</strong> above<br />
-                  2. Open <strong>Safari</strong> or <strong>Chrome</strong> on your phone<br />
-                  3. Paste the link and complete verification<br />
-                  4. Come back here — your status updates automatically
-                </p>
-                <p className="text-xs text-slate-400 text-center">
-                  Complete KYC in your browser, then return here. Your wallet stays connected.
-                </p>
-              </div>
-            ) : (
-              <button
-                onClick={launchSumsub}
-                disabled={sumsubConfigured === null}
-                className="w-full py-3.5 text-sm font-semibold bg-slate-900 text-white rounded-xl hover:bg-slate-800 disabled:opacity-40 transition-all"
-              >
-                {sumsubConfigured === null ? (
-                  <span className="flex items-center justify-center gap-2">
-                    <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>
-                    {t("loading")}
-                  </span>
-                ) : (
-                  isRejected ? t("retryButton") : t("startButton")
-                )}
-              </button>
-            )}
+            <button
+              onClick={launchSumsub}
+              disabled={sumsubConfigured === null}
+              className="w-full py-3.5 text-sm font-semibold bg-slate-900 text-white rounded-xl hover:bg-slate-800 disabled:opacity-40 transition-all"
+            >
+              {sumsubConfigured === null ? (
+                <span className="flex items-center justify-center gap-2">
+                  <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>
+                  {t("loading")}
+                </span>
+              ) : (
+                isRejected ? t("retryButton") : t("startButton")
+              )}
+            </button>
           </div>
         )}
       </div>
