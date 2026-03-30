@@ -65,6 +65,7 @@ def load_abi(name: str) -> list:
 def ok(msg): print(f"\033[92m  ✅ {msg}\033[0m")
 def fail(msg): print(f"\033[91m  ❌ {msg}\033[0m")
 def info(msg): print(f"\033[94m  ℹ️  {msg}\033[0m")
+def warn(msg): print(f"\033[93m  ⚠️  {msg}\033[0m")
 def step(n, msg): print(f"\n\033[1m{'─'*60}\n  Step {n}: {msg}\n{'─'*60}\033[0m")
 
 
