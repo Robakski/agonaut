@@ -603,7 +603,7 @@ DASHBOARD_HTML = r"""<!DOCTYPE html>
 function escHtml(s){if(!s)return'';return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;').replace(/\n/g,'<br>');}
 const API = window.location.origin + '/api/v1';
 const KEY = '__ADMIN_KEY__';
-const q = (p) => fetch(`${API}${p}${p.includes('?')?'&':'?'}key=${KEY}`).then(r=>r.json());
+const q = (p) => fetch(`${API}${p}`,{headers:{'X-Admin-Key':KEY},credentials:'include'}).then(r=>r.json());
 
 async function loadAll(){
   try{
@@ -838,7 +838,7 @@ async function updateFeedbackStatus(id,status){
 
 async function loadEmails(){
   try{
-    const r=await fetch(`${location.origin}/admin/email/inbox?key=__ADMIN_KEY__&limit=30`);
+    const r=await fetch(`${location.origin}/admin/email/inbox?limit=30`,{headers:{'X-Admin-Key':KEY},credentials:'include'});
     if(!r.ok)throw new Error('Email fetch failed');
     const d=await r.json();
     const el=document.getElementById('emailList');
@@ -874,7 +874,7 @@ async function readEmail(uid){
   content.innerHTML='<div style="padding:24px;color:var(--muted)">Loading...</div>';
   panel.classList.add('open');
   try{
-    const r=await fetch(`${location.origin}/admin/email/read/${uid}?key=__ADMIN_KEY__`);
+    const r=await fetch(`${location.origin}/admin/email/read/${uid}`,{headers:{'X-Admin-Key':KEY},credentials:'include'});
     const m=await r.json();
     const dt=m.timestamp?new Date(m.timestamp*1000).toLocaleString('de-DE',{dateStyle:'full',timeStyle:'short'}):'';
     content.innerHTML=`
@@ -930,7 +930,7 @@ async function forwardEmail(uid){
   if(!to)return;
   const comment=prompt('Add a comment (optional):','');
   try{
-    const r=await fetch(`${location.origin}/admin/email/forward?key=__ADMIN_KEY__`,{
+    const r=await fetch(`${location.origin}/admin/email/forward`,{headers:{'X-Admin-Key':KEY},credentials:'include',
       method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({uid,to,comment:comment||''})
     });
@@ -948,7 +948,7 @@ async function sendComposedEmail(){
   if(!to||!subject||!body){status.textContent='Please fill all fields';status.style.color='var(--red)';return}
   btn.disabled=true;btn.textContent='Sending...';
   try{
-    const r=await fetch(`${location.origin}/admin/email/send?key=__ADMIN_KEY__`,{
+    const r=await fetch(`${location.origin}/admin/email/send`,{headers:{'X-Admin-Key':KEY},credentials:'include',
       method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({to,subject,body})
     });

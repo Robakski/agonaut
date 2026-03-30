@@ -31,8 +31,8 @@ export default function KycPage() {
   useEffect(() => {
     fetch(`${API_URL}/kyc/sumsub/configured`)
       .then(r => r.json())
-      .then(d => setSumsubConfigured(d.configured))
-      .catch(() => setSumsubConfigured(false));
+      .then(d => setSumsubConfigured(d.configured ?? true))
+      .catch(() => setSumsubConfigured(true));
   }, []);
 
   // Check KYC status

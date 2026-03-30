@@ -45,7 +45,7 @@ app.add_middleware(
     ],
     allow_credentials=True,
     allow_methods=["GET", "POST", "OPTIONS"],
-    allow_headers=["Content-Type", "Authorization", "X-Wallet-Address"],
+    allow_headers=["Content-Type", "Authorization", "X-Wallet-Address", "X-Admin-Key"],
 )
 
 # ── Sanctions Middleware (runs AFTER rate limiting in the request flow) ──
