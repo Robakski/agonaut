@@ -214,43 +214,82 @@ export default function CreateBountyPage() {
   };
 
   // ── Auto-save draft to localStorage ──
-  const DRAFT_KEY = address ? `agonaut_bounty_draft_${address}` : null;
+  // Save under both wallet-specific AND generic key for resilience
+  const DRAFT_KEY_WALLET = address ? `agonaut_bounty_draft_${address.toLowerCase()}` : null;
+  const DRAFT_KEY_GENERIC = "agonaut_bounty_draft_latest";
 
   // Save on every change
   useEffect(() => {
-    if (!DRAFT_KEY || !selectedTemplate) return;
-    const draft = { selectedTemplate, stepIdx, title, description, tags, criteria, bountyEth, commitHours, maxAgents, threshold, graduated, visibility, savedAt: Date.now() };
-    try { localStorage.setItem(DRAFT_KEY, JSON.stringify(draft)); } catch {}
-  }, [DRAFT_KEY, selectedTemplate, stepIdx, title, description, tags, criteria, bountyEth, commitHours, maxAgents, threshold, graduated, visibility]);
-
-  // Restore on mount
-  const [draftRestored, setDraftRestored] = useState(false);
-  useEffect(() => {
-    if (!DRAFT_KEY || draftRestored) return;
+    if (!selectedTemplate) return;
+    const draft = { selectedTemplate, stepIdx, title, description, tags, criteria, bountyEth, commitHours, maxAgents, threshold, graduated, visibility, savedAt: Date.now(), wallet: address?.toLowerCase() || "" };
     try {
-      const raw = localStorage.getItem(DRAFT_KEY);
+      const json = JSON.stringify(draft);
+      if (DRAFT_KEY_WALLET) localStorage.setItem(DRAFT_KEY_WALLET, json);
+      localStorage.setItem(DRAFT_KEY_GENERIC, json);
+    } catch {}
+  }, [DRAFT_KEY_WALLET, selectedTemplate, stepIdx, title, description, tags, criteria, bountyEth, commitHours, maxAgents, threshold, graduated, visibility, address]);
+
+  // Restore on mount — try wallet-specific first, then generic
+  const [draftRestored, setDraftRestored] = useState(false);
+  const [hasDraft, setHasDraft] = useState(false);
+  const [draftTitle, setDraftTitle] = useState("");
+
+  const restoreDraft = (draft: Record<string, unknown>) => {
+    if (draft.selectedTemplate) setSelectedTemplate(draft.selectedTemplate as string);
+    if (draft.stepIdx) setStepIdx(draft.stepIdx as number);
+    if (draft.title) setTitle(draft.title as string);
+    if (draft.description) setDescription(draft.description as string);
+    if (draft.tags) setTags(draft.tags as string[]);
+    if ((draft.criteria as Criterion[])?.length) setCriteria(draft.criteria as Criterion[]);
+    if (draft.bountyEth) setBountyEth(draft.bountyEth as string);
+    if (draft.commitHours) setCommitHours(draft.commitHours as string);
+    if (draft.maxAgents) setMaxAgents(draft.maxAgents as string);
+    if (draft.threshold) setThreshold(draft.threshold as string);
+    if (draft.graduated !== undefined) setGraduated(draft.graduated as boolean);
+    if (draft.visibility) setVisibility(draft.visibility as "PUBLIC" | "SUMMARY" | "PRIVATE");
+  };
+
+  useEffect(() => {
+    if (draftRestored) return;
+    try {
+      // Try wallet-specific first, then generic
+      const raw = (DRAFT_KEY_WALLET && localStorage.getItem(DRAFT_KEY_WALLET)) || localStorage.getItem(DRAFT_KEY_GENERIC);
       if (!raw) { setDraftRestored(true); return; }
       const draft = JSON.parse(raw);
-      // Only restore if less than 24h old
-      if (Date.now() - (draft.savedAt || 0) > 86400000) { localStorage.removeItem(DRAFT_KEY); setDraftRestored(true); return; }
-      if (draft.selectedTemplate) setSelectedTemplate(draft.selectedTemplate);
-      if (draft.stepIdx) setStepIdx(draft.stepIdx);
-      if (draft.title) setTitle(draft.title);
-      if (draft.description) setDescription(draft.description);
-      if (draft.tags) setTags(draft.tags);
-      if (draft.criteria?.length) setCriteria(draft.criteria);
-      if (draft.bountyEth) setBountyEth(draft.bountyEth);
-      if (draft.commitHours) setCommitHours(draft.commitHours);
-      if (draft.maxAgents) setMaxAgents(draft.maxAgents);
-      if (draft.threshold) setThreshold(draft.threshold);
-      if (draft.graduated !== undefined) setGraduated(draft.graduated);
-      if (draft.visibility) setVisibility(draft.visibility);
+      if (Date.now() - (draft.savedAt || 0) > 86400000) {
+        if (DRAFT_KEY_WALLET) localStorage.removeItem(DRAFT_KEY_WALLET);
+        localStorage.removeItem(DRAFT_KEY_GENERIC);
+        setDraftRestored(true);
+        return;
+      }
+      // Show "continue draft" banner instead of auto-restoring
+      setHasDraft(true);
+      setDraftTitle((draft.title as string) || "Untitled bounty");
     } catch {}
     setDraftRestored(true);
-  }, [DRAFT_KEY, draftRestored]);
+  }, [DRAFT_KEY_WALLET, draftRestored]);
+
+  const continueDraft = () => {
+    try {
+      const raw = (DRAFT_KEY_WALLET && localStorage.getItem(DRAFT_KEY_WALLET)) || localStorage.getItem(DRAFT_KEY_GENERIC);
+      if (!raw) return;
+      const draft = JSON.parse(raw);
+      restoreDraft(draft);
+      setHasDraft(false);
+    } catch {}
+  };
+
+  const discardDraft = () => {
+    if (DRAFT_KEY_WALLET) try { localStorage.removeItem(DRAFT_KEY_WALLET); } catch {}
+    try { localStorage.removeItem(DRAFT_KEY_GENERIC); } catch {}
+    setHasDraft(false);
+  };
 
   // Clear draft on successful submission
-  const clearDraft = () => { if (DRAFT_KEY) try { localStorage.removeItem(DRAFT_KEY); } catch {} };
+  const clearDraft = () => {
+    if (DRAFT_KEY_WALLET) try { localStorage.removeItem(DRAFT_KEY_WALLET); } catch {}
+    try { localStorage.removeItem(DRAFT_KEY_GENERIC); } catch {}
+  };
 
   // Handle deposit hash → confirming state
   useEffect(() => {
@@ -810,6 +849,23 @@ export default function CreateBountyPage() {
       {/* ───── Step 1: Template ───── */}
       {step === "Template" && (
         <div className="space-y-4">
+          {/* Continue draft banner */}
+          {hasDraft && (
+            <div className="bg-amber-50 border-2 border-amber-300 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center gap-3">
+              <div className="flex-1">
+                <p className="text-sm font-semibold text-amber-900">📝 Continue your draft?</p>
+                <p className="text-xs text-amber-700 mt-0.5">&ldquo;{draftTitle}&rdquo; — saved recently</p>
+              </div>
+              <div className="flex gap-2">
+                <button onClick={continueDraft} className="px-4 py-2 text-sm font-semibold bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-all">
+                  Continue →
+                </button>
+                <button onClick={discardDraft} className="px-3 py-2 text-xs text-amber-600 hover:text-amber-800 transition-colors">
+                  Discard
+                </button>
+              </div>
+            </div>
+          )}
           <p className="text-slate-600 text-sm">{t("templateHint")}</p>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {Object.entries(TEMPLATES).map(([key, tpl]) => (
