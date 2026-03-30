@@ -11,6 +11,13 @@ import SumsubWebSdk from "@sumsub/websdk-react";
 /* ─── Types ─── */
 type KycStatus = "NONE" | "PENDING" | "VERIFIED" | "REJECTED" | "loading";
 
+/* ─── In-app browser detection ─── */
+function isInAppBrowser(): boolean {
+  if (typeof window === "undefined") return false;
+  const ua = navigator.userAgent || "";
+  return /MetaMask|Coinbase|Trust\/|Rainbow|TokenPocket|imToken|OKX|Phantom|Rabby/i.test(ua);
+}
+
 export default function KycPage() {
   const t = useTranslations("kyc");
   const { isConnected, address } = useAccount();
@@ -19,6 +26,12 @@ export default function KycPage() {
   const [sumsubToken, setSumsubToken] = useState<string | null>(null);
   const [sdkLaunched, setSdkLaunched] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [inAppBrowser, setInAppBrowser] = useState(false);
+
+  // Detect in-app browser
+  useEffect(() => {
+    setInAppBrowser(isInAppBrowser());
+  }, []);
 
   // Check Sumsub configuration
   useEffect(() => {
@@ -253,7 +266,7 @@ export default function KycPage() {
           </div>
         )}
 
-        {/* Start button or fallback form */}
+        {/* Start button */}
         {!sdkLaunched && (
           <div className="px-6 sm:px-8 pb-8">
             {error && (
@@ -262,34 +275,47 @@ export default function KycPage() {
               </div>
             )}
 
-            {sumsubConfigured === false ? (
-              <ManualKycForm wallet={address!} onSubmit={() => setStatus("PENDING")} />
-            ) : (
-              <>
-                <button
-                  onClick={launchSumsub}
-                  disabled={sumsubConfigured === null}
-                  className="w-full py-3.5 text-sm font-semibold bg-slate-900 text-white rounded-xl hover:bg-slate-800 disabled:opacity-40 transition-all"
+            {inAppBrowser ? (
+              <div className="space-y-4">
+                <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
+                  <div className="flex items-start gap-3">
+                    <span className="text-xl">🌐</span>
+                    <div>
+                      <p className="text-sm font-semibold text-amber-900">External browser required</p>
+                      <p className="text-xs text-amber-700 mt-1">
+                        Identity verification requires your phone&apos;s main browser (Safari or Chrome). 
+                        Wallet browsers don&apos;t support the verification widget.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <a
+                  href={`https://agonaut.io/en/kyc?wallet=${address}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block w-full py-3.5 text-sm font-semibold bg-slate-900 text-white rounded-xl hover:bg-slate-800 transition-all text-center"
                 >
-                  {sumsubConfigured === null ? (
-                    <span className="flex items-center justify-center gap-2">
-                      <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>
-                      {t("loading")}
-                    </span>
-                  ) : (
-                    isRejected ? t("retryButton") : t("startButton")
-                  )}
-                </button>
-                <p
-                  role="button"
-                  tabIndex={0}
-                  onClick={() => { setSumsubConfigured(false); }}
-                  onKeyDown={(e) => { if (e.key === "Enter") setSumsubConfigured(false); }}
-                  className="w-full mt-3 text-center text-xs text-slate-400 hover:text-slate-600 cursor-pointer transition-colors"
-                >
-                  Having trouble? Use manual verification instead
+                  Open in Safari / Chrome →
+                </a>
+                <p className="text-xs text-slate-400 text-center">
+                  Complete KYC in your browser, then return here. Your wallet stays connected.
                 </p>
-              </>
+              </div>
+            ) : (
+              <button
+                onClick={launchSumsub}
+                disabled={sumsubConfigured === null}
+                className="w-full py-3.5 text-sm font-semibold bg-slate-900 text-white rounded-xl hover:bg-slate-800 disabled:opacity-40 transition-all"
+              >
+                {sumsubConfigured === null ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>
+                    {t("loading")}
+                  </span>
+                ) : (
+                  isRejected ? t("retryButton") : t("startButton")
+                )}
+              </button>
             )}
           </div>
         )}
