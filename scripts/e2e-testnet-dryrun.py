@@ -272,34 +272,33 @@ class E2ETest:
             except Exception:
                 pass
 
-            # Need to insert directly — use the webhook simulation endpoint
-            # or direct DB insert via a test endpoint
-            info(f"{label} ({wallet[:10]}...) needs KYC — attempting test bypass")
+            info(f"{label} ({wallet[:10]}...) needs KYC — inserting directly into DB")
 
-            # Try Sumsub webhook simulation (if available)
-            webhook_payload = {
-                "type": "applicantReviewed",
-                "applicantId": f"e2e-test-{label}-{int(time.time())}",
-                "externalUserId": wallet.lower(),
-                "reviewResult": {
-                    "reviewAnswer": "GREEN",
-                },
-                "reviewStatus": "completed",
-            }
+            # Direct DB insert for E2E testing (bypasses Sumsub)
             try:
-                r = requests.post(
-                    f"{API_URL}/kyc/webhook",
-                    json=webhook_payload,
-                    timeout=5,
+                import sqlite3
+                kyc_db = os.environ.get("KYC_DB", "/opt/agonaut-api/data/kyc.db")
+                conn = sqlite3.connect(kyc_db)
+                now = int(time.time())
+                wl = wallet.lower()
+                # Check if already exists
+                row = conn.execute("SELECT status FROM submissions WHERE wallet = ? ORDER BY id DESC LIMIT 1", (wl,)).fetchone()
+                if row and row[0] == "VERIFIED":
+                    ok(f"{label} already verified in DB")
+                    conn.close()
+                    continue
+                # Insert verified submission
+                conn.execute(
+                    "INSERT INTO submissions (wallet, full_name, country, document_type, document_id, status, submitted_at, reviewed_at, reviewed_by, review_reason) "
+                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                    (wl, f"E2E Test {label.title()}", "DE", "passport", f"E2E-{int(now)}", "VERIFIED", now, now, "e2e-test", "E2E auto-approve"),
                 )
-                if r.status_code == 200:
-                    ok(f"{label} KYC set to VERIFIED via webhook")
-                else:
-                    info(f"Webhook returned {r.status_code}: {r.text[:100]}")
-                    info(f"You may need to manually insert KYC record for {wallet}")
+                conn.commit()
+                conn.close()
+                ok(f"{label} KYC set to VERIFIED via direct DB insert")
             except Exception as e:
-                info(f"KYC webhook failed: {e}")
-                info(f"Manual fix: INSERT INTO kyc (wallet, status) VALUES ('{wallet.lower()}', 'VERIFIED')")
+                warn(f"KYC DB insert failed: {e}")
+                info(f"Try running as root or set KYC_DB env var")
 
         return True  # Non-fatal — we'll see if bounty creation works
 
