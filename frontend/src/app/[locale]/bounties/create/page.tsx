@@ -861,25 +861,27 @@ export default function CreateBountyPage() {
                   </div>
                   {!criterion.collapsed && (
                     <div className="p-4 space-y-3">
-                      <div className="flex items-center gap-2 text-xs text-slate-400 font-medium px-1">
+                      <div className="hidden sm:flex items-center gap-2 text-xs text-slate-400 font-medium px-1">
                         <span className="flex-1">Check description</span>
                         <span className="w-20 text-center">Weight</span>
                         <span className="w-20 text-center">Required</span>
                         <span className="w-8"></span>
                       </div>
                       {criterion.checks.map((check, chIdx) => (
-                        <div key={chIdx} className="flex items-center gap-2">
-                          <input type="text" value={check.description} onChange={(e) => updateCheck(cIdx, chIdx, "description", e.target.value)} placeholder={t("checkPlaceholder")} className="input-field flex-1 !py-2 text-sm" />
-                          <input type="number" value={check.weight || ""} onChange={(e) => updateCheck(cIdx, chIdx, "weight", Number(e.target.value))} placeholder="BPS" className="input-field w-20 !py-2 text-sm text-center" />
-                          <div className="w-20 flex justify-center">
-                            <button onClick={() => updateCheck(cIdx, chIdx, "required", !check.required)}
-                              className={`px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors ${check.required ? "bg-red-50 text-red-700 border border-red-200" : "bg-slate-50 text-slate-400 border border-slate-200 hover:border-slate-300"}`}>
-                              {check.required ? t("required") : t("optional")}
+                        <div key={chIdx} className="flex flex-col sm:flex-row sm:items-center gap-2 p-3 sm:p-0 bg-slate-50 sm:bg-transparent rounded-xl sm:rounded-none">
+                          <input type="text" value={check.description} onChange={(e) => updateCheck(cIdx, chIdx, "description", e.target.value)} placeholder={t("checkPlaceholder")} className="input-field w-full sm:flex-1 !py-2.5 text-sm" />
+                          <div className="flex items-center gap-2">
+                            <input type="number" value={check.weight || ""} onChange={(e) => updateCheck(cIdx, chIdx, "weight", Number(e.target.value))} placeholder="BPS" className="input-field w-24 sm:w-20 !py-2 text-sm text-center" />
+                            <div className="flex-1 sm:w-20 sm:flex-none flex sm:justify-center">
+                              <button onClick={() => updateCheck(cIdx, chIdx, "required", !check.required)}
+                                className={`px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors ${check.required ? "bg-red-50 text-red-700 border border-red-200" : "bg-slate-50 text-slate-400 border border-slate-200 hover:border-slate-300"}`}>
+                                {check.required ? t("required") : t("optional")}
+                              </button>
+                            </div>
+                            <button onClick={() => removeCheck(cIdx, chIdx)} className="w-8 text-slate-400 hover:text-red-500 flex justify-center shrink-0">
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
                             </button>
                           </div>
-                          <button onClick={() => removeCheck(cIdx, chIdx)} className="w-8 text-slate-400 hover:text-red-500 flex justify-center">
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-                          </button>
                         </div>
                       ))}
                       <button onClick={() => addCheck(cIdx)} className="text-sm text-amber-700 hover:text-amber-800 font-medium flex items-center gap-1 mt-1">
