@@ -280,19 +280,19 @@ class E2ETest:
                 import sqlite3
                 kyc_db = os.environ.get("KYC_DB", "/opt/agonaut-api/data/kyc.db")
                 conn = sqlite3.connect(kyc_db)
-                now = int(time.time())
+                now = time.time()
                 wl = wallet.lower()
                 # Check if already exists
-                row = conn.execute("SELECT status FROM submissions WHERE wallet = ? ORDER BY id DESC LIMIT 1", (wl,)).fetchone()
+                row = conn.execute("SELECT status FROM kyc_submissions WHERE wallet = ? ORDER BY id DESC LIMIT 1", (wl,)).fetchone()
                 if row and row[0] == "VERIFIED":
                     ok(f"{label} already verified in DB")
                     conn.close()
                     continue
-                # Insert verified submission
+                # Insert verified submission (enc fields = plaintext for test, not real encryption)
                 conn.execute(
-                    "INSERT INTO submissions (wallet, full_name, country, document_type, document_id, status, submitted_at, reviewed_at, reviewed_by, review_reason) "
-                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                    (wl, f"E2E Test {label.title()}", "DE", "passport", f"E2E-{int(now)}", "VERIFIED", now, now, "e2e-test", "E2E auto-approve"),
+                    "INSERT INTO kyc_submissions (wallet, status, full_name_enc, country, document_type, document_id_enc, email_enc, submitted_at, reviewed_at, reviewed_by, review_reason) "
+                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                    (wl, "VERIFIED", f"E2E Test {label.title()}", "DE", "passport", f"E2E-{int(now)}", "e2e@test.local", now, now, "e2e-test", "E2E auto-approve"),
                 )
                 conn.commit()
                 conn.close()
