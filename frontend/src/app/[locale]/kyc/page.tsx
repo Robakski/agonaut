@@ -65,6 +65,18 @@ export default function KycPage() {
 
       const { token } = await res.json();
 
+      // Wait for SDK script to be available
+      if (!window.snsWebSdk) {
+        // Wait up to 5 seconds for script to load
+        for (let i = 0; i < 50; i++) {
+          await new Promise(r => setTimeout(r, 100));
+          if (window.snsWebSdk) break;
+        }
+        if (!window.snsWebSdk) {
+          throw new Error("Sumsub SDK failed to load. Please disable ad blockers and try again.");
+        }
+      }
+
       // Initialize Sumsub WebSDK
       const sdk = window.snsWebSdk
         .init(token, async () => {
@@ -184,7 +196,7 @@ export default function KycPage() {
       {/* Load Sumsub WebSDK script */}
       <Script
         src="https://static.sumsub.com/idensic/static/sns-websdk-builder.js"
-        strategy="lazyOnload"
+        strategy="beforeInteractive"
       />
 
       <div className="mx-auto max-w-2xl px-4 sm:px-6 lg:px-8 py-12 sm:py-20">
