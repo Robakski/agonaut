@@ -220,7 +220,7 @@ export default function CreateBountyPage() {
 
   // Save on every change
   useEffect(() => {
-    if (!selectedTemplate) return;
+    if (!title && !selectedTemplate) return;
     const draft = { selectedTemplate, stepIdx, title, description, tags, criteria, bountyEth, commitHours, maxAgents, threshold, graduated, visibility, savedAt: Date.now(), wallet: address?.toLowerCase() || "" };
     try {
       const json = JSON.stringify(draft);
