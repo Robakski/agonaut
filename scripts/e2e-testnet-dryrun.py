@@ -257,51 +257,30 @@ class E2ETest:
             fail(f"Registration failed: {e}")
             return False
 
-    def step1b_bypass_kyc(self):
-        """Insert KYC verification for operator wallet (test only)."""
-        step("1b", "Bypass KYC for test wallets")
+    def step1b_verify_kyc(self):
+        """Verify KYC status for test wallets."""
+        step("1b", "Verify KYC for test wallets")
 
-        # Call the API to check/set KYC status
-        # In production, this would go through Sumsub. For testing,
-        # we directly insert into the KYC database.
+        all_verified = True
         for wallet, label in [(self.operator.address, "operator"), (self.agent.address, "agent")]:
             try:
                 r = requests.get(f"{API_URL}/kyc/status?wallet={wallet}", timeout=5)
                 if r.status_code == 200 and r.json().get("status") == "VERIFIED":
-                    ok(f"{label} KYC already verified")
+                    ok(f"{label} KYC verified ✓")
                     continue
             except Exception:
                 pass
 
-            info(f"{label} ({wallet[:10]}...) needs KYC — inserting directly into DB")
+            fail(f"{label} ({wallet[:10]}...) is NOT KYC verified")
+            info(f"Complete KYC at https://agonaut.io/kyc for wallet: {wallet}")
+            all_verified = False
 
-            # Direct DB insert for E2E testing (bypasses Sumsub)
-            try:
-                import sqlite3
-                kyc_db = os.environ.get("KYC_DB", "/opt/agonaut-api/data/kyc.db")
-                conn = sqlite3.connect(kyc_db)
-                now = time.time()
-                wl = wallet.lower()
-                # Check if already exists
-                row = conn.execute("SELECT status FROM kyc_submissions WHERE wallet = ? ORDER BY id DESC LIMIT 1", (wl,)).fetchone()
-                if row and row[0] == "VERIFIED":
-                    ok(f"{label} already verified in DB")
-                    conn.close()
-                    continue
-                # Insert verified submission (enc fields = plaintext for test, not real encryption)
-                conn.execute(
-                    "INSERT INTO kyc_submissions (wallet, status, full_name_enc, country, document_type, document_id_enc, email_enc, submitted_at, reviewed_at, reviewed_by, review_reason) "
-                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                    (wl, "VERIFIED", f"E2E Test {label.title()}", "DE", "passport", f"E2E-{int(now)}", "e2e@test.local", now, now, "e2e-test", "E2E auto-approve"),
-                )
-                conn.commit()
-                conn.close()
-                ok(f"{label} KYC set to VERIFIED via direct DB insert")
-            except Exception as e:
-                warn(f"KYC DB insert failed: {e}")
-                info(f"Try running as root or set KYC_DB env var")
+        if not all_verified:
+            fail("KYC required for all wallets before E2E test can proceed")
+            info("Complete Sumsub verification, then re-run this script")
+            return False
 
-        return True  # Non-fatal — we'll see if bounty creation works
+        return True
 
     def step2_create_bounty(self):
         """Create bounty via backend relay API."""
@@ -624,7 +603,7 @@ class E2ETest:
         steps = [
             (self.step0_preflight, True),
             (self.step1_register_agent, True),
-            (self.step1b_bypass_kyc, False),
+            (self.step1b_verify_kyc, True),
             (self.step2_create_bounty, True),
             (self.step3_deposit_bounty, True),
             (self.step4_agent_enters, True),
