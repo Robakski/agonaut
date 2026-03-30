@@ -289,26 +289,26 @@ export default function KycPage() {
                     </div>
                   </div>
                 </div>
-                <button
-                  onClick={() => {
-                    const url = `https://agonaut.io/en/kyc?wallet=${address}`;
-                    // Try multiple methods to escape in-app browser
-                    if (window.open(url, "_system")) return;
-                    if (window.open(url, "_blank")) return;
-                    // Fallback: use intent URL for Android
-                    const intentUrl = `intent://${url.replace("https://", "")}#Intent;scheme=https;end`;
-                    window.location.href = intentUrl;
-                  }}
-                  className="block w-full py-3.5 text-sm font-semibold bg-slate-900 text-white rounded-xl hover:bg-slate-800 transition-all text-center"
-                >
-                  Open in Safari / Chrome →
-                </button>
-                <a
-                  href={`https://agonaut.io/en/kyc?wallet=${address}`}
-                  className="block w-full mt-2 py-2 text-xs text-slate-400 hover:text-slate-600 transition-colors text-center underline"
-                >
-                  Or tap here to copy link and open manually
-                </a>
+                <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 flex items-center gap-2">
+                  <code className="text-xs text-slate-600 truncate flex-1">agonaut.io/en/kyc</code>
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(`https://agonaut.io/en/kyc?wallet=${address}`);
+                      const btn = document.getElementById("copy-btn");
+                      if (btn) { btn.textContent = "Copied! ✓"; setTimeout(() => { btn.textContent = "Copy Link"; }, 2000); }
+                    }}
+                    id="copy-btn"
+                    className="px-3 py-1.5 text-xs font-semibold bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition-all shrink-0"
+                  >
+                    Copy Link
+                  </button>
+                </div>
+                <p className="text-xs text-slate-400 text-center mt-3">
+                  1. Tap <strong>Copy Link</strong> above<br />
+                  2. Open <strong>Safari</strong> or <strong>Chrome</strong> on your phone<br />
+                  3. Paste the link and complete verification<br />
+                  4. Come back here — your status updates automatically
+                </p>
                 <p className="text-xs text-slate-400 text-center">
                   Complete KYC in your browser, then return here. Your wallet stays connected.
                 </p>
