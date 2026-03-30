@@ -3,7 +3,7 @@
 
 services:
   scorer:
-    image: ghcr.io/robakski/agonaut-scorer:latest
+    image: ghcr.io/robakski/agonaut-scorer:v2.4.0
     ports:
       - "8001:8001"
     volumes:
