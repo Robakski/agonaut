@@ -221,7 +221,7 @@ export default function CreateBountyPage() {
   // Save on every change
   useEffect(() => {
     if (!title && !selectedTemplate) return;
-    const draft = { selectedTemplate, stepIdx, title, description, tags, criteria, bountyEth, commitHours, maxAgents, threshold, graduated, visibility, savedAt: Date.now(), wallet: address?.toLowerCase() || "" };
+    const draft = { selectedTemplate, stepIdx, title, description, tags, criteria, bountyEth, commitHours, maxAgents, threshold, graduated, visibility, withdrawalConsent, savedAt: Date.now(), wallet: address?.toLowerCase() || "" };
     try {
       const json = JSON.stringify(draft);
       if (DRAFT_KEY_WALLET) localStorage.setItem(DRAFT_KEY_WALLET, json);
@@ -246,7 +246,8 @@ export default function CreateBountyPage() {
     if (draft.maxAgents) setMaxAgents(draft.maxAgents as string);
     if (draft.threshold) setThreshold(draft.threshold as string);
     if (draft.graduated !== undefined) setGraduated(draft.graduated as boolean);
-    if (draft.visibility) setVisibility(draft.visibility as "PUBLIC" | "SUMMARY" | "PRIVATE");
+    if (draft.withdrawalConsent) setWithdrawalConsent(draft.withdrawalConsent as boolean);
+      if (draft.visibility) setVisibility(draft.visibility as "PUBLIC" | "SUMMARY" | "PRIVATE");
   };
 
   useEffect(() => {
