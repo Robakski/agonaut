@@ -64,6 +64,8 @@ export default function KycPage() {
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Failed to start verification";
       setError(message);
+      // Fall back to manual form on any error
+      setSumsubConfigured(false);
     }
   }, [address, sdkLaunched, getToken]);
 
@@ -91,7 +93,10 @@ export default function KycPage() {
 
   const handleSumsubError = useCallback((error: unknown) => {
     console.error("Sumsub error:", error);
-    setError("Verification encountered an error. Please try again.");
+    setError("Verification widget failed to load. Switching to manual form.");
+    setSdkLaunched(false);
+    setSumsubToken(null);
+    setSumsubConfigured(false);
   }, []);
 
   /* ─── Not connected ─── */
@@ -260,20 +265,31 @@ export default function KycPage() {
             {sumsubConfigured === false ? (
               <ManualKycForm wallet={address!} onSubmit={() => setStatus("PENDING")} />
             ) : (
-              <button
-                onClick={launchSumsub}
-                disabled={sumsubConfigured === null}
-                className="w-full py-3.5 text-sm font-semibold bg-slate-900 text-white rounded-xl hover:bg-slate-800 disabled:opacity-40 transition-all"
-              >
-                {sumsubConfigured === null ? (
-                  <span className="flex items-center justify-center gap-2">
-                    <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>
-                    {t("loading")}
-                  </span>
-                ) : (
-                  isRejected ? t("retryButton") : t("startButton")
-                )}
-              </button>
+              <>
+                <button
+                  onClick={launchSumsub}
+                  disabled={sumsubConfigured === null}
+                  className="w-full py-3.5 text-sm font-semibold bg-slate-900 text-white rounded-xl hover:bg-slate-800 disabled:opacity-40 transition-all"
+                >
+                  {sumsubConfigured === null ? (
+                    <span className="flex items-center justify-center gap-2">
+                      <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>
+                      {t("loading")}
+                    </span>
+                  ) : (
+                    isRejected ? t("retryButton") : t("startButton")
+                  )}
+                </button>
+                <p
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => { setSumsubConfigured(false); }}
+                  onKeyDown={(e) => { if (e.key === "Enter") setSumsubConfigured(false); }}
+                  className="w-full mt-3 text-center text-xs text-slate-400 hover:text-slate-600 cursor-pointer transition-colors"
+                >
+                  Having trouble? Use manual verification instead
+                </p>
+              </>
             )}
           </div>
         )}
