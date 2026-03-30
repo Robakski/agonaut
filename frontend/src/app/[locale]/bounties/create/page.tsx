@@ -213,6 +213,45 @@ export default function CreateBountyPage() {
     return true;
   };
 
+  // ── Auto-save draft to localStorage ──
+  const DRAFT_KEY = address ? `agonaut_bounty_draft_${address}` : null;
+
+  // Save on every change
+  useEffect(() => {
+    if (!DRAFT_KEY || !selectedTemplate) return;
+    const draft = { selectedTemplate, stepIdx, title, description, tags, criteria, bountyEth, commitHours, maxAgents, threshold, graduated, visibility, savedAt: Date.now() };
+    try { localStorage.setItem(DRAFT_KEY, JSON.stringify(draft)); } catch {}
+  }, [DRAFT_KEY, selectedTemplate, stepIdx, title, description, tags, criteria, bountyEth, commitHours, maxAgents, threshold, graduated, visibility]);
+
+  // Restore on mount
+  const [draftRestored, setDraftRestored] = useState(false);
+  useEffect(() => {
+    if (!DRAFT_KEY || draftRestored) return;
+    try {
+      const raw = localStorage.getItem(DRAFT_KEY);
+      if (!raw) { setDraftRestored(true); return; }
+      const draft = JSON.parse(raw);
+      // Only restore if less than 24h old
+      if (Date.now() - (draft.savedAt || 0) > 86400000) { localStorage.removeItem(DRAFT_KEY); setDraftRestored(true); return; }
+      if (draft.selectedTemplate) setSelectedTemplate(draft.selectedTemplate);
+      if (draft.stepIdx) setStepIdx(draft.stepIdx);
+      if (draft.title) setTitle(draft.title);
+      if (draft.description) setDescription(draft.description);
+      if (draft.tags) setTags(draft.tags);
+      if (draft.criteria?.length) setCriteria(draft.criteria);
+      if (draft.bountyEth) setBountyEth(draft.bountyEth);
+      if (draft.commitHours) setCommitHours(draft.commitHours);
+      if (draft.maxAgents) setMaxAgents(draft.maxAgents);
+      if (draft.threshold) setThreshold(draft.threshold);
+      if (draft.graduated !== undefined) setGraduated(draft.graduated);
+      if (draft.visibility) setVisibility(draft.visibility);
+    } catch {}
+    setDraftRestored(true);
+  }, [DRAFT_KEY, draftRestored]);
+
+  // Clear draft on successful submission
+  const clearDraft = () => { if (DRAFT_KEY) try { localStorage.removeItem(DRAFT_KEY); } catch {} };
+
   // Handle deposit hash → confirming state
   useEffect(() => {
     if (depositHash && submitState.kind === "awaiting_deposit") {
@@ -224,6 +263,7 @@ export default function CreateBountyPage() {
   useEffect(() => {
     if (isConfirmed && (submitState.kind === "confirming" || submitState.kind === "depositing")) {
       const s = submitState as any;
+      clearDraft();
       setSubmitState({
         kind: "success",
         bountyId: s.bountyId || 0,
@@ -433,13 +473,30 @@ export default function CreateBountyPage() {
     setCriteria(u);
   };
   const autoBalance = () => {
-    const total = criteria.reduce((s, c) => s + c.checks.length, 0);
-    if (total === 0) return;
-    const per = Math.floor(10000 / total);
-    const remainder = 10000 - per * total;
-    const u = [...criteria];
-    let i = 0;
-    u.forEach((c) => c.checks.forEach((ch) => { ch.weight = per + (i === 0 ? remainder : 0); i++; }));
+    const allChecks = criteria.flatMap((c) => c.checks);
+    if (allChecks.length === 0) return;
+    const currentTotal = allChecks.reduce((s, ch) => s + ch.weight, 0);
+    const u = criteria.map((c) => ({ ...c, checks: c.checks.map((ch) => ({ ...ch })) }));
+    const uChecks = u.flatMap((c) => c.checks);
+
+    if (currentTotal > 0) {
+      // Proportional scale: keep relative weights, scale to 10000
+      const scale = 10000 / currentTotal;
+      let assigned = 0;
+      uChecks.forEach((ch, i) => {
+        if (i === uChecks.length - 1) {
+          ch.weight = 10000 - assigned; // last one gets remainder
+        } else {
+          ch.weight = Math.round(ch.weight * scale);
+          assigned += ch.weight;
+        }
+      });
+    } else {
+      // All zeros: distribute equally
+      const per = Math.floor(10000 / uChecks.length);
+      const remainder = 10000 - per * uChecks.length;
+      uChecks.forEach((ch, i) => { ch.weight = per + (i === 0 ? remainder : 0); });
+    }
     setCriteria(u);
   };
   const addTag = () => {
@@ -899,6 +956,11 @@ export default function CreateBountyPage() {
                 {t("addCriterion")}
               </button>
               <div className="flex items-center gap-3">
+                {totalWeight !== 10000 && (
+                  <button onClick={autoBalance} className="btn-secondary text-xs">
+                    {t("autoBalance")}
+                  </button>
+                )}
                 <span className={`text-sm font-mono font-semibold ${totalWeight === 10000 ? "text-emerald-600" : totalWeight > 10000 ? "text-red-600" : "text-amber-600"}`}>
                   {totalWeight.toLocaleString()} / 10,000 BPS
                 </span>
