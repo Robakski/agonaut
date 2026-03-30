@@ -289,13 +289,25 @@ export default function KycPage() {
                     </div>
                   </div>
                 </div>
-                <a
-                  href={`https://agonaut.io/en/kyc?wallet=${address}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                <button
+                  onClick={() => {
+                    const url = `https://agonaut.io/en/kyc?wallet=${address}`;
+                    // Try multiple methods to escape in-app browser
+                    if (window.open(url, "_system")) return;
+                    if (window.open(url, "_blank")) return;
+                    // Fallback: use intent URL for Android
+                    const intentUrl = `intent://${url.replace("https://", "")}#Intent;scheme=https;end`;
+                    window.location.href = intentUrl;
+                  }}
                   className="block w-full py-3.5 text-sm font-semibold bg-slate-900 text-white rounded-xl hover:bg-slate-800 transition-all text-center"
                 >
                   Open in Safari / Chrome →
+                </button>
+                <a
+                  href={`https://agonaut.io/en/kyc?wallet=${address}`}
+                  className="block w-full mt-2 py-2 text-xs text-slate-400 hover:text-slate-600 transition-colors text-center underline"
+                >
+                  Or tap here to copy link and open manually
                 </a>
                 <p className="text-xs text-slate-400 text-center">
                   Complete KYC in your browser, then return here. Your wallet stays connected.
