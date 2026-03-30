@@ -20,18 +20,28 @@ function isInAppBrowser(): boolean {
 
 export default function KycPage() {
   const t = useTranslations("kyc");
-  const { isConnected, address } = useAccount();
+  const { isConnected, address: walletAddress } = useAccount();
   const [status, setStatus] = useState<KycStatus>("loading");
   const [sumsubConfigured, setSumsubConfigured] = useState<boolean | null>(null);
   const [sumsubToken, setSumsubToken] = useState<string | null>(null);
   const [sdkLaunched, setSdkLaunched] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [inAppBrowser, setInAppBrowser] = useState(false);
+  const [urlWallet, setUrlWallet] = useState<string | null>(null);
 
-  // Detect in-app browser
+  // Detect in-app browser + read wallet from URL param
   useEffect(() => {
     setInAppBrowser(isInAppBrowser());
+    const params = new URLSearchParams(window.location.search);
+    const w = params.get("wallet");
+    if (w && /^0x[a-fA-F0-9]{40}$/.test(w)) {
+      setUrlWallet(w);
+    }
   }, []);
+
+  // Use wallet from URL if no wallet connected (external browser flow)
+  const address = walletAddress || urlWallet;
+  const effectivelyConnected = isConnected || !!urlWallet;
 
   // Check Sumsub configuration
   useEffect(() => {
@@ -113,7 +123,7 @@ export default function KycPage() {
   }, []);
 
   /* ─── Not connected ─── */
-  if (!isConnected) {
+  if (!effectivelyConnected) {
     return (
       <div className="mx-auto max-w-2xl px-4 sm:px-6 lg:px-8 py-20">
         <div className="text-center py-16 bg-white border border-slate-200 rounded-2xl shadow-sm">
