@@ -79,36 +79,35 @@ export function GlowCard({
         transition: "box-shadow 0.5s ease",
       }}
     >
-      {/* Outer glow — soft blurred halo that fades to white */}
-      <div
-        className="absolute -inset-[10px] rounded-[inherit] overflow-hidden pointer-events-none"
-      >
+      {/* Outer glow — soft blurred halo */}
+      <div className="absolute -inset-[12px] rounded-[inherit] overflow-hidden pointer-events-none">
         <div
-          className="absolute"
+          className="absolute rounded-full aspect-square"
           style={{
-            width: "200%",
-            height: "200%",
-            top: "-50%",
-            left: "-50%",
+            /* Must be larger than the card diagonal — use max(width, height) * 1.5 */
+            width: "max(100%, 800px)",
+            height: "max(100%, 800px)",
+            top: "50%",
+            left: "50%",
+            translate: "-50% -50%",
             background: `conic-gradient(from 0deg at 50% 50%, ${p.stops})`,
             animation: `spin ${speed} linear infinite`,
-            filter: "blur(16px)",
-            opacity: 0.6,
+            filter: "blur(18px)",
+            opacity: 0.55,
           }}
         />
       </div>
 
-      {/* Inner sharp border — spinning conic-gradient disc */}
-      <div
-        className="absolute inset-0 rounded-[inherit] overflow-hidden"
-      >
+      {/* Inner border — spinning conic disc (circular to avoid hard edges) */}
+      <div className="absolute inset-0 rounded-[inherit] overflow-hidden">
         <div
-          className="absolute"
+          className="absolute rounded-full aspect-square"
           style={{
-            width: "200%",
-            height: "200%",
-            top: "-50%",
-            left: "-50%",
+            width: "max(100%, 800px)",
+            height: "max(100%, 800px)",
+            top: "50%",
+            left: "50%",
+            translate: "-50% -50%",
             background: `conic-gradient(from 0deg at 50% 50%, ${p.stops})`,
             animation: `spin ${speed} linear infinite`,
           }}
