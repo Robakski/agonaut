@@ -1,95 +1,105 @@
 "use client";
 
 /**
- * Ambient animated background — ultra-subtle gold + silver smoke/liquid blobs.
- * Low opacity, slow drifting, creates depth and premium feel on white backgrounds.
- * Place behind page content with position: fixed or absolute.
+ * Ambient animated background — ultra-subtle gold + silver smoke blobs.
+ * Uses viewport-relative sizing so blobs never clip on mobile.
+ * position: fixed ensures they cover the full page without overflow issues.
  */
 export function AmbientBackground() {
   return (
-    <div className="fixed inset-0 pointer-events-none overflow-hidden" style={{ zIndex: 0 }}>
-      {/* Gold smoke — top left, drifting right and down */}
-      <div
-        className="absolute rounded-full"
-        style={{
-          width: "800px",
-          height: "600px",
-          top: "-5%",
-          left: "-5%",
-          background: "radial-gradient(ellipse at center, rgba(212,175,55,0.07) 0%, rgba(212,175,55,0.03) 40%, transparent 70%)",
-          filter: "blur(80px)",
-          animation: "ambient-drift-1 30s ease-in-out infinite",
-        }}
-      />
+    <div
+      className="fixed inset-0 pointer-events-none"
+      style={{ zIndex: 0, overflow: "hidden" }}
+    >
+      {/* All blobs use vw/vh sizing + are inset enough to never clip at edges */}
 
-      {/* Silver mist — top right, drifting left */}
-      <div
-        className="absolute rounded-full"
-        style={{
-          width: "700px",
-          height: "500px",
-          top: "5%",
-          right: "-8%",
-          background: "radial-gradient(ellipse at center, rgba(170,170,185,0.06) 0%, rgba(170,170,185,0.02) 45%, transparent 70%)",
-          filter: "blur(90px)",
-          animation: "ambient-drift-2 35s ease-in-out infinite",
-        }}
-      />
-
-      {/* Gold wash — center, slowly rising */}
-      <div
-        className="absolute rounded-full"
-        style={{
-          width: "600px",
-          height: "600px",
-          top: "30%",
-          left: "35%",
-          background: "radial-gradient(circle at center, rgba(197,165,78,0.05) 0%, rgba(197,165,78,0.02) 40%, transparent 65%)",
-          filter: "blur(70px)",
-          animation: "ambient-drift-3 25s ease-in-out infinite",
-        }}
-      />
-
-      {/* Silver ribbon — mid-left, horizontal drift */}
+      {/* Gold smoke — upper area */}
       <div
         className="absolute"
         style={{
-          width: "900px",
-          height: "200px",
+          width: "min(600px, 80vw)",
+          height: "min(500px, 60vh)",
+          top: "5%",
+          left: "10%",
+          background: "radial-gradient(ellipse at center, rgba(212,175,55,0.06) 0%, rgba(212,175,55,0.02) 40%, transparent 70%)",
+          filter: "blur(80px)",
+          animation: "ambient-drift-1 30s ease-in-out infinite",
+          borderRadius: "50%",
+        }}
+      />
+
+      {/* Silver mist — upper right */}
+      <div
+        className="absolute"
+        style={{
+          width: "min(550px, 70vw)",
+          height: "min(400px, 50vh)",
+          top: "8%",
+          right: "10%",
+          background: "radial-gradient(ellipse at center, rgba(170,170,185,0.05) 0%, rgba(170,170,185,0.015) 45%, transparent 70%)",
+          filter: "blur(90px)",
+          animation: "ambient-drift-2 35s ease-in-out infinite",
+          borderRadius: "50%",
+        }}
+      />
+
+      {/* Gold wash — center */}
+      <div
+        className="absolute"
+        style={{
+          width: "min(500px, 70vw)",
+          height: "min(500px, 50vh)",
+          top: "30%",
+          left: "20%",
+          background: "radial-gradient(circle at center, rgba(197,165,78,0.04) 0%, rgba(197,165,78,0.01) 40%, transparent 65%)",
+          filter: "blur(70px)",
+          animation: "ambient-drift-3 25s ease-in-out infinite",
+          borderRadius: "50%",
+        }}
+      />
+
+      {/* Silver ribbon — mid area */}
+      <div
+        className="absolute"
+        style={{
+          width: "min(700px, 85vw)",
+          height: "min(180px, 20vh)",
           top: "55%",
-          left: "-10%",
-          background: "linear-gradient(90deg, transparent 0%, rgba(180,180,195,0.04) 30%, rgba(212,175,55,0.03) 60%, transparent 100%)",
+          left: "8%",
+          background: "linear-gradient(90deg, transparent 0%, rgba(180,180,195,0.035) 30%, rgba(212,175,55,0.025) 60%, transparent 100%)",
           filter: "blur(60px)",
           animation: "ambient-drift-4 40s ease-in-out infinite",
           borderRadius: "50%",
         }}
       />
 
-      {/* Gold accent — bottom right, slow pulse */}
+      {/* Gold accent — lower right */}
       <div
-        className="absolute rounded-full"
+        className="absolute"
         style={{
-          width: "500px",
-          height: "400px",
-          bottom: "0%",
-          right: "10%",
-          background: "radial-gradient(ellipse at center, rgba(212,175,55,0.05) 0%, rgba(212,175,55,0.01) 50%, transparent 70%)",
+          width: "min(450px, 65vw)",
+          height: "min(350px, 40vh)",
+          bottom: "8%",
+          right: "12%",
+          background: "radial-gradient(ellipse at center, rgba(212,175,55,0.04) 0%, rgba(212,175,55,0.01) 50%, transparent 70%)",
           filter: "blur(80px)",
           animation: "ambient-drift-5 28s ease-in-out infinite",
+          borderRadius: "50%",
         }}
       />
 
-      {/* Silver wash — bottom left */}
+      {/* Silver wash — lower left */}
       <div
-        className="absolute rounded-full"
+        className="absolute"
         style={{
-          width: "600px",
-          height: "350px",
-          bottom: "10%",
-          left: "5%",
-          background: "radial-gradient(ellipse at center, rgba(175,175,190,0.04) 0%, transparent 65%)",
+          width: "min(500px, 70vw)",
+          height: "min(300px, 35vh)",
+          bottom: "12%",
+          left: "10%",
+          background: "radial-gradient(ellipse at center, rgba(175,175,190,0.035) 0%, transparent 65%)",
           filter: "blur(85px)",
           animation: "ambient-drift-2 32s ease-in-out infinite reverse",
+          borderRadius: "50%",
         }}
       />
     </div>
