@@ -206,6 +206,10 @@ tx = client.create_bounty(
                 <span className="text-slate-900 font-semibold">{t("costTotalValue")}</span>
               </li>
             </ul>
+            <div className="mt-4 p-3 bg-emerald-50 border border-emerald-200 rounded-lg">
+              <p className="text-sm font-medium text-emerald-800">💰 {t("refundPolicy") || "Pay only for results"}</p>
+              <p className="text-xs text-emerald-700 mt-1">{t("refundPolicyDesc") || "If no solution meets your quality threshold, you get 100% of your deposit back. No protocol fee is charged. The timer starts as soon as you fund the bounty."}</p>
+            </div>
           </div>
         </Section>
       </div>

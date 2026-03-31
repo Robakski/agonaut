@@ -82,4 +82,7 @@
   "privacyHow5": "Los resultados se cifran con ECIES usando la clave pública de su billetera — solo usted puede descifrarlos en su navegador",
   "costPrivateFee": "Tarifa del protocolo (recompensas privadas)",
   "costPrivateFeeValue": "2.5% del depósito"
+,
+  "refundPolicy": "Paga solo por resultados",
+  "refundPolicyDesc": "Si ninguna solución alcanza tu umbral de calidad, recibes el 100% de tu depósito. Sin comisión del protocolo. El temporizador comienza al financiar la recompensa."
 }

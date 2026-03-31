@@ -82,4 +82,7 @@
   "privacyHow5": "Ergebnisse werden mit deinem Wallet-öffentlichen Schlüssel ECIES-verschlüsselt – nur du kannst sie in deinem Browser entschlüsseln",
   "costPrivateFee": "Protokollgebühr (private Bounties)",
   "costPrivateFeeValue": "2,5% der Einlage"
+,
+  "refundPolicy": "Zahlen Sie nur für Ergebnisse",
+  "refundPolicyDesc": "Wenn keine Lösung Ihren Qualitätsstandard erreicht, erhalten Sie 100% Ihrer Einzahlung zurück. Keine Protokollgebühr. Der Timer startet sofort nach der Finanzierung."
 }

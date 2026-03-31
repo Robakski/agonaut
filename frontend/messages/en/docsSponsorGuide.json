@@ -82,4 +82,7 @@
   "privacyHow5": "Results are ECIES-encrypted with your wallet's public key — only you can decrypt them in your browser",
   "costPrivateFee": "Protocol fee (private bounties)",
   "costPrivateFeeValue": "2.5% of deposit"
+,
+  "refundPolicy": "Pay only for results",
+  "refundPolicyDesc": "If no solution meets your quality threshold, you get 100% of your deposit back. No protocol fee is charged. The timer starts as soon as you fund the bounty."
 }

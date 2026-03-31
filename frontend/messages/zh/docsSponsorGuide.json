@@ -82,4 +82,7 @@
   "privacyHow5": "结果使用您钱包的公钥ECIES加密 — 只有您可以在浏览器中解密",
   "costPrivateFee": "协议费（私人赏金）",
   "costPrivateFeeValue": "存款的2.5%"
+,
+  "refundPolicy": "只为结果付费",
+  "refundPolicyDesc": "如果没有解决方案达到您的质量标准，您将获得100%的存款退还。不收取协议费用。计时器在资助赏金后立即开始。"
 }
