@@ -7,18 +7,23 @@ interface GlowCardProps {
   className?: string;
   glowColor?: "amber" | "silver" | "blue" | "gold";
   intensity?: "subtle" | "medium" | "strong";
+  /** Use dark card background (for dark sections) */
+  dark?: boolean;
 }
 
 /**
- * Premium glow card — a light spot travels along the card's rectangular border path.
- * No spinning disc. The light follows the perimeter like a torch tracing edges.
- * Inspired by huly.io's card edge lighting technique.
+ * Premium glow card — a bright light spot orbits the card's rectangular border.
+ * Inspired by huly.io. Works on both light and dark backgrounds.
+ *
+ * On dark backgrounds, the card uses a semi-transparent dark fill with
+ * a glassmorphism effect. The glow is more visible against dark.
  */
 export function GlowCard({
   children,
   className = "",
   glowColor = "amber",
   intensity = "medium",
+  dark = false,
 }: GlowCardProps) {
   const cardRef = useRef<HTMLDivElement>(null);
   const [mousePos, setMousePos] = useState({ x: 50, y: 50 });
@@ -27,50 +32,45 @@ export function GlowCard({
   const animRef = useRef<number>(0);
   const startRef = useRef<number>(0);
 
-  const palette: Record<string, { rgb: string; spotAlpha: number }> = {
-    amber:  { rgb: "191,155,48",  spotAlpha: 0.12 },
-    silver: { rgb: "160,165,175", spotAlpha: 0.14 },
-    blue:   { rgb: "59,130,246",  spotAlpha: 0.12 },
-    gold:   { rgb: "191,155,48",  spotAlpha: 0.14 },
+  const palette: Record<string, { rgb: string; hoverAlpha: number }> = {
+    amber: { rgb: "212,175,55", hoverAlpha: 0.12 },
+    silver: { rgb: "192,192,200", hoverAlpha: 0.10 },
+    blue: { rgb: "96,165,250", hoverAlpha: 0.10 },
+    gold: { rgb: "212,175,55", hoverAlpha: 0.14 },
   };
 
-  const duration = intensity === "subtle" ? 8000 : intensity === "medium" ? 6000 : 4000;
+  const duration =
+    intensity === "subtle" ? 8000 : intensity === "medium" ? 6000 : 4500;
   const p = palette[glowColor] || palette.amber;
 
-  // Animate a point along the card's rectangular perimeter
+  // Glow sizing by intensity
+  const spotSize =
+    intensity === "subtle" ? 120 : intensity === "medium" ? 160 : 200;
+  const borderOpacity =
+    intensity === "subtle" ? 0.6 : intensity === "medium" ? 0.8 : 1.0;
+  const haloOpacity =
+    intensity === "subtle" ? 0.15 : intensity === "medium" ? 0.25 : 0.35;
+
+  // Orbit a point around the card's rectangular perimeter
   useEffect(() => {
     const animate = (time: number) => {
       if (!startRef.current) startRef.current = time;
-      const elapsed = time - startRef.current;
-      const progress = (elapsed % duration) / duration; // 0..1
-
-      // Perimeter walk: top → right → bottom → left
-      // We parameterize as 0..4 (one unit per side)
-      const t = progress * 4;
+      const t = (((time - startRef.current) % duration) / duration) * 4;
       let x: number, y: number;
 
       if (t < 1) {
-        // Top edge: left to right
-        x = t;
-        y = 0;
+        x = t; y = 0;
       } else if (t < 2) {
-        // Right edge: top to bottom
-        x = 1;
-        y = t - 1;
+        x = 1; y = t - 1;
       } else if (t < 3) {
-        // Bottom edge: right to left
-        x = 1 - (t - 2);
-        y = 1;
+        x = 1 - (t - 2); y = 1;
       } else {
-        // Left edge: bottom to top
-        x = 0;
-        y = 1 - (t - 3);
+        x = 0; y = 1 - (t - 3);
       }
 
       setLightPos({ x: x * 100, y: y * 100 });
       animRef.current = requestAnimationFrame(animate);
     };
-
     animRef.current = requestAnimationFrame(animate);
     return () => cancelAnimationFrame(animRef.current);
   }, [duration]);
@@ -84,45 +84,42 @@ export function GlowCard({
     });
   }, []);
 
-  // Glow size/strength by intensity
-  const glowSize = intensity === "subtle" ? 140 : intensity === "medium" ? 180 : 220;
-  const glowOpacity = intensity === "subtle" ? 0.5 : intensity === "medium" ? 0.7 : 0.9;
-  const outerBlur = intensity === "subtle" ? 30 : intensity === "medium" ? 40 : 50;
+  const cardBg = dark
+    ? "bg-white/[0.04] backdrop-blur-sm border-white/[0.08]"
+    : "bg-white border-slate-100";
 
   return (
     <div
       ref={cardRef}
-      className={`relative ${className}`}
+      className={`relative group ${className}`}
       onMouseMove={handleMouseMove}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      {/* Traveling light — a radial gradient spot that follows the border path */}
-      {/* Outer soft halo (bleeds outside the card) */}
+      {/* Outer halo — soft glow that bleeds beyond card edges */}
       <div
-        className="absolute -inset-[24px] rounded-[inherit] pointer-events-none"
+        className="absolute -inset-[20px] rounded-[inherit] pointer-events-none"
         style={{ zIndex: 0 }}
       >
         <div
           className="absolute rounded-full pointer-events-none"
           style={{
-            width: `${glowSize + 60}px`,
-            height: `${glowSize + 60}px`,
+            width: `${spotSize + 80}px`,
+            height: `${spotSize + 80}px`,
             left: `${lightPos.x}%`,
             top: `${lightPos.y}%`,
             translate: "-50% -50%",
-            background: `radial-gradient(circle, rgba(${p.rgb},${glowOpacity * 0.4}) 0%, rgba(${p.rgb},0.08) 40%, transparent 70%)`,
-            filter: `blur(${outerBlur}px)`,
+            background: `radial-gradient(circle, rgba(${p.rgb},${haloOpacity}) 0%, rgba(${p.rgb},0.05) 40%, transparent 70%)`,
+            filter: "blur(30px)",
           }}
         />
       </div>
 
-      {/* Inner border glow — sharp light on the edge */}
+      {/* Border glow — sharp light on the 2px edge */}
       <div
         className="absolute inset-0 rounded-[inherit] pointer-events-none overflow-hidden"
         style={{ zIndex: 1 }}
       >
-        {/* Border-only mask: show glow only in the 2px border zone */}
         <div
           className="absolute inset-0 rounded-[inherit]"
           style={{
@@ -135,45 +132,50 @@ export function GlowCard({
           <div
             className="absolute rounded-full pointer-events-none"
             style={{
-              width: `${glowSize}px`,
-              height: `${glowSize}px`,
+              width: `${spotSize}px`,
+              height: `${spotSize}px`,
               left: `${lightPos.x}%`,
               top: `${lightPos.y}%`,
               translate: "-50% -50%",
-              background: `radial-gradient(circle, rgba(${p.rgb},${glowOpacity}) 0%, rgba(${p.rgb},0.3) 30%, transparent 60%)`,
-              filter: "blur(4px)",
+              background: `radial-gradient(circle, rgba(${p.rgb},${borderOpacity}) 0%, rgba(${p.rgb},0.25) 30%, transparent 55%)`,
+              filter: "blur(3px)",
             }}
           />
         </div>
+      </div>
 
-        {/* Secondary soft glow behind the border (visible through card slightly) */}
+      {/* Inner glow wash — subtle light inside the card near the traveling spot */}
+      <div
+        className="absolute inset-0 rounded-[inherit] pointer-events-none overflow-hidden"
+        style={{ zIndex: 2 }}
+      >
         <div
           className="absolute rounded-full pointer-events-none"
           style={{
-            width: `${glowSize + 20}px`,
-            height: `${glowSize + 20}px`,
+            width: `${spotSize + 40}px`,
+            height: `${spotSize + 40}px`,
             left: `${lightPos.x}%`,
             top: `${lightPos.y}%`,
             translate: "-50% -50%",
-            background: `radial-gradient(circle, rgba(${p.rgb},0.15) 0%, rgba(${p.rgb},0.04) 40%, transparent 65%)`,
-            filter: "blur(12px)",
+            background: `radial-gradient(circle, rgba(${p.rgb},0.06) 0%, transparent 50%)`,
+            filter: "blur(15px)",
           }}
         />
       </div>
 
       {/* Mouse spotlight on hover */}
       <div
-        className="absolute inset-0 rounded-[inherit] pointer-events-none transition-opacity duration-500"
+        className="absolute inset-0 rounded-[inherit] pointer-events-none transition-opacity duration-500 overflow-hidden"
         style={{
           opacity: isHovered ? 1 : 0,
-          background: `radial-gradient(350px circle at ${mousePos.x}% ${mousePos.y}%, rgba(${p.rgb},${p.spotAlpha}), transparent 60%)`,
+          background: `radial-gradient(350px circle at ${mousePos.x}% ${mousePos.y}%, rgba(${p.rgb},${p.hoverAlpha}), transparent 60%)`,
           zIndex: 3,
         }}
       />
 
-      {/* Inner white card — clean content area */}
+      {/* Card content */}
       <div
-        className="relative bg-white rounded-[inherit] h-full overflow-hidden border border-slate-100"
+        className={`relative rounded-[inherit] h-full overflow-hidden border ${cardBg}`}
         style={{ zIndex: 4 }}
       >
         {children}

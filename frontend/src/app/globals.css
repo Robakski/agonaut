@@ -227,3 +227,9 @@ body {
 .animate-text-shimmer {
   animation: text-shimmer 14s ease-in-out infinite;
 }
+
+/* Slide right — for traveling light along connection line */
+@keyframes slide-right {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100vw); }
+}
