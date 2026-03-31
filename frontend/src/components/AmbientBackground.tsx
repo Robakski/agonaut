@@ -8,7 +8,7 @@
 export function AmbientBackground() {
   return (
     <div
-      className="fixed inset-0 pointer-events-none"
+      className="fixed inset-0 pointer-events-none hidden md:block"
       style={{ zIndex: 0, overflow: "hidden" }}
     >
       {/* All blobs use vw/vh sizing + are inset enough to never clip at edges */}
