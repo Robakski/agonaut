@@ -11,9 +11,9 @@ interface GlowCardProps {
 }
 
 /**
- * Premium glow card — an elongated light trail orbits the card border.
- * Gold center → white edges → smooth fade to transparent.
- * Slow, elegant movement. Inspired by huly.io.
+ * Premium glow card — a smooth continuous light ribbon orbits the card border.
+ * 20 tightly-packed, large overlapping spots create a seamless gradient trail.
+ * Gold center → white edges. Slow, elegant. Inspired by huly.io.
  */
 export function GlowCard({
   children,
@@ -25,11 +25,16 @@ export function GlowCard({
   const cardRef = useRef<HTMLDivElement>(null);
   const [mousePos, setMousePos] = useState({ x: 50, y: 50 });
   const [isHovered, setIsHovered] = useState(false);
-  const [lightPos, setLightPos] = useState({ x: 0, y: 0 });
   const animRef = useRef<number>(0);
   const startRef = useRef<number>(0);
 
-  // Core gold color for center, white for edges
+  // 20 trail positions + lead = 21 total points
+  const TRAIL_COUNT = 20;
+  const SPACING = 0.018; // 1.8% apart — very tight
+  const [positions, setPositions] = useState<{ x: number; y: number }[]>(
+    Array(TRAIL_COUNT + 1).fill({ x: 0, y: 0 })
+  );
+
   const palette: Record<string, { core: string; edge: string; hoverAlpha: number }> = {
     amber: { core: "212,175,55", edge: "255,255,255", hoverAlpha: 0.08 },
     silver: { core: "200,200,210", edge: "255,255,255", hoverAlpha: 0.06 },
@@ -37,12 +42,11 @@ export function GlowCard({
     gold: { core: "212,175,55", edge: "255,255,255", hoverAlpha: 0.10 },
   };
 
-  // SLOW orbits — 14s medium, 18s subtle, 10s strong
   const duration =
     intensity === "subtle" ? 18000 : intensity === "medium" ? 14000 : 10000;
   const p = palette[glowColor] || palette.amber;
 
-  // Track card dimensions for responsive spot sizing
+  // Card dimensions for responsive sizing
   const [cardSize, setCardSize] = useState({ w: 400, h: 300 });
   useEffect(() => {
     if (!cardRef.current) return;
@@ -53,16 +57,14 @@ export function GlowCard({
     return () => ro.disconnect();
   }, []);
 
-  // Spot size scales with card — ~45% of the shorter dimension, min 120px
-  const baseSpot = Math.max(120, Math.min(cardSize.w, cardSize.h) * 0.45);
+  // Big spots — 80% of shorter dim, min 160px
+  const baseSpot = Math.max(160, Math.min(cardSize.w, cardSize.h) * 0.8);
 
-  // Intensity tuning
   const borderOpacity =
     intensity === "subtle" ? 0.5 : intensity === "medium" ? 0.7 : 0.85;
   const haloOpacity =
     intensity === "subtle" ? 0.06 : intensity === "medium" ? 0.10 : 0.14;
 
-  // Convert progress (0..1) to perimeter position
   function perimeterPos(progress: number) {
     const t = progress * 4;
     if (t < 1) return { x: t * 100, y: 0 };
@@ -71,23 +73,16 @@ export function GlowCard({
     return { x: 0, y: (1 - (t - 3)) * 100 };
   }
 
-  // 9 trail positions for seamless continuous glow
-  const [trails, setTrails] = useState<{x:number;y:number}[]>(Array(9).fill({x:0,y:0}));
-
   useEffect(() => {
     const animate = (time: number) => {
       if (!startRef.current) startRef.current = time;
-      const elapsed = time - startRef.current;
-      const progress = (elapsed % duration) / duration;
+      const progress = ((time - startRef.current) % duration) / duration;
 
-      // Lead + 8 trails spaced 3.5% apart = ~32% of perimeter covered
-      setLightPos(perimeterPos(progress));
-      const t: {x:number;y:number}[] = [];
-      for (let i = 1; i <= 9; i++) {
-        t.push(perimeterPos((progress - i * 0.035 + 1) % 1));
+      const pts: { x: number; y: number }[] = [];
+      for (let i = 0; i <= TRAIL_COUNT; i++) {
+        pts.push(perimeterPos((progress - i * SPACING + 1) % 1));
       }
-      setTrails(t);
-
+      setPositions(pts);
       animRef.current = requestAnimationFrame(animate);
     };
     animRef.current = requestAnimationFrame(animate);
@@ -107,30 +102,19 @@ export function GlowCard({
     ? "bg-white/[0.04] backdrop-blur-sm border-white/[0.08]"
     : "bg-white border-slate-100";
 
-  // Render a single glow spot (used for lead + trails)
-  function renderBorderSpot(
-    pos: { x: number; y: number },
-    size: number,
-    opacity: number,
-    color: string,
-    blur: number,
-    key: string
-  ) {
-    return (
-      <div
-        key={key}
-        className="absolute rounded-full pointer-events-none"
-        style={{
-          width: `${size}px`,
-          height: `${size}px`,
-          left: `${pos.x}%`,
-          top: `${pos.y}%`,
-          translate: "-50% -50%",
-          background: `radial-gradient(circle, rgba(${color},${opacity}) 0%, rgba(${color},${opacity * 0.3}) 40%, transparent 65%)`,
-          filter: `blur(${blur}px)`,
-        }}
-      />
-    );
+  // Compute opacity and color for each trail position
+  // 0 = lead (gold, full opacity) → TRAIL_COUNT = tail (white, nearly transparent)
+  function trailProps(i: number) {
+    const t = i / TRAIL_COUNT; // 0..1
+    // Opacity: smooth falloff
+    const opacity = borderOpacity * (1 - t * 0.85);
+    // Color: gold for first 40%, blend to white for rest
+    const color = t < 0.4 ? p.core : p.edge;
+    // Size: all large for overlap, slight shrink toward tail
+    const size = baseSpot * (1 - t * 0.25);
+    // Blur: slightly more toward tail
+    const blur = 4 + t * 8;
+    return { opacity, color, size, blur };
   }
 
   return (
@@ -141,14 +125,30 @@ export function GlowCard({
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      {/* Outer halo — subtle bleed beyond card */}
-      <div className="absolute -inset-[12px] rounded-[inherit] pointer-events-none" style={{ zIndex: 0 }}>
-        {renderBorderSpot(lightPos, baseSpot * 0.6, haloOpacity, p.core, 25, "halo-lead")}
-        {trails[3] && renderBorderSpot(trails[3], baseSpot * 0.5, haloOpacity * 0.3, p.edge, 20, "halo-mid")}
+      {/* Outer halo — subtle bleed, lead only */}
+      <div
+        className="absolute -inset-[12px] rounded-[inherit] pointer-events-none"
+        style={{ zIndex: 0 }}
+      >
+        <div
+          className="absolute rounded-full pointer-events-none"
+          style={{
+            width: `${baseSpot * 0.55}px`,
+            height: `${baseSpot * 0.55}px`,
+            left: `${positions[0]?.x ?? 0}%`,
+            top: `${positions[0]?.y ?? 0}%`,
+            translate: "-50% -50%",
+            background: `radial-gradient(circle, rgba(${p.core},${haloOpacity}) 0%, rgba(${p.core},0.02) 50%, transparent 70%)`,
+            filter: "blur(20px)",
+          }}
+        />
       </div>
 
-      {/* Border glow — seamless continuous trail along 2px edge */}
-      <div className="absolute inset-0 rounded-[inherit] pointer-events-none overflow-hidden" style={{ zIndex: 1 }}>
+      {/* Border glow — 21 overlapping spots masked to 2px border */}
+      <div
+        className="absolute inset-0 rounded-[inherit] pointer-events-none overflow-hidden"
+        style={{ zIndex: 1 }}
+      >
         <div
           className="absolute inset-0 rounded-[inherit]"
           style={{
@@ -158,29 +158,44 @@ export function GlowCard({
             padding: "2px",
           }}
         >
-          {/* Lead — gold, brightest */}
-          {renderBorderSpot(lightPos, baseSpot, borderOpacity, p.core, 4, "b0")}
-          {/* Trails 1-3: gold, fading */}
-          {trails[0] && renderBorderSpot(trails[0], baseSpot * 0.95, borderOpacity * 0.8, p.core, 5, "b1")}
-          {trails[1] && renderBorderSpot(trails[1], baseSpot * 0.9, borderOpacity * 0.65, p.core, 5, "b2")}
-          {trails[2] && renderBorderSpot(trails[2], baseSpot * 0.85, borderOpacity * 0.5, p.core, 6, "b3")}
-          {/* Trails 4-5: gold→white transition */}
-          {trails[3] && renderBorderSpot(trails[3], baseSpot * 0.8, borderOpacity * 0.35, p.core, 6, "b4c")}
-          {trails[3] && renderBorderSpot(trails[3], baseSpot * 0.75, borderOpacity * 0.2, p.edge, 5, "b4w")}
-          {trails[4] && renderBorderSpot(trails[4], baseSpot * 0.75, borderOpacity * 0.25, p.edge, 7, "b5")}
-          {trails[4] && renderBorderSpot(trails[4], baseSpot * 0.7, borderOpacity * 0.15, p.core, 6, "b5c")}
-          {/* Trails 6-7: mostly white */}
-          {trails[5] && renderBorderSpot(trails[5], baseSpot * 0.7, borderOpacity * 0.18, p.edge, 7, "b6")}
-          {trails[6] && renderBorderSpot(trails[6], baseSpot * 0.65, borderOpacity * 0.12, p.edge, 8, "b7")}
-          {/* Trails 8-9: faint white tail */}
-          {trails[7] && renderBorderSpot(trails[7], baseSpot * 0.6, borderOpacity * 0.08, p.edge, 9, "b8")}
-          {trails[8] && renderBorderSpot(trails[8], baseSpot * 0.5, borderOpacity * 0.04, p.edge, 10, "b9")}
+          {positions.map((pos, i) => {
+            const tp = trailProps(i);
+            return (
+              <div
+                key={i}
+                className="absolute rounded-full pointer-events-none"
+                style={{
+                  width: `${tp.size}px`,
+                  height: `${tp.size}px`,
+                  left: `${pos.x}%`,
+                  top: `${pos.y}%`,
+                  translate: "-50% -50%",
+                  background: `radial-gradient(circle, rgba(${tp.color},${tp.opacity}) 0%, rgba(${tp.color},${tp.opacity * 0.3}) 40%, transparent 65%)`,
+                  filter: `blur(${tp.blur}px)`,
+                }}
+              />
+            );
+          })}
         </div>
       </div>
 
-      {/* Inner wash — very subtle */}
-      <div className="absolute inset-0 rounded-[inherit] pointer-events-none overflow-hidden" style={{ zIndex: 2 }}>
-        {renderBorderSpot(lightPos, baseSpot * 0.7, 0.03, p.core, 20, "wash")}
+      {/* Inner wash — very subtle glow inside near lead */}
+      <div
+        className="absolute inset-0 rounded-[inherit] pointer-events-none overflow-hidden"
+        style={{ zIndex: 2 }}
+      >
+        <div
+          className="absolute rounded-full pointer-events-none"
+          style={{
+            width: `${baseSpot * 0.6}px`,
+            height: `${baseSpot * 0.6}px`,
+            left: `${positions[0]?.x ?? 0}%`,
+            top: `${positions[0]?.y ?? 0}%`,
+            translate: "-50% -50%",
+            background: `radial-gradient(circle, rgba(${p.core},0.03) 0%, transparent 50%)`,
+            filter: "blur(15px)",
+          }}
+        />
       </div>
 
       {/* Mouse spotlight on hover */}
