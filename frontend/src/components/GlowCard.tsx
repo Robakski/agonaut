@@ -13,10 +13,10 @@ const TRAIL_COUNT = 20;
 const SPACING = 0.018;
 
 const PALETTES: Record<string, { core: string; edge: string; shadow: string; hoverAlpha: number }> = {
-  amber: { core: "180,140,30", edge: "160,160,170", shadow: "212,175,55", hoverAlpha: 0.06 },
-  silver: { core: "140,140,155", edge: "180,180,190", shadow: "160,160,175", hoverAlpha: 0.05 },
-  blue: { core: "59,130,246", edge: "140,170,220", shadow: "59,130,246", hoverAlpha: 0.05 },
-  gold: { core: "180,140,30", edge: "160,160,170", shadow: "212,175,55", hoverAlpha: 0.07 },
+  amber: { core: "180,140,30", edge: "160,160,170", shadow: "212,175,55", hoverAlpha: 0.18 },
+  silver: { core: "140,140,155", edge: "180,180,190", shadow: "160,160,175", hoverAlpha: 0.15 },
+  blue: { core: "59,130,246", edge: "140,170,220", shadow: "59,130,246", hoverAlpha: 0.14 },
+  gold: { core: "180,140,30", edge: "160,160,170", shadow: "212,175,55", hoverAlpha: 0.20 },
 };
 
 /**
@@ -147,7 +147,7 @@ export function GlowCard({
       style={{
         // Colored drop-shadow around card for visibility on white
         filter: isHovered
-          ? `drop-shadow(0 4px 20px rgba(${p.shadow},0.15))`
+          ? `drop-shadow(0 8px 30px rgba(${p.shadow},0.25)) drop-shadow(0 2px 8px rgba(${p.shadow},0.15))`
           : `drop-shadow(0 2px 12px rgba(${p.shadow},0.08))`,
         transition: "filter 0.5s ease",
       }}
