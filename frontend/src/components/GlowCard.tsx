@@ -27,32 +27,33 @@ export function GlowCard({
 
   const palette: Record<string, { stops: string; spot: string; shadow: string; shadowHover: string }> = {
     amber: {
-      stops: "rgba(212,175,55,0.7), transparent 40%, rgba(197,165,78,0.5), transparent 60%, rgba(212,175,55,0.7)",
-      spot: "rgba(212,175,55,0.12)",
-      shadow: "0 0 40px -10px rgba(212,175,55,0.08)",
-      shadowHover: "0 0 60px -10px rgba(212,175,55,0.18)",
+      // Single bright spot — pure clockwise, no reversal
+      stops: "rgba(191,155,48,1) 0%, rgba(191,155,48,0.4) 8%, transparent 25%, transparent 75%, rgba(191,155,48,0.4) 92%, rgba(191,155,48,1) 100%",
+      spot: "rgba(191,155,48,0.12)",
+      shadow: "0 0 30px -5px rgba(191,155,48,0.06), 0 0 60px -10px rgba(191,155,48,0.03)",
+      shadowHover: "0 0 40px -5px rgba(191,155,48,0.12), 0 0 80px -10px rgba(191,155,48,0.06)",
     },
     silver: {
-      stops: "rgba(203,213,225,0.9), transparent 40%, rgba(148,163,184,0.7), transparent 60%, rgba(203,213,225,0.9)",
-      spot: "rgba(148,163,184,0.15)",
-      shadow: "0 0 40px -10px rgba(148,163,184,0.1)",
-      shadowHover: "0 0 60px -10px rgba(148,163,184,0.2)",
+      stops: "rgba(180,180,190,1) 0%, rgba(180,180,190,0.4) 8%, transparent 25%, transparent 75%, rgba(180,180,190,0.4) 92%, rgba(180,180,190,1) 100%",
+      spot: "rgba(180,180,190,0.15)",
+      shadow: "0 0 30px -5px rgba(180,180,190,0.06), 0 0 60px -10px rgba(180,180,190,0.03)",
+      shadowHover: "0 0 40px -5px rgba(180,180,190,0.12), 0 0 80px -10px rgba(180,180,190,0.06)",
     },
     blue: {
-      stops: "rgba(59,130,246,0.8), transparent 40%, rgba(37,99,235,0.6), transparent 60%, rgba(59,130,246,0.8)",
+      stops: "rgba(59,130,246,1) 0%, rgba(59,130,246,0.4) 8%, transparent 25%, transparent 75%, rgba(59,130,246,0.4) 92%, rgba(59,130,246,1) 100%",
       spot: "rgba(59,130,246,0.12)",
-      shadow: "0 0 40px -10px rgba(59,130,246,0.1)",
-      shadowHover: "0 0 60px -10px rgba(59,130,246,0.2)",
+      shadow: "0 0 30px -5px rgba(59,130,246,0.06), 0 0 60px -10px rgba(59,130,246,0.03)",
+      shadowHover: "0 0 40px -5px rgba(59,130,246,0.12), 0 0 80px -10px rgba(59,130,246,0.06)",
     },
     gold: {
-      stops: "rgba(212,175,55,0.9), transparent 40%, rgba(184,152,40,0.6), transparent 60%, rgba(212,175,55,0.9)",
-      spot: "rgba(212,175,55,0.15)",
-      shadow: "0 0 40px -10px rgba(212,175,55,0.1)",
-      shadowHover: "0 0 60px -10px rgba(212,175,55,0.22)",
+      stops: "rgba(191,155,48,1) 0%, rgba(191,155,48,0.4) 8%, transparent 25%, transparent 75%, rgba(191,155,48,0.4) 92%, rgba(191,155,48,1) 100%",
+      spot: "rgba(191,155,48,0.15)",
+      shadow: "0 0 30px -5px rgba(191,155,48,0.08), 0 0 60px -10px rgba(191,155,48,0.04)",
+      shadowHover: "0 0 40px -5px rgba(191,155,48,0.15), 0 0 80px -10px rgba(191,155,48,0.08)",
     },
   };
 
-  const borderPx = intensity === "subtle" ? 1 : intensity === "medium" ? 1.5 : 2;
+  const borderPx = intensity === "subtle" ? 1.5 : intensity === "medium" ? 2.5 : 3.5;
   const speed = intensity === "subtle" ? "20s" : intensity === "medium" ? "14s" : "10s";
   const p = palette[glowColor] || palette.amber;
 
@@ -78,14 +79,32 @@ export function GlowCard({
         transition: "box-shadow 0.5s ease",
       }}
     >
-      {/* Spinning conic-gradient disc — clipped to border by the inner white card */}
+      {/* Outer glow — soft blurred halo that fades to white */}
+      <div
+        className="absolute -inset-[6px] rounded-[inherit] overflow-hidden pointer-events-none"
+      >
+        <div
+          className="absolute"
+          style={{
+            width: "200%",
+            height: "200%",
+            top: "-50%",
+            left: "-50%",
+            background: `conic-gradient(from 0deg at 50% 50%, ${p.stops})`,
+            animation: `spin ${speed} linear infinite`,
+            filter: "blur(12px)",
+            opacity: 0.5,
+          }}
+        />
+      </div>
+
+      {/* Inner sharp border — spinning conic-gradient disc */}
       <div
         className="absolute inset-0 rounded-[inherit] overflow-hidden"
       >
         <div
           className="absolute"
           style={{
-            /* Make it a large square centered on the card, so it covers corners when spinning */
             width: "200%",
             height: "200%",
             top: "-50%",
