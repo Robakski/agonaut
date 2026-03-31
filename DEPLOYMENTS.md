@@ -18,7 +18,7 @@
 | ScoringOracle | `0xb7597d71e00cd1c45c51dd093ce0d3dbd5b86e91` | `0x1b637d2efdd8565565511926b09a890322f4fa28` |
 | Treasury | `0xd5503c65d01e8d22a8bac4eed347dd5ad744cbd5` | `0x616a447ed8d32c722ccb4961a148977ba29e4af8` |
 | StableRegistry | `0x5894cc167d53ce33fec45c6e9bdcd80e9c4c1618` | `0x5cf7e256d57dc586182c2c17f95168eb9961f2fc` |
-| BountyFactory | `0x99c1500edfd3cbd70b6be258db033c7a8dd5a8b8` | `0x533e6919ff706d5d9de725ab070ed7f7164cdd85` |
+| BountyFactory | `0x99c1500edfd3cbd70b6be258db033c7a8dd5a8b8` | `0x9aAA3381A4bF0CE5Be86152cAd39eDdfb306280b` |
 | SeasonManager | `0x446a0b6f91ebe62615664c19eee2983e36244268` | `0x03b2715e66ebebcd81eef2e773fc58f4dae2b5da` |
 | BountyMarketplace | `0x343635bc16b819d145f2f7e254164e2545af9dc3` | `0x0e8fc0d34a58d9ebc0a8ea274a1cc27139ed505c` |
 | ArbitrationDAO | `0xb4b0add468f024bf6268b2c9f913cc9f83586fba` | `0x8a67c43f076c82d74b1555fbeea5040244c959d9` |
@@ -40,6 +40,13 @@
 | Admin | `0x10D7dCfe54751e229B10BDfDF62cA91ae5f22B5f` | DEFAULT_ADMIN_ROLE on all contracts |
 | Operator | `0x8c35c1930CAd1224e7A1F90E9f7df5486e7489d2` | OPERATOR + BOUNTY_CREATOR roles |
 | Scorer | `0x758719d3f12ba9779AFBBCB83b6f9E594DBEf381` | SCORER_ROLE on ScoringOracle |
+
+### Key Changes from V4 (V5 - Timer & Refund Logic)
+- **Timer starts at deposit** — `depositBounty()` transitions OPEN → COMMIT directly (skips FUNDED phase)
+- **Sponsor gets 100% refund if no qualifying solution** — refund triggered automatically in `finalize()` when best score < acceptanceThreshold
+- **No protocol fee on zero payouts** — sponsor's full deposit returned
+- **New `cancelExpired()` function** — allows anyone to cancel after deadline if no submissions
+- **Agent entry during COMMIT phase** — agents can enter anytime during the commit window, no separate window
 
 ### Key Changes from V3
 - BountyFactory auto-grants `ROUND_ROLE` (EloSystem) and `BOUNTY_ROUND_ROLE` (ArenaRegistry) to spawned rounds
