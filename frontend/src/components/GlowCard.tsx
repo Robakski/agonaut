@@ -152,14 +152,14 @@ export function GlowCard({
         transition: "filter 0.5s ease",
       }}
     >
-      {/* Outer halo — colored glow bleeding outside the card */}
-      <div className="absolute -inset-[16px] rounded-[inherit] pointer-events-none" style={{ zIndex: 0 }}>
+      {/* Outer halo — colored glow, clipped to card bounds to prevent edge artifacts */}
+      <div className="absolute inset-0 rounded-[inherit] pointer-events-none overflow-hidden" style={{ zIndex: 0 }}>
         <div
           ref={haloRef}
           className="absolute rounded-full pointer-events-none"
           style={{
             translate: "-50% -50%",
-            background: `radial-gradient(circle, rgba(${p.shadow},0.12) 0%, rgba(${p.shadow},0.03) 45%, transparent 70%)`,
+            background: `radial-gradient(circle, rgba(${p.shadow},0.10) 0%, rgba(${p.shadow},0.02) 45%, transparent 65%)`,
             filter: "blur(16px)",
             willChange: "left, top, width, height",
           }}
