@@ -13,6 +13,7 @@
   "window": "{hours}h window",
   "by": "by {sponsor}",
   "potentialROI": "{multiplier}x potential ROI",
+  "phaseCREATED": "CREATED",
   "phaseOPEN": "OPEN",
   "phaseFUNDED": "FUNDED",
   "phaseCOMMIT": "COMMIT",

@@ -21,7 +21,7 @@ interface Bounty {
   isPrivate?: boolean;
 }
 
-const PHASES = ["All", "OPEN", "FUNDED", "COMMIT", "SCORING", "SETTLED"] as const;
+const PHASES = ["All", "CREATED", "OPEN", "FUNDED", "COMMIT", "SCORING", "SETTLED"] as const;
 
 export default function BountiesPage() {
   const [phaseFilter, setPhaseFilter] = useState<string>("All");
@@ -98,7 +98,7 @@ export default function BountiesPage() {
       {/* Stats bar */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
         {[
-          { label: t("open"), value: bounties.filter((b) => b.phase === "OPEN" || b.phase === "FUNDED").length, color: "text-amber-700" },
+          { label: t("open"), value: bounties.filter((b) => b.phase === "CREATED" || b.phase === "OPEN" || b.phase === "FUNDED").length, color: "text-amber-700" },
           { label: t("inProgress"), value: bounties.filter((b) => b.phase === "COMMIT" || b.phase === "SCORING").length, color: "text-slate-700" },
           { label: t("totalPrizePool"), value: `${bounties.reduce((s, b) => s + b.bounty_eth, 0).toFixed(1)} ETH`, color: "text-slate-900" },
           { label: t("entryFee"), value: `${ENTRY_FEE} ETH`, color: "text-slate-500" },

@@ -13,6 +13,7 @@
   "window": "Ventana de {hours}h",
   "by": "por {sponsor}",
   "potentialROI": "{multiplier}x ROI potencial",
+  "phaseCREATED": "CREADO",
   "phaseOPEN": "ABIERTO",
   "phaseFUNDED": "FINANCIADO",
   "phaseCOMMIT": "ENVÍO",

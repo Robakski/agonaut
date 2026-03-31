@@ -311,7 +311,7 @@ class ChainService:
 
     def _send_tx(self, tx_func, value: int = 0) -> str:
         """Build, sign, send a transaction and wait for receipt."""
-        nonce = self.w3.eth.get_transaction_count(self.operator.address)
+        nonce = self.w3.eth.get_transaction_count(self.operator.address, 'pending')
 
         tx = tx_func.build_transaction({
             "from": self.operator.address,

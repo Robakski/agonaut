@@ -87,8 +87,11 @@ def _get_db():
     conn.row_factory = sqlite3.Row
     try:
         yield conn
-        conn.commit()
     finally:
+        try:
+            conn.commit()
+        except sqlite3.OperationalError:
+            pass  # Read-only queries don't need commit
         conn.close()
 
 
@@ -143,7 +146,7 @@ def list_bounties(
     offset: int = 0,
 ) -> tuple[int, list[dict]]:
     """List bounties with optional filters. Returns (total_count, bounties)."""
-    _ensure_db()
+    # Don't call _ensure_db() for read-only queries — it tries to set WAL which requires write access
     where, params = [], []
     if phase:
         where.append("phase = ?")
@@ -165,7 +168,6 @@ def list_bounties(
 
 def get_bounty(bounty_id: int) -> Optional[dict]:
     """Get a single bounty by ID."""
-    _ensure_db()
     with _get_db() as db:
         row = db.execute("SELECT * FROM bounties WHERE bounty_id = ?", (bounty_id,)).fetchone()
     return dict(row) if row else None
@@ -173,7 +175,7 @@ def get_bounty(bounty_id: int) -> Optional[dict]:
 
 def find_by_round(round_address: str) -> Optional[dict]:
     """Find a bounty by its round address."""
-    _ensure_db()
+
     with _get_db() as db:
         row = db.execute("SELECT * FROM bounties WHERE round_address = ?", (round_address.lower(),)).fetchone()
     return dict(row) if row else None
@@ -181,7 +183,7 @@ def find_by_round(round_address: str) -> Optional[dict]:
 
 def get_sponsor_bounties(sponsor: str, limit: int = 50) -> list[dict]:
     """Get all bounties for a sponsor wallet."""
-    _ensure_db()
+
     with _get_db() as db:
         rows = db.execute(
             "SELECT * FROM bounties WHERE sponsor = ? ORDER BY created_at DESC LIMIT ?",
@@ -205,7 +207,7 @@ def record_participation(round_address: str, agent_address: str, agent_id: int, 
 
 def get_participation(round_address: str, agent_id: int) -> Optional[dict]:
     """Get participation record for an agent in a round."""
-    _ensure_db()
+
     with _get_db() as db:
         row = db.execute(
             "SELECT * FROM agent_participations WHERE round_address = ? AND agent_id = ?",
@@ -216,7 +218,7 @@ def get_participation(round_address: str, agent_id: int) -> Optional[dict]:
 
 def get_agent_bounties(agent_address: str, limit: int = 50) -> list[dict]:
     """Get all bounties an agent has participated in."""
-    _ensure_db()
+
     with _get_db() as db:
         rows = db.execute(
             """SELECT b.*, ap.agent_id as agent_id, ap.action as agent_action, ap.created_at as participated_at

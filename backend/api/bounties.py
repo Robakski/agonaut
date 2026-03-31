@@ -74,6 +74,7 @@ class BountyResponse(BaseModel):
     agents_entered: int
     max_agents: int
     phase: str
+    commit_hours: int = 24
     commit_deadline: Optional[int] = None
     rubric: Optional[list[RubricCriterion]] = None
     created_at: int
@@ -278,10 +279,14 @@ async def list_bounties(
         )
         # For small result sets (≤20), refresh on-chain phase
         if len(bounties) <= 20:
-            chain = get_chain_service()
+            try:
+                chain = get_chain_service()
+            except Exception as chain_err:
+                logger.warning(f"Chain service unavailable, returning cached data: {chain_err}")
+                chain = None
             for b in bounties:
                 ra = b.get("round_address")
-                if ra:
+                if ra and chain:
                     try:
                         details = chain.get_round_details(ra)
                         b["phase"] = details["phase"]
@@ -307,7 +312,8 @@ async def list_bounties(
                 agents_entered=b.get("agent_count", 0),
                 max_agents=b.get("max_agents", 0),
                 phase=b.get("phase", "CREATED"),
-                created_at=b.get("created_at", 0),
+                commit_hours=b.get("commit_hours", 24),
+                created_at=int(b.get("created_at", 0)),
                 is_private=bool(b.get("is_private", 0)),
             )
             for b in bounties
@@ -315,6 +321,37 @@ async def list_bounties(
     except Exception as e:
         logger.warning(f"Failed to list bounties: {e}")
         return []
+
+
+@router.get("/debug-list")
+async def debug_list():
+    """Temporary debug endpoint to diagnose bounty listing issues."""
+    import traceback, sqlite3
+    results = {}
+    
+    try:
+        conn = sqlite3.connect("/opt/agonaut-api/data/bounty_index.db")
+        conn.row_factory = sqlite3.Row
+        rows = conn.execute("SELECT bounty_id, title, phase FROM bounties").fetchall()
+        results["raw_db"] = [dict(r) for r in rows]
+        conn.close()
+    except Exception as e:
+        results["raw_db_error"] = str(e)
+    
+    try:
+        total, bounties = bounty_index.list_bounties()
+        results["list_bounties"] = {"total": total, "count": len(bounties), "data": bounties}
+    except Exception as e:
+        results["list_bounties_error"] = str(e)
+        results["traceback"] = traceback.format_exc()
+    
+    try:
+        chain = get_chain_service()
+        results["chain_service"] = "OK"
+    except Exception as e:
+        results["chain_error"] = str(e)
+    
+    return results
 
 
 @router.get("/agent/{agent_address}")
@@ -427,7 +464,26 @@ async def get_bounty(bounty_id: int):
     """Get details of a specific bounty."""
     stored = load_rubric(bounty_id)
     if not stored:
-        raise HTTPException(status_code=404, detail="Bounty not found")
+        # Fall back to bounty index DB (rubric file may not exist for manually indexed bounties)
+        indexed = bounty_index.get_bounty(bounty_id)
+        if indexed:
+            stored = {
+                "title": indexed.get("title", ""),
+                "description": indexed.get("description", ""),
+                "tags": indexed.get("tags", "").split(",") if isinstance(indexed.get("tags"), str) else indexed.get("tags", []),
+                "bounty_eth": indexed.get("bounty_eth", 0),
+                "entry_fee_eth": indexed.get("entry_fee_eth", 0.003),
+                "commit_hours": indexed.get("commit_hours", 24),
+                "max_agents": indexed.get("max_agents", 0),
+                "threshold": indexed.get("threshold", 0),
+                "graduated": bool(indexed.get("graduated", 0)),
+                "sponsor": indexed.get("sponsor", ""),
+                "round_address": indexed.get("round_address", ""),
+                "is_private": bool(indexed.get("is_private", 0)),
+                "problem_cid": indexed.get("problem_cid", ""),
+            }
+        else:
+            raise HTTPException(status_code=404, detail="Bounty not found")
 
     # SECURITY: Strip sensitive fields from private bounties
     result = {"bounty_id": bounty_id, **stored}

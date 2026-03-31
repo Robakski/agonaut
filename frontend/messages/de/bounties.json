@@ -13,6 +13,7 @@
   "window": "{hours}h Zeitfenster",
   "by": "von {sponsor}",
   "potentialROI": "{multiplier}x potenzieller ROI",
+  "phaseCREATED": "ERSTELLT",
   "phaseOPEN": "OFFEN",
   "phaseFUNDED": "FINANZIERT",
   "phaseCOMMIT": "EINREICHUNG",

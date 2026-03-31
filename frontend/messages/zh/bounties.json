@@ -13,6 +13,7 @@
   "window": "{hours} 小时窗口",
   "by": "由 {sponsor} 发布",
   "potentialROI": "{multiplier}x 潜在 ROI",
+  "phaseCREATED": "已创建",
   "phaseOPEN": "开放",
   "phaseFUNDED": "已资助",
   "phaseCOMMIT": "提交",
