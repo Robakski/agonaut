@@ -9,8 +9,8 @@ interface GlowCardProps {
   intensity?: "subtle" | "medium" | "strong";
 }
 
-const TRAIL_COUNT = 20;
-const SPACING = 0.018;
+const MAX_TRAILS = 20;
+const MOBILE_TRAILS = 8;
 
 const PALETTES: Record<string, { core: string; edge: string; shadow: string; hoverAlpha: number }> = {
   amber: { core: "180,140,30", edge: "160,160,170", shadow: "212,175,55", hoverAlpha: 0.18 },
@@ -30,6 +30,14 @@ export function GlowCard({
   glowColor = "amber",
   intensity = "medium",
 }: GlowCardProps) {
+  // Fewer trails on mobile to prevent GPU crash when pinch-zooming
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    setIsMobile(window.innerWidth < 768);
+  }, []);
+  const trailCount = isMobile ? MOBILE_TRAILS : MAX_TRAILS;
+  const spacing = isMobile ? 0.04 : 0.018;
+
   const cardRef = useRef<HTMLDivElement>(null);
   const spotsRef = useRef<(HTMLDivElement | null)[]>([]);
   const haloRef = useRef<HTMLDivElement>(null);
@@ -78,11 +86,11 @@ export function GlowCard({
         borderMaskRef.current.style.padding = `${borderPx}px`;
       }
 
-      for (let i = 0; i <= TRAIL_COUNT; i++) {
+      for (let i = 0; i <= trailCount; i++) {
         const el = spotsRef.current[i];
         if (!el) continue;
-        const pos = perimeterPos((progress - i * SPACING + 1) % 1, w, h);
-        const t = i / TRAIL_COUNT;
+        const pos = perimeterPos((progress - i * spacing + 1) % 1, w, h);
+        const t = i / trailCount;
         const size = baseSpot * (1 - t * 0.25);
         el.style.width = `${size}px`;
         el.style.height = `${size}px`;
@@ -104,7 +112,7 @@ export function GlowCard({
     };
     animRef.current = requestAnimationFrame(animate);
     return () => cancelAnimationFrame(animRef.current);
-  }, [duration]);
+  }, [duration, trailCount, spacing]);
 
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
     if (!cardRef.current) return;
@@ -117,8 +125,8 @@ export function GlowCard({
 
   // Build spot elements with gradient colors visible on white
   const spotElements = [];
-  for (let i = 0; i <= TRAIL_COUNT; i++) {
-    const t = i / TRAIL_COUNT;
+  for (let i = 0; i <= trailCount; i++) {
+    const t = i / trailCount;
     const opacity = borderOpacity * (1 - t * 0.85);
     const color = t < 0.4 ? p.core : p.edge;
     const blur = 2 + t * 6;
@@ -167,7 +175,7 @@ export function GlowCard({
       </div>
 
       {/* Border glow — traveling light along edge */}
-      <div className="absolute inset-0 rounded-[inherit] pointer-events-none overflow-hidden" style={{ zIndex: 1 }}>
+      <div className="absolute inset-0 rounded-[inherit] pointer-events-none overflow-hidden" style={{ zIndex: 1, contain: "strict" }}>
         <div
           ref={borderMaskRef}
           className="absolute inset-0 rounded-[inherit]"
