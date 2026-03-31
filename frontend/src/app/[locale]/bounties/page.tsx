@@ -176,7 +176,7 @@ export default function BountiesPage() {
       {/* Bounty cards */}
       {!loading && !error && <div className="space-y-4">
         {filtered.map((bounty) => (
-          <GlowCard key={bounty.bounty_id} glowColor="amber" className="rounded-xl border border-slate-200">
+          <GlowCard key={bounty.bounty_id} glowColor="amber" className="rounded-xl">
           <Link
             href={`/bounties/${bounty.bounty_id}`}
             className="block p-6 group"
