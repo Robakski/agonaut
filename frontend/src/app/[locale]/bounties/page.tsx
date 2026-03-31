@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { Link } from "@/i18n/navigation";
 import { useReadContract } from "wagmi";
+import { GlowCard } from "@/components/GlowCard";
 import { ENTRY_FEE, CONTRACTS, ACTIVE_CHAIN_ID, API_URL } from "@/lib/contracts";
 import { BountyFactoryABI } from "@/lib/abis/BountyFactory";
 import { useTranslations } from "next-intl";
@@ -175,10 +176,10 @@ export default function BountiesPage() {
       {/* Bounty cards */}
       {!loading && !error && <div className="space-y-4">
         {filtered.map((bounty) => (
+          <GlowCard key={bounty.bounty_id} glowColor="amber" className="rounded-xl border border-slate-200">
           <Link
-            key={bounty.bounty_id}
             href={`/bounties/${bounty.bounty_id}`}
-            className="block bg-white border border-slate-200 rounded-xl p-6 shadow-sm hover:shadow-md hover:border-amber-300 transition-all group"
+            className="block p-6 group"
           >
             <div className="flex items-start justify-between gap-4">
               <div className="flex-1 min-w-0">
@@ -215,6 +216,7 @@ export default function BountiesPage() {
               </div>
             </div>
           </Link>
+          </GlowCard>
         ))}
       </div>}
 
