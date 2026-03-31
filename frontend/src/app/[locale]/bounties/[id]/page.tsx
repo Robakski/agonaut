@@ -105,7 +105,9 @@ export default function BountyDetailPage() {
   const agents = b.agents_entered || b.agent_count || 0;
   const maxAgents = b.max_agents || 0;
   const sponsor = b.sponsor || "";
-  const phase = b.phase || "CREATED";
+  // Map backend phases to user-facing: FUNDED → OPEN (accepting agents)
+  const rawPhase = b.phase || "OPEN";
+  const phase = rawPhase === "FUNDED" ? "OPEN" : rawPhase === "CREATED" ? "OPEN" : rawPhase;
   const roundAddr = b.round_address || "";
   const isPrivate = b.is_private || false;
   const isSponsor = address && sponsor && address.toLowerCase() === sponsor.toLowerCase();

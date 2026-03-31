@@ -21,7 +21,7 @@ interface Bounty {
   isPrivate?: boolean;
 }
 
-const PHASES = ["All", "CREATED", "OPEN", "FUNDED", "COMMIT", "SCORING", "SETTLED"] as const;
+const PHASES = ["All", "OPEN", "COMMIT", "SCORING", "SETTLED"] as const;
 
 export default function BountiesPage() {
   const [phaseFilter, setPhaseFilter] = useState<string>("All");
@@ -46,20 +46,34 @@ export default function BountiesPage() {
       .then((r) => r.ok ? r.json() : Promise.reject(new Error(`HTTP ${r.status}`)))
       .then((data: any[]) => {
         if (Array.isArray(data)) {
+          // Map backend phases to user-facing phases:
+          // Contract OPEN = unfunded (hide), FUNDED = accepting agents (show as "OPEN")
+          const PHASE_MAP: Record<string, string> = {
+            "OPEN": "_HIDE_",      // Unfunded — don't show
+            "CREATED": "_HIDE_",   // Legacy — don't show
+            "FUNDED": "OPEN",      // Funded & accepting agents → user sees "OPEN"
+            "COMMIT": "COMMIT",
+            "SCORING": "SCORING",
+            "SETTLED": "SETTLED",
+            "CANCELLED": "CANCELLED",
+            "DISPUTED": "DISPUTED",
+          };
           setBounties(
-            data.map((b) => ({
-              bounty_id: b.bounty_id,
-              title: b.problem_title || b.title || "Untitled",
-              sponsor: b.sponsor ? `${b.sponsor.slice(0, 6)}...${b.sponsor.slice(-4)}` : "Unknown",
-              bounty_eth: b.total_bounty_eth || 0,
-              agents: b.agents_entered || 0,
-              max_agents: b.max_agents || 0,
-              phase: b.phase || "CREATED",
-              tier: "Bronze",
-              tags: b.tags || [],
-              commit_hours: b.commit_hours || 24,
-              isPrivate: b.is_private || false,
-            }))
+            data
+              .map((b) => ({
+                bounty_id: b.bounty_id,
+                title: b.problem_title || b.title || "Untitled",
+                sponsor: b.sponsor ? `${b.sponsor.slice(0, 6)}...${b.sponsor.slice(-4)}` : "Unknown",
+                bounty_eth: b.total_bounty_eth || 0,
+                agents: b.agents_entered || 0,
+                max_agents: b.max_agents || 0,
+                phase: PHASE_MAP[b.phase] || b.phase,
+                tier: "Bronze",
+                tags: b.tags || [],
+                commit_hours: b.commit_hours || 24,
+                isPrivate: b.is_private || false,
+              }))
+              .filter((b) => b.phase !== "_HIDE_")  // Hide unfunded bounties
           );
         }
         setError(false);
@@ -98,7 +112,7 @@ export default function BountiesPage() {
       {/* Stats bar */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
         {[
-          { label: t("open"), value: bounties.filter((b) => b.phase === "CREATED" || b.phase === "OPEN" || b.phase === "FUNDED").length, color: "text-amber-700" },
+          { label: t("open"), value: bounties.filter((b) => b.phase === "OPEN").length, color: "text-amber-700" },
           { label: t("inProgress"), value: bounties.filter((b) => b.phase === "COMMIT" || b.phase === "SCORING").length, color: "text-slate-700" },
           { label: t("totalPrizePool"), value: `${bounties.reduce((s, b) => s + b.bounty_eth, 0).toFixed(1)} ETH`, color: "text-slate-900" },
           { label: t("entryFee"), value: `${ENTRY_FEE} ETH`, color: "text-slate-500" },
