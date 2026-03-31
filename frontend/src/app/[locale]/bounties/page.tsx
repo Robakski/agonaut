@@ -18,10 +18,11 @@ interface Bounty {
   tier: string;
   tags: string[];
   commit_hours: number;
+  commit_deadline: number;
   isPrivate?: boolean;
 }
 
-const PHASES = ["All", "OPEN", "COMMIT", "SCORING", "SETTLED"] as const;
+const PHASES = ["All", "OPEN", "COMPLETED"] as const;
 
 export default function BountiesPage() {
   const [phaseFilter, setPhaseFilter] = useState<string>("All");
@@ -48,13 +49,14 @@ export default function BountiesPage() {
         if (Array.isArray(data)) {
           // Map backend phases to user-facing phases:
           // Contract OPEN = unfunded (hide), FUNDED = accepting agents (show as "OPEN")
+          // User-facing phases: OPEN (accepting/solving), JUDGING (scoring), COMPLETED, CANCELLED
           const PHASE_MAP: Record<string, string> = {
             "OPEN": "_HIDE_",      // Unfunded — don't show
             "CREATED": "_HIDE_",   // Legacy — don't show
-            "FUNDED": "OPEN",      // Funded & accepting agents → user sees "OPEN"
-            "COMMIT": "COMMIT",
-            "SCORING": "SCORING",
-            "SETTLED": "SETTLED",
+            "FUNDED": "OPEN",      // Funded & accepting agents
+            "COMMIT": "OPEN",      // Agents actively solving — still "open" to users
+            "SCORING": "JUDGING",  // TEE scoring in progress
+            "SETTLED": "COMPLETED",
             "CANCELLED": "CANCELLED",
             "DISPUTED": "DISPUTED",
           };
@@ -71,6 +73,7 @@ export default function BountiesPage() {
                 tier: "Bronze",
                 tags: b.tags || [],
                 commit_hours: b.commit_hours || 24,
+                commit_deadline: b.commit_deadline || 0,
                 isPrivate: b.is_private || false,
               }))
               .filter((b) => b.phase !== "_HIDE_")  // Hide unfunded bounties
@@ -112,8 +115,8 @@ export default function BountiesPage() {
       {/* Stats bar */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
         {[
-          { label: t("open"), value: bounties.filter((b) => b.phase === "OPEN").length, color: "text-amber-700" },
-          { label: t("inProgress"), value: bounties.filter((b) => b.phase === "COMMIT" || b.phase === "SCORING").length, color: "text-slate-700" },
+          { label: t("phaseOPEN"), value: bounties.filter((b) => b.phase === "OPEN" || b.phase === "JUDGING").length, color: "text-amber-700" },
+          { label: t("phaseCOMPLETED") || "Completed", value: bounties.filter((b) => b.phase === "COMPLETED").length, color: "text-slate-700" },
           { label: t("totalPrizePool"), value: `${bounties.reduce((s, b) => s + b.bounty_eth, 0).toFixed(1)} ETH`, color: "text-slate-900" },
           { label: t("entryFee"), value: `${ENTRY_FEE} ETH`, color: "text-slate-500" },
         ].map((stat) => (
@@ -197,7 +200,9 @@ export default function BountiesPage() {
                   </span>
                   <span className="flex items-center gap-1">
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                    {t("window", { hours: bounty.commit_hours })}
+                    {bounty.commit_deadline > 0
+                      ? `${t("ends") || "Ends"}: ${new Date(bounty.commit_deadline * 1000).toLocaleDateString(undefined, { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}`
+                      : t("acceptingSolutions") || "Accepting solutions"}
                   </span>
                   <span>{t("by", { sponsor: bounty.sponsor })}</span>
                 </div>

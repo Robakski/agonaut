@@ -152,10 +152,12 @@ export default function BountyDetailPage() {
         <StatCard label={t("prize")} value={`${eth} ETH`} />
         <StatCard label={t("entryFee")} value={entryFeeEth > 0 ? `${entryFeeEth} ETH` : "—"} />
         <StatCard label={t("agents")} value={maxAgents > 0 ? `${agents}/${maxAgents}` : `${agents}`} />
-        <StatCard label={t("commitWindow")} value={b.commit_hours ? `${b.commit_hours}h` : "—"} />
-        {b.commit_deadline && b.commit_deadline > 0 && (
-          <StatCard label={t("deadline") || "Deadline"} value={new Date(b.commit_deadline * 1000).toLocaleString()} />
-        )}
+        <StatCard
+          label={b.commit_deadline && b.commit_deadline > 0 ? (t("deadline") || "Deadline") : (t("status") || "Status")}
+          value={b.commit_deadline && b.commit_deadline > 0
+            ? new Date(b.commit_deadline * 1000).toLocaleDateString(undefined, { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })
+            : (t("acceptingSolutions") || "Accepting solutions")}
+        />
       </div>
 
       {/* Description */}
