@@ -59,19 +59,24 @@ export function GlowCard({
     return { x: 0, y: (1 - (t - 3)) * 100 };
   }
 
-  // Animate lead + two trailing positions for elongated glow
+  // Animate lead + 5 trailing positions for smooth continuous glow
+  const [trailPos3, setTrailPos3] = useState({ x: 0, y: 0 });
+  const [trailPos4, setTrailPos4] = useState({ x: 0, y: 0 });
+  const [trailPos5, setTrailPos5] = useState({ x: 0, y: 0 });
+
   useEffect(() => {
     const animate = (time: number) => {
       if (!startRef.current) startRef.current = time;
       const elapsed = time - startRef.current;
       const progress = (elapsed % duration) / duration;
 
-      // Lead spot
+      // Lead + 5 trails spaced 5% apart = ~30% of perimeter covered
       setLightPos(perimeterPos(progress));
-      // Trail 1 — 8% behind
-      setTrailPos1(perimeterPos((progress - 0.08 + 1) % 1));
-      // Trail 2 — 16% behind
-      setTrailPos2(perimeterPos((progress - 0.16 + 1) % 1));
+      setTrailPos1(perimeterPos((progress - 0.05 + 1) % 1));
+      setTrailPos2(perimeterPos((progress - 0.10 + 1) % 1));
+      setTrailPos3(perimeterPos((progress - 0.15 + 1) % 1));
+      setTrailPos4(perimeterPos((progress - 0.20 + 1) % 1));
+      setTrailPos5(perimeterPos((progress - 0.25 + 1) % 1));
 
       animRef.current = requestAnimationFrame(animate);
     };
@@ -126,13 +131,13 @@ export function GlowCard({
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      {/* Outer halo — SUBTLE bleed beyond card, lead spot only */}
+      {/* Outer halo — subtle bleed beyond card */}
       <div className="absolute -inset-[12px] rounded-[inherit] pointer-events-none" style={{ zIndex: 0 }}>
         {renderBorderSpot(lightPos, 120, haloOpacity, p.core, 25, "halo-lead")}
-        {renderBorderSpot(trailPos1, 100, haloOpacity * 0.5, p.edge, 20, "halo-t1")}
+        {renderBorderSpot(trailPos2, 100, haloOpacity * 0.4, p.edge, 20, "halo-mid")}
       </div>
 
-      {/* Border glow — elongated trail along the 2px edge */}
+      {/* Border glow — smooth continuous trail along 2px edge */}
       <div className="absolute inset-0 rounded-[inherit] pointer-events-none overflow-hidden" style={{ zIndex: 1 }}>
         <div
           className="absolute inset-0 rounded-[inherit]"
@@ -143,19 +148,26 @@ export function GlowCard({
             padding: "2px",
           }}
         >
-          {/* Lead — gold center, brightest */}
-          {renderBorderSpot(lightPos, 180, borderOpacity, p.core, 4, "b-lead")}
-          {/* Trail 1 — mix of gold + white */}
-          {renderBorderSpot(trailPos1, 160, borderOpacity * 0.55, p.edge, 6, "b-t1")}
-          {renderBorderSpot(trailPos1, 140, borderOpacity * 0.3, p.core, 5, "b-t1g")}
-          {/* Trail 2 — white edge, fading out */}
-          {renderBorderSpot(trailPos2, 130, borderOpacity * 0.25, p.edge, 8, "b-t2")}
+          {/* Lead — gold, brightest, largest */}
+          {renderBorderSpot(lightPos, 200, borderOpacity, p.core, 4, "b0")}
+          {/* Trail 1 — gold, slightly dimmer */}
+          {renderBorderSpot(trailPos1, 190, borderOpacity * 0.75, p.core, 5, "b1")}
+          {/* Trail 2 — gold→white transition */}
+          {renderBorderSpot(trailPos2, 180, borderOpacity * 0.55, p.core, 6, "b2c")}
+          {renderBorderSpot(trailPos2, 170, borderOpacity * 0.3, p.edge, 5, "b2w")}
+          {/* Trail 3 — more white */}
+          {renderBorderSpot(trailPos3, 160, borderOpacity * 0.35, p.edge, 7, "b3")}
+          {renderBorderSpot(trailPos3, 150, borderOpacity * 0.2, p.core, 6, "b3c")}
+          {/* Trail 4 — mostly white, fading */}
+          {renderBorderSpot(trailPos4, 140, borderOpacity * 0.2, p.edge, 8, "b4")}
+          {/* Trail 5 — faint white tail */}
+          {renderBorderSpot(trailPos5, 120, borderOpacity * 0.1, p.edge, 10, "b5")}
         </div>
       </div>
 
-      {/* Inner wash — very subtle light inside near the lead */}
+      {/* Inner wash — very subtle */}
       <div className="absolute inset-0 rounded-[inherit] pointer-events-none overflow-hidden" style={{ zIndex: 2 }}>
-        {renderBorderSpot(lightPos, 160, 0.04, p.core, 20, "wash")}
+        {renderBorderSpot(lightPos, 160, 0.03, p.core, 20, "wash")}
       </div>
 
       {/* Mouse spotlight on hover */}
