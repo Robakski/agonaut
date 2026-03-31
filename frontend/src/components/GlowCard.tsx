@@ -27,33 +27,33 @@ export function GlowCard({
 
   const palette: Record<string, { stops: string; spot: string; shadow: string; shadowHover: string }> = {
     amber: {
-      // Single bright spot — pure clockwise, no reversal
-      stops: "rgba(191,155,48,1) 0%, rgba(191,155,48,0.4) 8%, transparent 25%, transparent 75%, rgba(191,155,48,0.4) 92%, rgba(191,155,48,1) 100%",
+      // Single bright arc (~15% of circle), rest fully transparent
+      stops: "rgba(191,155,48,0.9) 0%, rgba(191,155,48,0.5) 5%, rgba(191,155,48,0.15) 10%, transparent 18%, transparent 100%",
       spot: "rgba(191,155,48,0.12)",
       shadow: "0 0 30px -5px rgba(191,155,48,0.06), 0 0 60px -10px rgba(191,155,48,0.03)",
       shadowHover: "0 0 40px -5px rgba(191,155,48,0.12), 0 0 80px -10px rgba(191,155,48,0.06)",
     },
     silver: {
-      stops: "rgba(180,180,190,1) 0%, rgba(180,180,190,0.4) 8%, transparent 25%, transparent 75%, rgba(180,180,190,0.4) 92%, rgba(180,180,190,1) 100%",
+      stops: "rgba(180,180,190,0.9) 0%, rgba(180,180,190,0.5) 5%, rgba(180,180,190,0.15) 10%, transparent 18%, transparent 100%",
       spot: "rgba(180,180,190,0.15)",
       shadow: "0 0 30px -5px rgba(180,180,190,0.06), 0 0 60px -10px rgba(180,180,190,0.03)",
       shadowHover: "0 0 40px -5px rgba(180,180,190,0.12), 0 0 80px -10px rgba(180,180,190,0.06)",
     },
     blue: {
-      stops: "rgba(59,130,246,1) 0%, rgba(59,130,246,0.4) 8%, transparent 25%, transparent 75%, rgba(59,130,246,0.4) 92%, rgba(59,130,246,1) 100%",
+      stops: "rgba(59,130,246,0.9) 0%, rgba(59,130,246,0.5) 5%, rgba(59,130,246,0.15) 10%, transparent 18%, transparent 100%",
       spot: "rgba(59,130,246,0.12)",
       shadow: "0 0 30px -5px rgba(59,130,246,0.06), 0 0 60px -10px rgba(59,130,246,0.03)",
       shadowHover: "0 0 40px -5px rgba(59,130,246,0.12), 0 0 80px -10px rgba(59,130,246,0.06)",
     },
     gold: {
-      stops: "rgba(191,155,48,1) 0%, rgba(191,155,48,0.4) 8%, transparent 25%, transparent 75%, rgba(191,155,48,0.4) 92%, rgba(191,155,48,1) 100%",
+      stops: "rgba(191,155,48,0.9) 0%, rgba(191,155,48,0.5) 5%, rgba(191,155,48,0.15) 10%, transparent 18%, transparent 100%",
       spot: "rgba(191,155,48,0.15)",
       shadow: "0 0 30px -5px rgba(191,155,48,0.08), 0 0 60px -10px rgba(191,155,48,0.04)",
       shadowHover: "0 0 40px -5px rgba(191,155,48,0.15), 0 0 80px -10px rgba(191,155,48,0.08)",
     },
   };
 
-  const borderPx = intensity === "subtle" ? 1.5 : intensity === "medium" ? 2.5 : 3.5;
+  const borderPx = intensity === "subtle" ? 2 : intensity === "medium" ? 3 : 4;
   const speed = intensity === "subtle" ? "20s" : intensity === "medium" ? "14s" : "10s";
   const p = palette[glowColor] || palette.amber;
 
@@ -81,7 +81,7 @@ export function GlowCard({
     >
       {/* Outer glow — soft blurred halo that fades to white */}
       <div
-        className="absolute -inset-[6px] rounded-[inherit] overflow-hidden pointer-events-none"
+        className="absolute -inset-[10px] rounded-[inherit] overflow-hidden pointer-events-none"
       >
         <div
           className="absolute"
@@ -92,8 +92,8 @@ export function GlowCard({
             left: "-50%",
             background: `conic-gradient(from 0deg at 50% 50%, ${p.stops})`,
             animation: `spin ${speed} linear infinite`,
-            filter: "blur(12px)",
-            opacity: 0.5,
+            filter: "blur(16px)",
+            opacity: 0.6,
           }}
         />
       </div>

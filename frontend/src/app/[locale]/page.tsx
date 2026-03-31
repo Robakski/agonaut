@@ -12,34 +12,44 @@ export default function Home() {
       <section className="relative">
         {/* Drifting gold/silver mesh blobs */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          {/* Gold blob — drifts slowly */}
+          {/* Gold blob — large, visible */}
           <div
-            className="absolute w-[500px] h-[500px] rounded-full blur-[120px] opacity-[0.07]"
+            className="absolute w-[600px] h-[600px] rounded-full blur-[100px]"
             style={{
-              background: "radial-gradient(circle, #D4AF37, transparent 70%)",
-              animation: "mesh-drift-1 20s ease-in-out infinite",
-              top: "-10%",
-              left: "20%",
+              background: "radial-gradient(circle, rgba(191,155,48,0.18), rgba(191,155,48,0.06) 50%, transparent 70%)",
+              animation: "mesh-drift-1 25s ease-in-out infinite",
+              top: "-15%",
+              left: "10%",
             }}
           />
-          {/* Silver blob — drifts opposite */}
+          {/* Silver blob — visible */}
           <div
-            className="absolute w-[400px] h-[400px] rounded-full blur-[100px] opacity-[0.06]"
+            className="absolute w-[500px] h-[500px] rounded-full blur-[90px]"
             style={{
-              background: "radial-gradient(circle, #C0C0C0, transparent 70%)",
-              animation: "mesh-drift-2 25s ease-in-out infinite",
-              top: "5%",
-              right: "15%",
+              background: "radial-gradient(circle, rgba(180,180,190,0.15), rgba(180,180,190,0.05) 50%, transparent 70%)",
+              animation: "mesh-drift-2 30s ease-in-out infinite",
+              top: "0%",
+              right: "5%",
             }}
           />
-          {/* Warm gold accent — smaller, brighter */}
+          {/* Warm gold accent */}
           <div
-            className="absolute w-[300px] h-[300px] rounded-full blur-[80px] opacity-[0.05]"
+            className="absolute w-[400px] h-[400px] rounded-full blur-[80px]"
             style={{
-              background: "radial-gradient(circle, #C5A54E, transparent 70%)",
-              animation: "mesh-drift-3 18s ease-in-out infinite",
-              top: "20%",
-              left: "50%",
+              background: "radial-gradient(circle, rgba(191,155,48,0.14), rgba(191,155,48,0.04) 50%, transparent 70%)",
+              animation: "mesh-drift-3 22s ease-in-out infinite",
+              top: "15%",
+              left: "45%",
+            }}
+          />
+          {/* Subtle silver shimmer — bottom */}
+          <div
+            className="absolute w-[500px] h-[300px] rounded-full blur-[100px]"
+            style={{
+              background: "radial-gradient(ellipse, rgba(180,180,190,0.1), transparent 70%)",
+              animation: "mesh-drift-1 28s ease-in-out infinite reverse",
+              bottom: "5%",
+              left: "25%",
             }}
           />
         </div>
