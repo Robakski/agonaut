@@ -43,7 +43,7 @@ export function GlowCard({
   };
 
   const duration =
-    intensity === "subtle" ? 18000 : intensity === "medium" ? 14000 : 10000;
+    intensity === "subtle" ? 35000 : intensity === "medium" ? 28000 : 20000;
   const p = palette[glowColor] || palette.amber;
 
   // Card dimensions for responsive sizing
