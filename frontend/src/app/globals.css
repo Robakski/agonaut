@@ -150,6 +150,12 @@ body {
 
 /* ─── Premium Glow Animations ─── */
 
+/* Spin — for rotating glow borders */
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
 /* Shimmer border — idle card animation */
 @keyframes shimmer-border {
   0% { background-position: -200% 0; }

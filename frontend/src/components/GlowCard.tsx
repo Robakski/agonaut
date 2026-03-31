@@ -10,10 +10,10 @@ interface GlowCardProps {
 }
 
 /**
- * Premium glow card with:
- * 1. Rotating conic-gradient border (always visible, slow rotation)
- * 2. Mouse-tracking spotlight on hover (brighter glow follows cursor)
- * 3. Ambient outer glow (colored shadow that breathes)
+ * Premium glow card:
+ * 1. A large spinning conic-gradient disc sits behind the card
+ * 2. The card clips it so only the border glow is visible
+ * 3. Mouse hover adds a spotlight overlay
  */
 export function GlowCard({
   children,
@@ -25,39 +25,36 @@ export function GlowCard({
   const [mousePos, setMousePos] = useState({ x: 50, y: 50 });
   const [isHovered, setIsHovered] = useState(false);
 
-  const colors: Record<string, { from: string; via: string; to: string; shadow: string; spotGlow: string }> = {
+  const palette: Record<string, { stops: string; spot: string; shadow: string; shadowHover: string }> = {
     amber: {
-      from: "rgba(245, 158, 11, 0.6)",
-      via: "rgba(217, 119, 6, 0.15)",
-      to: "rgba(180, 83, 9, 0.6)",
-      shadow: "0 0 30px rgba(245, 158, 11, 0.08), 0 0 60px rgba(245, 158, 11, 0.04)",
-      spotGlow: "rgba(245, 158, 11, 0.25)",
+      stops: "rgba(245,158,11,0.8), transparent 40%, rgba(217,119,6,0.6), transparent 60%, rgba(245,158,11,0.8)",
+      spot: "rgba(245,158,11,0.15)",
+      shadow: "0 0 40px -10px rgba(245,158,11,0.1)",
+      shadowHover: "0 0 60px -10px rgba(245,158,11,0.2)",
     },
     silver: {
-      from: "rgba(203, 213, 225, 0.7)",
-      via: "rgba(148, 163, 184, 0.15)",
-      to: "rgba(100, 116, 139, 0.7)",
-      shadow: "0 0 30px rgba(148, 163, 184, 0.08), 0 0 60px rgba(148, 163, 184, 0.04)",
-      spotGlow: "rgba(148, 163, 184, 0.3)",
+      stops: "rgba(203,213,225,0.9), transparent 40%, rgba(148,163,184,0.7), transparent 60%, rgba(203,213,225,0.9)",
+      spot: "rgba(148,163,184,0.15)",
+      shadow: "0 0 40px -10px rgba(148,163,184,0.1)",
+      shadowHover: "0 0 60px -10px rgba(148,163,184,0.2)",
     },
     blue: {
-      from: "rgba(59, 130, 246, 0.6)",
-      via: "rgba(37, 99, 235, 0.15)",
-      to: "rgba(29, 78, 216, 0.6)",
-      shadow: "0 0 30px rgba(59, 130, 246, 0.08), 0 0 60px rgba(59, 130, 246, 0.04)",
-      spotGlow: "rgba(59, 130, 246, 0.25)",
+      stops: "rgba(59,130,246,0.8), transparent 40%, rgba(37,99,235,0.6), transparent 60%, rgba(59,130,246,0.8)",
+      spot: "rgba(59,130,246,0.12)",
+      shadow: "0 0 40px -10px rgba(59,130,246,0.1)",
+      shadowHover: "0 0 60px -10px rgba(59,130,246,0.2)",
     },
     gold: {
-      from: "rgba(234, 179, 8, 0.7)",
-      via: "rgba(202, 138, 4, 0.15)",
-      to: "rgba(161, 98, 7, 0.7)",
-      shadow: "0 0 30px rgba(234, 179, 8, 0.08), 0 0 60px rgba(234, 179, 8, 0.04)",
-      spotGlow: "rgba(234, 179, 8, 0.3)",
+      stops: "rgba(234,179,8,0.9), transparent 40%, rgba(202,138,4,0.7), transparent 60%, rgba(234,179,8,0.9)",
+      spot: "rgba(234,179,8,0.15)",
+      shadow: "0 0 40px -10px rgba(234,179,8,0.12)",
+      shadowHover: "0 0 60px -10px rgba(234,179,8,0.25)",
     },
   };
 
-  const borderWidth = intensity === "subtle" ? 1 : intensity === "medium" ? 1.5 : 2;
-  const c = colors[glowColor] || colors.amber;
+  const borderPx = intensity === "subtle" ? 1 : intensity === "medium" ? 1.5 : 2;
+  const speed = intensity === "subtle" ? "12s" : intensity === "medium" ? "8s" : "5s";
+  const p = palette[glowColor] || palette.amber;
 
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
     if (!cardRef.current) return;
@@ -76,36 +73,40 @@ export function GlowCard({
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       style={{
-        boxShadow: isHovered
-          ? c.shadow.replace(/0\.08/g, "0.15").replace(/0\.04/g, "0.08")
-          : c.shadow,
+        padding: `${borderPx}px`,
+        boxShadow: isHovered ? p.shadowHover : p.shadow,
         transition: "box-shadow 0.5s ease",
       }}
     >
-      {/* Rotating conic-gradient border — always visible */}
+      {/* Spinning conic-gradient disc — clipped to border by the inner white card */}
       <div
-        className="absolute -inset-px rounded-[inherit] animate-[spin_8s_linear_infinite] pointer-events-none"
-        style={{
-          background: `conic-gradient(from 0deg, ${c.from}, transparent 25%, ${c.via}, transparent 50%, ${c.to}, transparent 75%, ${c.via}, ${c.from})`,
-          padding: `${borderWidth}px`,
-          mask: "linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)",
-          WebkitMask: "linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)",
-          maskComposite: "xor" as any,
-          WebkitMaskComposite: "xor" as any,
-        }}
-      />
+        className="absolute inset-0 rounded-[inherit] overflow-hidden"
+      >
+        <div
+          className="absolute"
+          style={{
+            /* Make it a large square centered on the card, so it covers corners when spinning */
+            width: "200%",
+            height: "200%",
+            top: "-50%",
+            left: "-50%",
+            background: `conic-gradient(from 0deg at 50% 50%, ${p.stops})`,
+            animation: `spin ${speed} linear infinite`,
+          }}
+        />
+      </div>
 
-      {/* Mouse spotlight overlay on hover */}
+      {/* Mouse spotlight on hover */}
       <div
-        className="absolute inset-0 rounded-[inherit] pointer-events-none transition-opacity duration-300"
+        className="absolute inset-0 rounded-[inherit] pointer-events-none transition-opacity duration-300 z-10"
         style={{
           opacity: isHovered ? 1 : 0,
-          background: `radial-gradient(300px circle at ${mousePos.x}% ${mousePos.y}%, ${c.spotGlow}, transparent 60%)`,
+          background: `radial-gradient(350px circle at ${mousePos.x}% ${mousePos.y}%, ${p.spot}, transparent 60%)`,
         }}
       />
 
-      {/* Content */}
-      <div className="relative bg-white rounded-[inherit] h-full overflow-hidden">
+      {/* Inner white card — masks the spinning disc, leaving only the border visible */}
+      <div className="relative bg-white rounded-[inherit] h-full z-10 overflow-hidden">
         {children}
       </div>
     </div>
