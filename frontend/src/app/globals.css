@@ -159,13 +159,13 @@ body {
   animation: shimmer-border 4s linear infinite;
 }
 
-/* Hero beam — vertical light ray */
+/* Hero beam — vertical light ray, slow breathe */
 @keyframes hero-beam {
-  0%, 100% { opacity: 0.3; transform: scaleY(1); }
-  50% { opacity: 0.6; transform: scaleY(1.02); }
+  0%, 100% { opacity: 0.7; transform: scaleY(1) scaleX(1); }
+  50% { opacity: 1; transform: scaleY(1.01) scaleX(1.15); }
 }
 .animate-hero-beam {
-  animation: hero-beam 4s ease-in-out infinite;
+  animation: hero-beam 6s ease-in-out infinite;
 }
 
 /* Gold particle float */
@@ -197,12 +197,11 @@ body {
   animation: breathe-glow 3s ease-in-out infinite;
 }
 
-/* Gradient text shimmer */
+/* Gradient text shimmer — slow gold to silver sweep */
 @keyframes text-shimmer {
-  0% { background-position: -200% center; }
-  100% { background-position: 200% center; }
+  0% { background-position: 0% center; }
+  100% { background-position: 300% center; }
 }
 .animate-text-shimmer {
-  background-size: 200% auto;
-  animation: text-shimmer 4s linear infinite;
+  animation: text-shimmer 8s ease-in-out infinite;
 }

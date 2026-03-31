@@ -8,28 +8,39 @@ export default function Home() {
 
   return (
     <div className="overflow-hidden">
-      {/* ═══ Hero — With gold light beam ═══ */}
+      {/* ═══ Hero — With dramatic gold light beam ═══ */}
       <section className="relative">
-        {/* Ambient radial glow */}
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-10%,rgba(245,158,11,0.06),transparent)]" />
+        {/* Large ambient glow — top center */}
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_40%_at_50%_0%,rgba(245,158,11,0.12),transparent_70%)]" />
 
-        {/* Gold light beam — vertical ray from top center */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-px h-[60%] animate-hero-beam">
-          <div className="w-px h-full bg-gradient-to-b from-amber-400/40 via-amber-300/20 to-transparent" />
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-12 h-full bg-gradient-to-b from-amber-400/10 via-amber-200/5 to-transparent blur-xl" />
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-40 h-[80%] bg-gradient-to-b from-amber-400/5 via-transparent to-transparent blur-3xl" />
+        {/* Gold light beam — bright vertical ray */}
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 h-[70%] animate-hero-beam pointer-events-none">
+          {/* Core beam — bright line */}
+          <div className="absolute left-1/2 -translate-x-1/2 w-[2px] h-full bg-gradient-to-b from-amber-300/80 via-amber-400/30 to-transparent" />
+          {/* Inner glow */}
+          <div className="absolute left-1/2 -translate-x-1/2 w-8 h-full bg-gradient-to-b from-amber-300/30 via-amber-400/10 to-transparent blur-md" />
+          {/* Mid glow */}
+          <div className="absolute left-1/2 -translate-x-1/2 w-24 h-[90%] bg-gradient-to-b from-amber-400/15 via-amber-300/5 to-transparent blur-xl" />
+          {/* Wide ambient spread */}
+          <div className="absolute left-1/2 -translate-x-1/2 w-64 h-[80%] bg-gradient-to-b from-amber-400/8 via-amber-200/3 to-transparent blur-3xl" />
+          {/* Flare at top */}
+          <div className="absolute left-1/2 -translate-x-1/2 -top-2 w-20 h-20 bg-amber-400/20 rounded-full blur-2xl" />
         </div>
 
-        {/* Gold particle dots */}
+        {/* Floating gold particles — larger and more visible */}
         <div className="absolute inset-0 pointer-events-none">
-          {[...Array(6)].map((_, i) => (
+          {[...Array(8)].map((_, i) => (
             <div
               key={i}
-              className="absolute w-1 h-1 rounded-full bg-amber-400/40"
+              className="absolute rounded-full"
               style={{
-                left: `${20 + i * 12}%`,
-                top: `${30 + (i % 3) * 15}%`,
-                animation: `gold-particle ${3 + i * 0.5}s ease-in-out ${i * 0.8}s infinite`,
+                width: `${2 + (i % 3)}px`,
+                height: `${2 + (i % 3)}px`,
+                background: `radial-gradient(circle, rgba(245,158,11,${0.4 + (i % 3) * 0.15}), transparent)`,
+                boxShadow: `0 0 ${4 + i * 2}px rgba(245,158,11,0.3)`,
+                left: `${15 + i * 10}%`,
+                top: `${25 + (i % 4) * 12}%`,
+                animation: `gold-particle ${4 + i * 0.7}s ease-in-out ${i * 0.6}s infinite`,
               }}
             />
           ))}
@@ -44,7 +55,7 @@ export default function Home() {
           <h1 className="text-5xl sm:text-6xl font-extrabold tracking-[-0.04em] leading-[1.05] text-slate-900 mb-6">
             {t("heading1")}
             <br />
-            <span className="bg-gradient-to-r from-slate-400 via-amber-500 to-amber-400 bg-clip-text text-transparent animate-text-shimmer bg-[length:200%_auto]">
+            <span className="bg-gradient-to-r from-amber-600 via-yellow-500 via-50% to-slate-400 bg-clip-text text-transparent bg-[length:300%_auto] animate-text-shimmer">
               {t("heading2")}
             </span>
           </h1>
