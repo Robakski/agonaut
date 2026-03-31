@@ -7,35 +7,32 @@ interface GlowCardProps {
   className?: string;
   glowColor?: "amber" | "silver" | "blue" | "gold";
   intensity?: "subtle" | "medium" | "strong";
-  dark?: boolean;
 }
 
 const TRAIL_COUNT = 20;
 const SPACING = 0.018;
 
-const PALETTES: Record<string, { core: string; edge: string; hoverAlpha: number }> = {
-  amber: { core: "212,175,55", edge: "255,255,255", hoverAlpha: 0.08 },
-  silver: { core: "200,200,210", edge: "255,255,255", hoverAlpha: 0.06 },
-  blue: { core: "96,165,250", edge: "200,220,255", hoverAlpha: 0.06 },
-  gold: { core: "212,175,55", edge: "255,255,255", hoverAlpha: 0.10 },
+const PALETTES: Record<string, { core: string; edge: string; shadow: string; hoverAlpha: number }> = {
+  amber: { core: "180,140,30", edge: "160,160,170", shadow: "212,175,55", hoverAlpha: 0.06 },
+  silver: { core: "140,140,155", edge: "180,180,190", shadow: "160,160,175", hoverAlpha: 0.05 },
+  blue: { core: "59,130,246", edge: "140,170,220", shadow: "59,130,246", hoverAlpha: 0.05 },
+  gold: { core: "180,140,30", edge: "160,160,170", shadow: "212,175,55", hoverAlpha: 0.07 },
 };
 
 /**
- * Premium glow card — smooth continuous light ribbon orbiting the card border.
- * Uses direct DOM manipulation for 60fps performance. Perimeter-proportional
- * speed so the light moves at constant velocity regardless of card aspect ratio.
+ * Premium glow card for WHITE backgrounds.
+ * Uses colored drop-shadows + a traveling border light.
+ * The border is slightly darker/visible so the traveling glow reads clearly.
  */
 export function GlowCard({
   children,
   className = "",
   glowColor = "amber",
   intensity = "medium",
-  dark = false,
 }: GlowCardProps) {
   const cardRef = useRef<HTMLDivElement>(null);
   const spotsRef = useRef<(HTMLDivElement | null)[]>([]);
   const haloRef = useRef<HTMLDivElement>(null);
-  const washRef = useRef<HTMLDivElement>(null);
   const borderMaskRef = useRef<HTMLDivElement>(null);
   const [mousePos, setMousePos] = useState({ x: 50, y: 50 });
   const [isHovered, setIsHovered] = useState(false);
@@ -47,11 +44,8 @@ export function GlowCard({
     intensity === "subtle" ? 35000 : intensity === "medium" ? 28000 : 20000;
   const p = PALETTES[glowColor] || PALETTES.amber;
   const borderOpacity =
-    intensity === "subtle" ? 0.5 : intensity === "medium" ? 0.7 : 0.85;
-  const haloOpacity =
-    intensity === "subtle" ? 0.06 : intensity === "medium" ? 0.10 : 0.14;
+    intensity === "subtle" ? 0.65 : intensity === "medium" ? 0.85 : 1.0;
 
-  // Track card size via ResizeObserver
   useEffect(() => {
     if (!cardRef.current) return;
     const ro = new ResizeObserver(([entry]) => {
@@ -61,46 +55,15 @@ export function GlowCard({
     return () => ro.disconnect();
   }, []);
 
-  /**
-   * Convert progress (0..1) to perimeter position, weighted by actual side lengths.
-   * This ensures constant visual speed regardless of aspect ratio.
-   */
   function perimeterPos(progress: number, w: number, h: number) {
     const perimeter = 2 * (w + h);
     const dist = progress * perimeter;
-
-    if (dist < w) {
-      // Top edge: left to right
-      return { x: (dist / w) * 100, y: 0 };
-    } else if (dist < w + h) {
-      // Right edge: top to bottom
-      return { x: 100, y: ((dist - w) / h) * 100 };
-    } else if (dist < 2 * w + h) {
-      // Bottom edge: right to left
-      return { x: (1 - (dist - w - h) / w) * 100, y: 100 };
-    } else {
-      // Left edge: bottom to top
-      return { x: 0, y: (1 - (dist - 2 * w - h) / h) * 100 };
-    }
+    if (dist < w) return { x: (dist / w) * 100, y: 0 };
+    if (dist < w + h) return { x: 100, y: ((dist - w) / h) * 100 };
+    if (dist < 2 * w + h) return { x: (1 - (dist - w - h) / w) * 100, y: 100 };
+    return { x: 0, y: (1 - (dist - 2 * w - h) / h) * 100 };
   }
 
-  // Precompute trail properties (static — don't change per frame)
-  const trailPropsRef = useRef<{ opacity: number; color: string; sizeMul: number; blur: number; bg: string }[]>([]);
-  useEffect(() => {
-    const props = [];
-    for (let i = 0; i <= TRAIL_COUNT; i++) {
-      const t = i / TRAIL_COUNT;
-      const opacity = borderOpacity * (1 - t * 0.85);
-      const color = t < 0.4 ? p.core : p.edge;
-      const sizeMul = 1 - t * 0.25;
-      const blur = 4 + t * 8;
-      const bg = `radial-gradient(circle, rgba(${color},${opacity}) 0%, rgba(${color},${opacity * 0.3}) 40%, transparent 65%)`;
-      props.push({ opacity, color, sizeMul, blur, bg });
-    }
-    trailPropsRef.current = props;
-  }, [borderOpacity, p.core, p.edge]);
-
-  // Animation loop — direct DOM updates, no React state
   useEffect(() => {
     const animate = (time: number) => {
       if (!startRef.current) startRef.current = time;
@@ -108,10 +71,9 @@ export function GlowCard({
       const shorter = Math.min(w, h);
       const baseSpot = Math.max(160, shorter * 0.8);
       const progress = ((time - startRef.current) % duration) / duration;
-
-      // Thicker border + brighter spots on small cards so the edge glow is equally visible
       const borderPx = shorter < 200 ? 4 : shorter < 350 ? 3 : 2;
-      const opacityBoost = shorter < 200 ? 1.6 : shorter < 350 ? 1.3 : 1.0;
+      const opacityBoost = shorter < 200 ? 1.5 : shorter < 350 ? 1.2 : 1.0;
+
       if (borderMaskRef.current) {
         borderMaskRef.current.style.padding = `${borderPx}px`;
       }
@@ -120,9 +82,8 @@ export function GlowCard({
         const el = spotsRef.current[i];
         if (!el) continue;
         const pos = perimeterPos((progress - i * SPACING + 1) % 1, w, h);
-        const tp = trailPropsRef.current[i];
-        if (!tp) continue;
-        const size = baseSpot * tp.sizeMul;
+        const t = i / TRAIL_COUNT;
+        const size = baseSpot * (1 - t * 0.25);
         el.style.width = `${size}px`;
         el.style.height = `${size}px`;
         el.style.left = `${pos.x}%`;
@@ -130,24 +91,13 @@ export function GlowCard({
         if (opacityBoost > 1) el.style.opacity = `${opacityBoost}`;
       }
 
-      // Halo follows lead
       if (haloRef.current) {
         const leadPos = perimeterPos(progress, w, h);
-        const haloSize = baseSpot * 0.55;
+        const haloSize = baseSpot * 0.7;
         haloRef.current.style.width = `${haloSize}px`;
         haloRef.current.style.height = `${haloSize}px`;
         haloRef.current.style.left = `${leadPos.x}%`;
         haloRef.current.style.top = `${leadPos.y}%`;
-      }
-
-      // Inner wash follows lead
-      if (washRef.current) {
-        const leadPos = perimeterPos(progress, w, h);
-        const washSize = baseSpot * 0.6;
-        washRef.current.style.width = `${washSize}px`;
-        washRef.current.style.height = `${washSize}px`;
-        washRef.current.style.left = `${leadPos.x}%`;
-        washRef.current.style.top = `${leadPos.y}%`;
       }
 
       animRef.current = requestAnimationFrame(animate);
@@ -165,17 +115,13 @@ export function GlowCard({
     });
   }, []);
 
-  const cardBg = dark
-    ? "bg-white/[0.04] backdrop-blur-sm border-white/[0.08]"
-    : "bg-white border-slate-100";
-
-  // Build initial trail spot styles (static backgrounds + blur)
+  // Build spot elements with gradient colors visible on white
   const spotElements = [];
   for (let i = 0; i <= TRAIL_COUNT; i++) {
     const t = i / TRAIL_COUNT;
     const opacity = borderOpacity * (1 - t * 0.85);
     const color = t < 0.4 ? p.core : p.edge;
-    const blur = 4 + t * 8;
+    const blur = 2 + t * 6;
     spotElements.push(
       <div
         key={i}
@@ -183,7 +129,7 @@ export function GlowCard({
         className="absolute rounded-full pointer-events-none"
         style={{
           translate: "-50% -50%",
-          background: `radial-gradient(circle, rgba(${color},${opacity}) 0%, rgba(${color},${opacity * 0.3}) 40%, transparent 65%)`,
+          background: `radial-gradient(circle, rgba(${color},${opacity}) 0%, rgba(${color},${opacity * 0.35}) 40%, transparent 65%)`,
           filter: `blur(${blur}px)`,
           willChange: "left, top, width, height",
         }}
@@ -198,22 +144,29 @@ export function GlowCard({
       onMouseMove={handleMouseMove}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
+      style={{
+        // Colored drop-shadow around card for visibility on white
+        filter: isHovered
+          ? `drop-shadow(0 4px 20px rgba(${p.shadow},0.15))`
+          : `drop-shadow(0 2px 12px rgba(${p.shadow},0.08))`,
+        transition: "filter 0.5s ease",
+      }}
     >
-      {/* Outer halo */}
-      <div className="absolute -inset-[12px] rounded-[inherit] pointer-events-none" style={{ zIndex: 0 }}>
+      {/* Outer halo — colored glow bleeding outside the card */}
+      <div className="absolute -inset-[16px] rounded-[inherit] pointer-events-none" style={{ zIndex: 0 }}>
         <div
           ref={haloRef}
           className="absolute rounded-full pointer-events-none"
           style={{
             translate: "-50% -50%",
-            background: `radial-gradient(circle, rgba(${p.core},${haloOpacity}) 0%, rgba(${p.core},0.02) 50%, transparent 70%)`,
-            filter: "blur(20px)",
+            background: `radial-gradient(circle, rgba(${p.shadow},0.12) 0%, rgba(${p.shadow},0.03) 45%, transparent 70%)`,
+            filter: "blur(16px)",
             willChange: "left, top, width, height",
           }}
         />
       </div>
 
-      {/* Border glow — spots masked to border strip (thicker on small cards) */}
+      {/* Border glow — traveling light along edge */}
       <div className="absolute inset-0 rounded-[inherit] pointer-events-none overflow-hidden" style={{ zIndex: 1 }}>
         <div
           ref={borderMaskRef}
@@ -229,34 +182,20 @@ export function GlowCard({
         </div>
       </div>
 
-      {/* Inner wash */}
-      <div className="absolute inset-0 rounded-[inherit] pointer-events-none overflow-hidden" style={{ zIndex: 2 }}>
-        <div
-          ref={washRef}
-          className="absolute rounded-full pointer-events-none"
-          style={{
-            translate: "-50% -50%",
-            background: `radial-gradient(circle, rgba(${p.core},0.03) 0%, transparent 50%)`,
-            filter: "blur(15px)",
-            willChange: "left, top, width, height",
-          }}
-        />
-      </div>
-
       {/* Mouse spotlight on hover */}
       <div
         className="absolute inset-0 rounded-[inherit] pointer-events-none transition-opacity duration-500 overflow-hidden"
         style={{
           opacity: isHovered ? 1 : 0,
-          background: `radial-gradient(300px circle at ${mousePos.x}% ${mousePos.y}%, rgba(${p.core},${p.hoverAlpha}), transparent 60%)`,
-          zIndex: 3,
+          background: `radial-gradient(300px circle at ${mousePos.x}% ${mousePos.y}%, rgba(${p.shadow},${p.hoverAlpha}), transparent 60%)`,
+          zIndex: 2,
         }}
       />
 
-      {/* Card content */}
+      {/* Card content — white with subtle border */}
       <div
-        className={`relative rounded-[inherit] h-full overflow-hidden border ${cardBg}`}
-        style={{ zIndex: 4 }}
+        className="relative rounded-[inherit] h-full overflow-hidden bg-white border border-slate-200/60"
+        style={{ zIndex: 3 }}
       >
         {children}
       </div>
