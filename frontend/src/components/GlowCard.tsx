@@ -9,20 +9,20 @@ interface GlowCardProps {
   intensity?: "subtle" | "medium" | "strong";
 }
 
-const MAX_TRAILS = 20;
-const MOBILE_TRAILS = 8;
+const TRAIL_COUNT = 20;
+const SPACING = 0.018;
 
-const PALETTES: Record<string, { core: string; edge: string; shadow: string; hoverAlpha: number }> = {
-  amber: { core: "180,140,30", edge: "160,160,170", shadow: "212,175,55", hoverAlpha: 0.18 },
-  silver: { core: "140,140,155", edge: "180,180,190", shadow: "160,160,175", hoverAlpha: 0.15 },
-  blue: { core: "59,130,246", edge: "140,170,220", shadow: "59,130,246", hoverAlpha: 0.14 },
-  gold: { core: "180,140,30", edge: "160,160,170", shadow: "212,175,55", hoverAlpha: 0.20 },
+const PALETTES: Record<string, { core: string; edge: string; shadow: string; hoverAlpha: number; css: string }> = {
+  amber: { core: "180,140,30", edge: "160,160,170", shadow: "212,175,55", hoverAlpha: 0.18, css: "#D4AF37" },
+  silver: { core: "140,140,155", edge: "180,180,190", shadow: "160,160,175", hoverAlpha: 0.15, css: "#A0A0AA" },
+  blue: { core: "59,130,246", edge: "140,170,220", shadow: "59,130,246", hoverAlpha: 0.14, css: "#3B82F6" },
+  gold: { core: "180,140,30", edge: "160,160,170", shadow: "212,175,55", hoverAlpha: 0.20, css: "#D4AF37" },
 };
 
 /**
- * Premium glow card for WHITE backgrounds.
- * Uses colored drop-shadows + a traveling border light.
- * The border is slightly darker/visible so the traveling glow reads clearly.
+ * Premium glow card.
+ * Desktop: animated traveling light along border (JS + blur filters).
+ * Mobile: pure CSS shimmer border (no JS animation, no blur, no GPU crash).
  */
 export function GlowCard({
   children,
@@ -30,14 +30,81 @@ export function GlowCard({
   glowColor = "amber",
   intensity = "medium",
 }: GlowCardProps) {
-  // Fewer trails on mobile to prevent GPU crash when pinch-zooming
-  const [isMobile, setIsMobile] = useState(false);
+  const [isMobile, setIsMobile] = useState(true); // default mobile to avoid flash
   useEffect(() => {
     setIsMobile(window.innerWidth < 768);
   }, []);
-  const trailCount = isMobile ? MOBILE_TRAILS : MAX_TRAILS;
-  const spacing = isMobile ? 0.04 : 0.018;
 
+  if (isMobile) {
+    return (
+      <MobileGlowCard className={className} glowColor={glowColor} intensity={intensity}>
+        {children}
+      </MobileGlowCard>
+    );
+  }
+
+  return (
+    <DesktopGlowCard className={className} glowColor={glowColor} intensity={intensity}>
+      {children}
+    </DesktopGlowCard>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════
+   MOBILE — Pure CSS shimmer border, zero JS animation
+   ═══════════════════════════════════════════════════════════ */
+function MobileGlowCard({
+  children,
+  className,
+  glowColor,
+  intensity,
+}: {
+  children: React.ReactNode;
+  className: string;
+  glowColor: string;
+  intensity: string;
+}) {
+  const p = PALETTES[glowColor] || PALETTES.amber;
+  const speed = intensity === "subtle" ? "8s" : intensity === "medium" ? "6s" : "4s";
+
+  return (
+    <div className={`relative ${className}`}>
+      {/* Animated shimmer border — pure CSS, no blur filters */}
+      <div
+        className="absolute inset-0 rounded-[inherit] pointer-events-none"
+        style={{
+          padding: "2px",
+          background: `linear-gradient(90deg, transparent 0%, ${p.css}40 25%, ${p.css}80 50%, ${p.css}40 75%, transparent 100%)`,
+          backgroundSize: "300% 100%",
+          animation: `shimmer-border ${speed} linear infinite`,
+          mask: "linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)",
+          maskComposite: "exclude",
+          WebkitMaskComposite: "xor",
+        }}
+      />
+
+      {/* Card content */}
+      <div className="relative rounded-[inherit] h-full overflow-hidden bg-white border border-slate-200/60">
+        {children}
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════
+   DESKTOP — Full animated traveling light
+   ═══════════════════════════════════════════════════════════ */
+function DesktopGlowCard({
+  children,
+  className,
+  glowColor,
+  intensity,
+}: {
+  children: React.ReactNode;
+  className: string;
+  glowColor: string;
+  intensity: string;
+}) {
   const cardRef = useRef<HTMLDivElement>(null);
   const spotsRef = useRef<(HTMLDivElement | null)[]>([]);
   const haloRef = useRef<HTMLDivElement>(null);
@@ -86,11 +153,11 @@ export function GlowCard({
         borderMaskRef.current.style.padding = `${borderPx}px`;
       }
 
-      for (let i = 0; i <= trailCount; i++) {
+      for (let i = 0; i <= TRAIL_COUNT; i++) {
         const el = spotsRef.current[i];
         if (!el) continue;
-        const pos = perimeterPos((progress - i * spacing + 1) % 1, w, h);
-        const t = i / trailCount;
+        const pos = perimeterPos((progress - i * SPACING + 1) % 1, w, h);
+        const t = i / TRAIL_COUNT;
         const size = baseSpot * (1 - t * 0.25);
         el.style.width = `${size}px`;
         el.style.height = `${size}px`;
@@ -112,7 +179,7 @@ export function GlowCard({
     };
     animRef.current = requestAnimationFrame(animate);
     return () => cancelAnimationFrame(animRef.current);
-  }, [duration, trailCount, spacing]);
+  }, [duration]);
 
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
     if (!cardRef.current) return;
@@ -123,10 +190,9 @@ export function GlowCard({
     });
   }, []);
 
-  // Build spot elements with gradient colors visible on white
   const spotElements = [];
-  for (let i = 0; i <= trailCount; i++) {
-    const t = i / trailCount;
+  for (let i = 0; i <= TRAIL_COUNT; i++) {
+    const t = i / TRAIL_COUNT;
     const opacity = borderOpacity * (1 - t * 0.85);
     const color = t < 0.4 ? p.core : p.edge;
     const blur = 2 + t * 6;
@@ -153,14 +219,13 @@ export function GlowCard({
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       style={{
-        // Colored drop-shadow around card for visibility on white
         filter: isHovered
           ? `drop-shadow(0 8px 30px rgba(${p.shadow},0.25)) drop-shadow(0 2px 8px rgba(${p.shadow},0.15))`
           : `drop-shadow(0 2px 12px rgba(${p.shadow},0.08))`,
         transition: "filter 0.5s ease",
       }}
     >
-      {/* Outer halo — uses the card's own bounds, no overflow, blob fades naturally */}
+      {/* Outer halo */}
       <div className="absolute inset-0 rounded-[inherit] pointer-events-none" style={{ zIndex: 0 }}>
         <div
           ref={haloRef}
@@ -174,7 +239,7 @@ export function GlowCard({
         />
       </div>
 
-      {/* Border glow — traveling light along edge */}
+      {/* Border glow — traveling light */}
       <div className="absolute inset-0 rounded-[inherit] pointer-events-none overflow-hidden" style={{ zIndex: 1, contain: "strict" }}>
         <div
           ref={borderMaskRef}
@@ -200,7 +265,7 @@ export function GlowCard({
         }}
       />
 
-      {/* Card content — white with subtle border */}
+      {/* Card content */}
       <div
         className="relative rounded-[inherit] h-full overflow-hidden bg-white border border-slate-200/60"
         style={{ zIndex: 3 }}
