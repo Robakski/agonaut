@@ -36,6 +36,7 @@ export function GlowCard({
   const spotsRef = useRef<(HTMLDivElement | null)[]>([]);
   const haloRef = useRef<HTMLDivElement>(null);
   const washRef = useRef<HTMLDivElement>(null);
+  const borderMaskRef = useRef<HTMLDivElement>(null);
   const [mousePos, setMousePos] = useState({ x: 50, y: 50 });
   const [isHovered, setIsHovered] = useState(false);
   const animRef = useRef<number>(0);
@@ -104,8 +105,16 @@ export function GlowCard({
     const animate = (time: number) => {
       if (!startRef.current) startRef.current = time;
       const { w, h } = sizeRef.current;
-      const baseSpot = Math.max(160, Math.min(w, h) * 0.8);
+      const shorter = Math.min(w, h);
+      const baseSpot = Math.max(160, shorter * 0.8);
       const progress = ((time - startRef.current) % duration) / duration;
+
+      // Thicker border + brighter spots on small cards so the edge glow is equally visible
+      const borderPx = shorter < 200 ? 4 : shorter < 350 ? 3 : 2;
+      const opacityBoost = shorter < 200 ? 1.6 : shorter < 350 ? 1.3 : 1.0;
+      if (borderMaskRef.current) {
+        borderMaskRef.current.style.padding = `${borderPx}px`;
+      }
 
       for (let i = 0; i <= TRAIL_COUNT; i++) {
         const el = spotsRef.current[i];
@@ -118,6 +127,7 @@ export function GlowCard({
         el.style.height = `${size}px`;
         el.style.left = `${pos.x}%`;
         el.style.top = `${pos.y}%`;
+        if (opacityBoost > 1) el.style.opacity = `${opacityBoost}`;
       }
 
       // Halo follows lead
@@ -203,9 +213,10 @@ export function GlowCard({
         />
       </div>
 
-      {/* Border glow — spots masked to 2px border */}
+      {/* Border glow — spots masked to border strip (thicker on small cards) */}
       <div className="absolute inset-0 rounded-[inherit] pointer-events-none overflow-hidden" style={{ zIndex: 1 }}>
         <div
+          ref={borderMaskRef}
           className="absolute inset-0 rounded-[inherit]"
           style={{
             mask: "linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)",
