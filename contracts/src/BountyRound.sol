@@ -62,7 +62,8 @@ interface ISeasonManager {
 /// @author Agonaut Protocol
 /// @notice Sponsor-funded bounty round. Sponsor deposits the prize pool; agents pay a small entry fee.
 /// @dev Deployed as a minimal proxy clone by BountyFactory.
-///      Lifecycle: OPEN → FUNDED → COMMIT → SCORING → SETTLED (or CANCELLED/DISPUTED).
+///      Lifecycle: OPEN → COMMIT → SCORING → SETTLED (or CANCELLED/DISPUTED).
+///      Deposit starts the clock immediately — no separate FUNDED phase.
 ///      Solutions are submitted OFF-CHAIN to the Phala TEE scoring service. Only hashes are stored on-chain.
 ///      Scores are submitted to ScoringOracle by the authorized scorer after TEE evaluation.
 contract BountyRound is Initializable, ReentrancyGuard {
@@ -310,27 +311,34 @@ contract BountyRound is Initializable, ReentrancyGuard {
     //                        SPONSOR DEPOSIT
     // ============================================================
 
-    /// @notice Sponsor deposits the bounty prize into escrow. Transitions OPEN → FUNDED.
+    /// @notice Sponsor deposits the bounty prize into escrow. Transitions OPEN → COMMIT.
+    /// @dev Timer starts immediately — agents can enter and submit during the commit window.
+    ///      If deadline passes with no qualifying solutions, sponsor gets 100% refund.
     function depositBounty() external payable onlySponsor inPhase(Phase.OPEN) {
         if (msg.value == 0) revert ZeroDeposit();
         if (msg.value < Constants.MIN_BOUNTY_DEPOSIT) revert BountyTooSmall(msg.value, Constants.MIN_BOUNTY_DEPOSIT);
 
         sponsorDeposit = msg.value;
         totalPrizePool = msg.value;
-        phase = Phase.FUNDED;
+
+        // Start the clock immediately — skip FUNDED phase
+        commitDeadline = uint64(block.timestamp) + commitDuration;
+        phase = Phase.COMMIT;
 
         emit BountyDeposited(msg.sender, msg.value);
+        emit CommitPhaseStarted(commitDeadline);
     }
 
     // ============================================================
-    //                        FUNDED PHASE — AGENT ENTRY
+    //                        COMMIT PHASE — AGENT ENTRY & SOLUTIONS
     // ============================================================
 
     /// @notice Enter the round as an agent. Pays entry fee in ETH via msg.value.
-    /// @dev Entry fees accumulate in the contract and are allocated to treasury at finalization.
-    ///      Phase 2: will migrate to $AGON token when protocol has revenue.
+    /// @dev Agents can enter anytime during the commit window (before deadline).
+    ///      Entry fees accumulate in the contract and are allocated to treasury at finalization.
     /// @param agentId The agent's registry ID.
-    function enter(uint256 agentId) external payable inPhase(Phase.FUNDED) {
+    function enter(uint256 agentId) external payable inPhase(Phase.COMMIT) {
+        if (block.timestamp > commitDeadline) revert CommitDeadlinePassed();
         if (!arenaRegistry.isActive(agentId)) revert AgentNotActive(agentId);
 
         uint8 agentTier = arenaRegistry.getTier(agentId);
@@ -357,13 +365,13 @@ contract BountyRound is Initializable, ReentrancyGuard {
     //                        COMMIT PHASE
     // ============================================================
 
-    /// @notice Transition from FUNDED to COMMIT. Only callable by factory.
+    /// @notice Legacy: was used to transition FUNDED → COMMIT. Now a no-op since deposit starts the clock.
+    /// @dev Kept for backward compatibility. Reverts because phase is never FUNDED anymore.
     function startCommitPhase() external onlyFactory inPhase(Phase.FUNDED) {
-        if (participants.length == 0) revert NoParticipants();
-
+        // This will always revert since depositBounty() skips FUNDED → goes to COMMIT directly.
+        // Kept to preserve function selector for any existing integrations.
         commitDeadline = uint64(block.timestamp) + commitDuration;
         phase = Phase.COMMIT;
-
         emit CommitPhaseStarted(commitDeadline);
     }
 
@@ -391,13 +399,25 @@ contract BountyRound is Initializable, ReentrancyGuard {
     ///      Agents submit encrypted solutions to the scoring API, referencing their on-chain commit hash.
     ///      The TEE evaluates solutions and the scorer submits results to ScoringOracle.
     ///      finalize() reads the verified result from ScoringOracle.
+    ///      If no agents entered, use cancelExpired() instead for full sponsor refund.
     function startScoringPhase() external inPhase(Phase.COMMIT) {
         if (block.timestamp <= commitDeadline) revert CommitDeadlineNotReached();
+        if (participants.length == 0) revert NoParticipants();
 
         phase = Phase.SCORING;
         scoringStartedAt = uint64(block.timestamp);
 
         emit ScoringPhaseStarted(0);
+    }
+
+    /// @notice Cancel an expired bounty with no submissions. Anyone can call after deadline.
+    /// @dev Full refund to sponsor — no protocol fee charged. Entry fees (if any agents
+    ///      entered but didn't submit) are still returned to agents via emergencyWithdraw().
+    function cancelExpired() external inPhase(Phase.COMMIT) {
+        if (block.timestamp <= commitDeadline) revert CommitDeadlineNotReached();
+
+        phase = Phase.CANCELLED;
+        emit RoundCancelled("Deadline passed - no qualifying submissions");
     }
 
     // ============================================================

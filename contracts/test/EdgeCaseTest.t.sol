@@ -206,8 +206,7 @@ contract EdgeCaseTest is Test {
         round.enter{value: Constants.ENTRY_FEE}(agentId);
 
         // Fund → Commit
-        vm.prank(operator);
-        factory.startCommitPhase(bountyId, 0);
+        // startCommitPhase no longer needed
 
         // Commit
         vm.prank(agentOwners[0]);
@@ -266,8 +265,7 @@ contract EdgeCaseTest is Test {
         uint256 agentId = _registerAgent(agentOwners[0], "agent0");
         vm.prank(agentOwners[0]);
         round.enter{value: Constants.ENTRY_FEE}(agentId);
-        vm.prank(operator);
-        factory.startCommitPhase(bountyId, 0);
+        // startCommitPhase no longer needed
         vm.prank(agentOwners[0]);
         round.commitSolution(agentId, keccak256("solution"));
         vm.warp(block.timestamp + 2 hours);
@@ -428,8 +426,7 @@ contract EdgeCaseTest is Test {
             round.enter{value: Constants.ENTRY_FEE}(agentIds[i]);
         }
 
-        vm.prank(operator);
-        factory.startCommitPhase(bountyId, 0);
+        // startCommitPhase no longer needed
 
         // All commit
         for (uint256 i = 0; i < 20; i++) {
@@ -473,8 +470,7 @@ contract EdgeCaseTest is Test {
         uint256 agentId = _registerAgent(agentOwners[0], "deadlineAgent");
         vm.prank(agentOwners[0]);
         round.enter{value: Constants.ENTRY_FEE}(agentId);
-        vm.prank(operator);
-        factory.startCommitPhase(bountyId, 0);
+        // startCommitPhase no longer needed
 
         // Warp to exact deadline (inclusive — should still work)
         vm.warp(block.timestamp + 1 hours);
@@ -492,8 +488,7 @@ contract EdgeCaseTest is Test {
         uint256 agentId = _registerAgent(agentOwners[0], "lateAgent");
         vm.prank(agentOwners[0]);
         round.enter{value: Constants.ENTRY_FEE}(agentId);
-        vm.prank(operator);
-        factory.startCommitPhase(bountyId, 0);
+        // startCommitPhase no longer needed
 
         // Warp 1 second past deadline
         vm.warp(block.timestamp + 1 hours + 1);
@@ -512,8 +507,7 @@ contract EdgeCaseTest is Test {
         uint256 agentId = _registerAgent(agentOwners[0], "earlyAgent");
         vm.prank(agentOwners[0]);
         round.enter{value: Constants.ENTRY_FEE}(agentId);
-        vm.prank(operator);
-        factory.startCommitPhase(bountyId, 0);
+        // startCommitPhase no longer needed
 
         // Warp to 1 second before deadline
         vm.warp(block.timestamp + 1 hours - 1);

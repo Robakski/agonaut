@@ -180,8 +180,7 @@ contract AdversarialTest is Test {
         }
 
         // Start commit
-        vm.prank(operator);
-        factory.startCommitPhase(bountyId, 0);
+        // startCommitPhase no longer needed
 
         // Commit solutions
         for (uint256 i; i < agentIds.length; i++) {
@@ -288,8 +287,7 @@ contract AdversarialTest is Test {
         round.enter{value: Constants.ENTRY_FEE}(agent2);
 
         // Start commit
-        vm.prank(operator);
-        factory.startCommitPhase(bountyId, 0);
+        // startCommitPhase no longer needed
 
         // Only agent1 commits
         vm.prank(agent1Owner);
@@ -346,8 +344,7 @@ contract AdversarialTest is Test {
         round.enter{value: Constants.ENTRY_FEE}(agent2);
 
         // Factory cancels (factory can always cancel)
-        vm.prank(operator);
-        factory.startCommitPhase(bountyId, 0);
+        // startCommitPhase no longer needed
 
         // Warp and start scoring to get to a cancellable state via timeout
         vm.warp(block.timestamp + 1 hours + 1);
@@ -378,8 +375,7 @@ contract AdversarialTest is Test {
         vm.prank(agent1Owner);
         round.enter{value: Constants.ENTRY_FEE}(agent1);
 
-        vm.prank(operator);
-        factory.startCommitPhase(bountyId, 0);
+        // startCommitPhase no longer needed
         vm.warp(block.timestamp + 1 hours + 1);
         round.startScoringPhase();
         vm.warp(block.timestamp + 24 hours + 1);
@@ -441,8 +437,7 @@ contract AdversarialTest is Test {
 
         vm.prank(agent1Owner);
         round.enter{value: Constants.ENTRY_FEE}(agent1);
-        vm.prank(operator);
-        factory.startCommitPhase(bountyId, 0);
+        // startCommitPhase no longer needed
         vm.prank(agent1Owner);
         round.commitSolution(agent1, keccak256("sol"));
         vm.warp(block.timestamp + 1 hours + 1);
@@ -476,8 +471,7 @@ contract AdversarialTest is Test {
         // Only agent1 enters
         vm.prank(agent1Owner);
         round.enter{value: Constants.ENTRY_FEE}(agent1);
-        vm.prank(operator);
-        factory.startCommitPhase(bountyId, 0);
+        // startCommitPhase no longer needed
         vm.prank(agent1Owner);
         round.commitSolution(agent1, keccak256("sol"));
         vm.warp(block.timestamp + 1 hours + 1);
@@ -503,8 +497,7 @@ contract AdversarialTest is Test {
 
         vm.prank(agent1Owner);
         round.enter{value: Constants.ENTRY_FEE}(agent1);
-        vm.prank(operator);
-        factory.startCommitPhase(bountyId, 0);
+        // startCommitPhase no longer needed
         vm.prank(agent1Owner);
         round.commitSolution(agent1, keccak256("sol"));
         vm.warp(block.timestamp + 1 hours + 1);
@@ -527,8 +520,7 @@ contract AdversarialTest is Test {
 
         vm.prank(agent1Owner);
         round.enter{value: Constants.ENTRY_FEE}(agent1);
-        vm.prank(operator);
-        factory.startCommitPhase(bountyId, 0);
+        // startCommitPhase no longer needed
         vm.prank(agent1Owner);
         round.commitSolution(agent1, keccak256("sol"));
         vm.warp(block.timestamp + 1 hours + 1);
@@ -575,18 +567,9 @@ contract AdversarialTest is Test {
         round.enter{value: Constants.ENTRY_FEE}(agent1);
     }
 
-    function test_cannotCommitBeforeCommitPhase() public {
-        uint256 agent1 = _registerAgent(agent1Owner, "a1");
-        (BountyRound round,) = _createRound(DEPOSIT, 10, 5000);
-
-        vm.prank(agent1Owner);
-        round.enter{value: Constants.ENTRY_FEE}(agent1);
-
-        // Phase is FUNDED, not COMMIT
-        vm.prank(agent1Owner);
-        vm.expectRevert();
-        round.commitSolution(agent1, keccak256("sol"));
-    }
+    // test_cannotCommitBeforeCommitPhase — REMOVED (obsolete)
+    // Reason: Deposit now starts COMMIT phase immediately. Agents can enter + commit
+    // in the same phase window. No "before COMMIT phase" period exists anymore.
 
     function test_cannotFinalizeBeforeScoring() public {
         uint256 agent1 = _registerAgent(agent1Owner, "a1");
@@ -594,8 +577,7 @@ contract AdversarialTest is Test {
 
         vm.prank(agent1Owner);
         round.enter{value: Constants.ENTRY_FEE}(agent1);
-        vm.prank(operator);
-        factory.startCommitPhase(bountyId, 0);
+        // startCommitPhase no longer needed
 
         // Phase is COMMIT, not SCORING
         vm.expectRevert();
@@ -608,8 +590,7 @@ contract AdversarialTest is Test {
 
         vm.prank(agent1Owner);
         round.enter{value: Constants.ENTRY_FEE}(agent1);
-        vm.prank(operator);
-        factory.startCommitPhase(bountyId, 0);
+        // startCommitPhase no longer needed
 
         // Try to start scoring immediately — deadline not reached
         vm.expectRevert();
@@ -622,8 +603,7 @@ contract AdversarialTest is Test {
 
         vm.prank(agent1Owner);
         round.enter{value: Constants.ENTRY_FEE}(agent1);
-        vm.prank(operator);
-        factory.startCommitPhase(bountyId, 0);
+        // startCommitPhase no longer needed
 
         // Warp past deadline
         vm.warp(block.timestamp + 1 hours + 1);
@@ -842,8 +822,7 @@ contract AdversarialTest is Test {
 
         vm.prank(agent1Owner);
         round.enter{value: Constants.ENTRY_FEE}(agent1);
-        vm.prank(operator);
-        factory.startCommitPhase(bountyId, 0);
+        // startCommitPhase no longer needed
         vm.prank(agent1Owner);
         round.commitSolution(agent1, keccak256("sol"));
         vm.warp(block.timestamp + 1 hours + 1);
@@ -880,8 +859,7 @@ contract AdversarialTest is Test {
 
         vm.prank(agent1Owner);
         round.enter{value: Constants.ENTRY_FEE}(agent1);
-        vm.prank(operator);
-        factory.startCommitPhase(bountyId, 0);
+        // startCommitPhase no longer needed
 
         // Attacker tries to commit for agent1
         vm.prank(attacker);
@@ -897,8 +875,7 @@ contract AdversarialTest is Test {
         // Only agent1 enters
         vm.prank(agent1Owner);
         round.enter{value: Constants.ENTRY_FEE}(agent1);
-        vm.prank(operator);
-        factory.startCommitPhase(bountyId, 0);
+        // startCommitPhase no longer needed
 
         // Agent2 tries to commit without entering
         vm.prank(agent2Owner);

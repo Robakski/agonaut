@@ -164,7 +164,7 @@ contract LifecycleTest is Test {
         vm.prank(operator);  // operator is sponsor (creator)
         round.depositBounty{value: Constants.MIN_BOUNTY_DEPOSIT}();
 
-        assertEq(uint256(round.phase()), 1, "Should be FUNDED");
+        assertEq(uint256(round.phase()), 2, "Should be COMMIT after deposit");
 
         // ═══════════════════════════════════════════
         //  Agent enters
@@ -178,8 +178,7 @@ contract LifecycleTest is Test {
         //  Start commit phase → COMMIT
         //  THIS IS THE TRANSITION THAT WAS MISSING!
         // ═══════════════════════════════════════════
-        vm.prank(operator);
-        factory.startCommitPhase(bountyId, 0);
+        // startCommitPhase no longer needed
 
         assertEq(uint256(round.phase()), 2, "Should be COMMIT");
 

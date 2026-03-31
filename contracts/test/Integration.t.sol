@@ -238,7 +238,7 @@ contract IntegrationTest is Test {
 
         // b/c. Spawn round (tier = Bronze = 0)
         BountyRound round = _spawnRound(0);
-        assertEq(uint8(round.getPhase()), uint8(BountyRound.Phase.FUNDED));
+        assertEq(uint8(round.getPhase()), uint8(BountyRound.Phase.COMMIT));
 
         // d. All 3 agents enter with ETH entry fee
         vm.prank(agent1Wallet);
@@ -254,7 +254,7 @@ contract IntegrationTest is Test {
         assertEq(round.totalPrizePool(), 1 ether, "prize pool should be sponsor deposit");
 
         // e. Start commit phase (we are factory)
-        round.startCommitPhase();
+        // startCommitPhase no longer needed — deposit starts clock
         assertEq(uint8(round.getPhase()), uint8(BountyRound.Phase.COMMIT));
 
         // f. All 3 agents commit different solutions
@@ -331,7 +331,7 @@ contract IntegrationTest is Test {
         vm.prank(agent1Wallet);
         round.enter{value: ENTRY_FEE}(id);
 
-        round.startCommitPhase();
+        // startCommitPhase no longer needed — deposit starts clock
 
         // Warp past commit deadline
         vm.warp(block.timestamp + COMMIT_DUR + 1);
@@ -353,7 +353,7 @@ contract IntegrationTest is Test {
         vm.prank(agent1Wallet);
         round.enter{value: ENTRY_FEE}(id);
 
-        round.startCommitPhase();
+        // startCommitPhase no longer needed — deposit starts clock
         assertEq(uint8(round.getPhase()), uint8(BountyRound.Phase.COMMIT));
 
         bytes memory solution = "real_solution";

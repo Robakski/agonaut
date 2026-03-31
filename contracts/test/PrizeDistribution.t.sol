@@ -264,7 +264,7 @@ contract PrizeDistributionTest is Test {
     }
 
     function _commitPhase(BountyRound round, uint256 numAgents, uint256[] memory agentIds) internal {
-        round.startCommitPhase();
+        // Deposit already starts COMMIT phase — no need for startCommitPhase()
         uint256 i;
         while (i < numAgents) {
             _doCommit(round, wallets[i], agentIds[i], i);
@@ -438,7 +438,7 @@ contract PrizeDistributionTest is Test {
         vm.prank(wallets[0]);
         round.enter(agentId);
 
-        round.startCommitPhase();
+        // startCommitPhase no longer needed — deposit starts clock
         bytes memory sol = "stableSol";
         bytes32 salt = keccak256("stableSalt");
         vm.prank(wallets[0]);
@@ -491,7 +491,7 @@ contract PrizeDistributionTest is Test {
         vm.prank(wallets[0]);
         round.enter(agentId);
 
-        round.startCommitPhase();
+        // startCommitPhase no longer needed — deposit starts clock
         bytes memory sol = "stableOnlySol";
         bytes32 salt = keccak256("stableOnlySalt");
         vm.prank(wallets[0]);
