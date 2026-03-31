@@ -309,38 +309,53 @@ class ChainService:
             f"factory={config.BOUNTY_FACTORY}"
         )
 
-    def _send_tx(self, tx_func, value: int = 0) -> str:
-        """Build, sign, send a transaction and wait for receipt."""
-        nonce = self.w3.eth.get_transaction_count(self.operator.address, 'pending')
+    def _send_tx(self, tx_func, value: int = 0, retries: int = 2) -> str:
+        """Build, sign, send a transaction and wait for receipt.
+        
+        Retries on nonce/gas price conflicts (replacement underpriced, nonce too low).
+        """
+        for attempt in range(retries + 1):
+            nonce = self.w3.eth.get_transaction_count(self.operator.address, 'pending')
+            gas_price = self.w3.eth.gas_price
+            # Use higher gas on retries to replace stuck txs
+            gas_multiplier = 3 + attempt * 2  # 3x, 5x, 7x
 
-        tx = tx_func.build_transaction({
-            "from": self.operator.address,
-            "nonce": nonce,
-            "gas": 2_000_000,  # generous limit, actual will be less
-            "maxFeePerGas": self.w3.eth.gas_price * 2,
-            "maxPriorityFeePerGas": self.w3.to_wei(0.001, "gwei"),
-            "chainId": config.CHAIN_ID,
-            "value": value,
-        })
+            tx = tx_func.build_transaction({
+                "from": self.operator.address,
+                "nonce": nonce,
+                "gas": 2_000_000,
+                "maxFeePerGas": gas_price * gas_multiplier,
+                "maxPriorityFeePerGas": self.w3.to_wei(0.1 * (attempt + 1), "gwei"),
+                "chainId": config.CHAIN_ID,
+                "value": value,
+            })
 
-        # Estimate gas for tighter limit
-        try:
-            estimated = self.w3.eth.estimate_gas(tx)
-            tx["gas"] = int(estimated * 1.2)  # 20% buffer
-        except Exception as e:
-            logger.warning(f"Gas estimation failed, using default: {e}")
+            try:
+                estimated = self.w3.eth.estimate_gas(tx)
+                tx["gas"] = int(estimated * 1.2)
+            except Exception as e:
+                logger.warning(f"Gas estimation failed, using default: {e}")
 
-        signed = self.w3.eth.account.sign_transaction(tx, self.operator.key)
-        tx_hash = self.w3.eth.send_raw_transaction(signed.raw_transaction)
+            try:
+                signed = self.w3.eth.account.sign_transaction(tx, self.operator.key)
+                tx_hash = self.w3.eth.send_raw_transaction(signed.raw_transaction)
+                logger.info(f"TX sent (attempt {attempt+1}): {tx_hash.hex()}")
 
-        logger.info(f"TX sent: {tx_hash.hex()}")
+                receipt = self.w3.eth.wait_for_transaction_receipt(tx_hash, timeout=120)
+                if receipt["status"] != 1:
+                    raise RuntimeError(f"Transaction reverted: {tx_hash.hex()}")
 
-        receipt = self.w3.eth.wait_for_transaction_receipt(tx_hash, timeout=120)
-        if receipt["status"] != 1:
-            raise RuntimeError(f"Transaction reverted: {tx_hash.hex()}")
+                logger.info(f"TX confirmed: {tx_hash.hex()} (block {receipt['blockNumber']})")
+                return tx_hash.hex()
 
-        logger.info(f"TX confirmed: {tx_hash.hex()} (block {receipt['blockNumber']})")
-        return tx_hash.hex()
+            except Exception as e:
+                err_msg = str(e).lower()
+                if attempt < retries and ("nonce" in err_msg or "underpriced" in err_msg or "replacement" in err_msg):
+                    logger.warning(f"TX attempt {attempt+1} failed ({e}), retrying with higher gas...")
+                    import time
+                    time.sleep(2)
+                    continue
+                raise
 
     def create_bounty_and_spawn(
         self,
@@ -516,7 +531,7 @@ class ChainService:
         deposit = contract.functions.sponsorDeposit().call()
         deadline = contract.functions.commitDeadline().call()
 
-        PHASE_NAMES = {0: "CREATED", 1: "FUNDED", 2: "COMMIT", 3: "SCORING", 4: "SETTLED", 5: "CANCELLED"}
+        PHASE_NAMES = {0: "OPEN", 1: "FUNDED", 2: "COMMIT", 3: "SCORING", 4: "SETTLED", 5: "CANCELLED", 6: "DISPUTED"}
         return {
             "phase": PHASE_NAMES.get(phase, f"UNKNOWN({phase})"),
             "phase_id": phase,

@@ -27,6 +27,7 @@ type BountyDetail = {
   agents_entered?: number;
   agent_count?: number;
   commit_hours?: number;
+  commit_deadline?: number;
   threshold?: number;
   graduated?: boolean;
   round_address?: string;
@@ -150,6 +151,9 @@ export default function BountyDetailPage() {
         <StatCard label={t("entryFee")} value={entryFeeEth > 0 ? `${entryFeeEth} ETH` : "—"} />
         <StatCard label={t("agents")} value={maxAgents > 0 ? `${agents}/${maxAgents}` : `${agents}`} />
         <StatCard label={t("commitWindow")} value={b.commit_hours ? `${b.commit_hours}h` : "—"} />
+        {b.commit_deadline && b.commit_deadline > 0 && (
+          <StatCard label={t("deadline") || "Deadline"} value={new Date(b.commit_deadline * 1000).toLocaleString()} />
+        )}
       </div>
 
       {/* Description */}
