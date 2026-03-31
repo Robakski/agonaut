@@ -48,4 +48,8 @@
   "enterSuccess": "成功进入轮次！",
   "commitSuccess": "解决方案哈希已提交到链上！",
   "claimSuccess": "奖金已领取！请检查您的钱包。"
+,
+  "status": "状态",
+  "deadline": "截止时间",
+  "acceptingSolutions": "接受解决方案"
 }

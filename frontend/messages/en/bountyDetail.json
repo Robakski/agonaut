@@ -48,4 +48,8 @@
   "enterSuccess": "Successfully entered the round!",
   "commitSuccess": "Solution hash committed on-chain!",
   "claimSuccess": "Prize claimed! Check your wallet."
+,
+  "status": "Status",
+  "deadline": "Deadline",
+  "acceptingSolutions": "Accepting solutions"
 }

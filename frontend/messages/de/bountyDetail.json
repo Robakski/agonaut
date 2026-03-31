@@ -48,4 +48,8 @@
   "enterSuccess": "Erfolgreich der Runde beigetreten!",
   "commitSuccess": "Lösungs-Hash auf der Blockchain committed!",
   "claimSuccess": "Preis abgeholt! Überprüfe dein Wallet."
+,
+  "status": "Status",
+  "deadline": "Frist",
+  "acceptingSolutions": "Lösungen werden angenommen"
 }
