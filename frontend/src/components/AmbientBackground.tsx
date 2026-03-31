@@ -1,10 +1,10 @@
 "use client";
 
 /**
- * Animated gold & silver flowing ribbons background.
- * Pure SVG + CSS animations — lightweight, scalable, GPU-friendly.
- * Multiple wave paths with metallic gradients at low opacity,
- * slowly flowing and morphing across the full page height.
+ * Flowing liquid gold & silver background.
+ * Large morphing blobs with metallic gradients that slowly flow and reshape.
+ * Creates a liquid/smoke effect reminiscent of molten metal.
+ * Pure CSS animations — no JS, no canvas, lightweight.
  */
 export function AmbientBackground() {
   return (
@@ -12,289 +12,170 @@ export function AmbientBackground() {
       className="fixed inset-0 pointer-events-none"
       style={{ zIndex: 0, overflow: "hidden" }}
     >
-      {/* Full-height SVG with flowing wave ribbons */}
-      <svg
-        className="absolute inset-0 w-full h-full"
-        viewBox="0 0 1440 3000"
-        preserveAspectRatio="none"
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        <defs>
-          {/* Gold metallic gradient */}
-          <linearGradient id="gold-ribbon" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor="#D4AF37" stopOpacity="0" />
-            <stop offset="15%" stopColor="#D4AF37" stopOpacity="0.08" />
-            <stop offset="30%" stopColor="#C5A54E" stopOpacity="0.12" />
-            <stop offset="50%" stopColor="#D4AF37" stopOpacity="0.06" />
-            <stop offset="70%" stopColor="#BF9B30" stopOpacity="0.10" />
-            <stop offset="85%" stopColor="#D4AF37" stopOpacity="0.07" />
-            <stop offset="100%" stopColor="#D4AF37" stopOpacity="0" />
-          </linearGradient>
+      {/* ═══ Gold flow 1 — massive top-left, drifting right ═══ */}
+      <div
+        className="absolute"
+        style={{
+          width: "120vw",
+          height: "45vh",
+          top: "-5%",
+          left: "-15%",
+          background: "linear-gradient(135deg, rgba(212,175,55,0.08) 0%, rgba(191,155,48,0.12) 30%, rgba(197,165,78,0.06) 60%, rgba(212,175,55,0.03) 100%)",
+          filter: "blur(60px)",
+          borderRadius: "40% 60% 55% 45% / 50% 40% 60% 50%",
+          animation: "liquid-flow-1 20s ease-in-out infinite",
+        }}
+      />
 
-          {/* Silver metallic gradient */}
-          <linearGradient id="silver-ribbon" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor="#B8B8C0" stopOpacity="0" />
-            <stop offset="20%" stopColor="#C8C8D0" stopOpacity="0.06" />
-            <stop offset="40%" stopColor="#B0B0B8" stopOpacity="0.09" />
-            <stop offset="60%" stopColor="#C0C0C8" stopOpacity="0.05" />
-            <stop offset="80%" stopColor="#B8B8C0" stopOpacity="0.08" />
-            <stop offset="100%" stopColor="#B8B8C0" stopOpacity="0" />
-          </linearGradient>
+      {/* ═══ Gold shine — bright edge highlight following flow 1 ═══ */}
+      <div
+        className="absolute"
+        style={{
+          width: "80vw",
+          height: "8vh",
+          top: "12%",
+          left: "5%",
+          background: "linear-gradient(90deg, transparent 0%, rgba(240,208,96,0.15) 20%, rgba(255,224,128,0.08) 50%, rgba(240,208,96,0.12) 80%, transparent 100%)",
+          filter: "blur(12px)",
+          borderRadius: "50%",
+          animation: "liquid-shine-1 20s ease-in-out infinite",
+        }}
+      />
 
-          {/* Bright gold highlight for edge shine */}
-          <linearGradient id="gold-shine" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor="#D4AF37" stopOpacity="0" />
-            <stop offset="30%" stopColor="#F0D060" stopOpacity="0.15" />
-            <stop offset="50%" stopColor="#FFE080" stopOpacity="0.08" />
-            <stop offset="70%" stopColor="#F0D060" stopOpacity="0.12" />
-            <stop offset="100%" stopColor="#D4AF37" stopOpacity="0" />
-          </linearGradient>
+      {/* ═══ Silver flow 1 — wide ribbon across upper section ═══ */}
+      <div
+        className="absolute"
+        style={{
+          width: "130vw",
+          height: "35vh",
+          top: "15%",
+          left: "-20%",
+          background: "linear-gradient(160deg, rgba(180,180,195,0.04) 0%, rgba(200,200,215,0.09) 35%, rgba(175,175,190,0.06) 65%, rgba(190,190,205,0.03) 100%)",
+          filter: "blur(65px)",
+          borderRadius: "55% 45% 50% 50% / 45% 55% 45% 55%",
+          animation: "liquid-flow-2 25s ease-in-out infinite",
+        }}
+      />
 
-          {/* Silver highlight */}
-          <linearGradient id="silver-shine" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor="#E0E0E8" stopOpacity="0" />
-            <stop offset="35%" stopColor="#F0F0F5" stopOpacity="0.10" />
-            <stop offset="65%" stopColor="#E8E8F0" stopOpacity="0.06" />
-            <stop offset="100%" stopColor="#E0E0E8" stopOpacity="0" />
-          </linearGradient>
+      {/* ═══ Gold flow 2 — thick flowing band, mid-upper ═══ */}
+      <div
+        className="absolute"
+        style={{
+          width: "110vw",
+          height: "50vh",
+          top: "25%",
+          left: "-10%",
+          background: "linear-gradient(120deg, rgba(212,175,55,0.03) 0%, rgba(191,155,48,0.10) 25%, rgba(212,175,55,0.14) 45%, rgba(197,165,78,0.08) 65%, rgba(212,175,55,0.03) 100%)",
+          filter: "blur(55px)",
+          borderRadius: "45% 55% 60% 40% / 55% 45% 55% 45%",
+          animation: "liquid-flow-3 22s ease-in-out infinite",
+        }}
+      />
 
-          {/* Gaussian blur for soft edges */}
-          <filter id="ribbon-blur">
-            <feGaussianBlur stdDeviation="8" />
-          </filter>
-          <filter id="ribbon-blur-lg">
-            <feGaussianBlur stdDeviation="16" />
-          </filter>
-        </defs>
+      {/* ═══ Gold edge shine — mid section ═══ */}
+      <div
+        className="absolute"
+        style={{
+          width: "70vw",
+          height: "6vh",
+          top: "42%",
+          left: "15%",
+          background: "linear-gradient(90deg, transparent, rgba(240,208,96,0.12) 30%, rgba(255,230,140,0.06) 50%, rgba(240,208,96,0.10) 70%, transparent)",
+          filter: "blur(10px)",
+          borderRadius: "50%",
+          animation: "liquid-shine-2 22s ease-in-out infinite",
+        }}
+      />
 
-        {/* ═══ Wave 1 — Wide gold ribbon, top area ═══ */}
-        <g filter="url(#ribbon-blur-lg)" opacity="0.7">
-          <path
-            d="M-100,200 C200,150 400,280 720,220 C1040,160 1200,300 1540,250"
-            stroke="url(#gold-ribbon)"
-            strokeWidth="80"
-            fill="none"
-            strokeLinecap="round"
-          >
-            <animateTransform
-              attributeName="transform"
-              type="translate"
-              values="0,0; 40,30; -20,15; 0,0"
-              dur="25s"
-              repeatCount="indefinite"
-            />
-          </path>
-        </g>
+      {/* ═══ Silver flow 2 — large mid-section ═══ */}
+      <div
+        className="absolute"
+        style={{
+          width: "120vw",
+          height: "40vh",
+          top: "40%",
+          left: "-15%",
+          background: "linear-gradient(145deg, rgba(175,175,190,0.03) 0%, rgba(200,200,215,0.08) 30%, rgba(190,190,205,0.11) 50%, rgba(180,180,195,0.06) 75%, rgba(175,175,190,0.02) 100%)",
+          filter: "blur(60px)",
+          borderRadius: "50% 50% 45% 55% / 40% 60% 40% 60%",
+          animation: "liquid-flow-4 28s ease-in-out infinite",
+        }}
+      />
 
-        {/* ═══ Wave 2 — Thin gold shine line, top ═══ */}
-        <g opacity="0.5">
-          <path
-            d="M-50,230 C250,180 450,310 720,250 C990,190 1180,320 1500,270"
-            stroke="url(#gold-shine)"
-            strokeWidth="3"
-            fill="none"
-            strokeLinecap="round"
-          >
-            <animateTransform
-              attributeName="transform"
-              type="translate"
-              values="0,0; 35,25; -15,12; 0,0"
-              dur="25s"
-              repeatCount="indefinite"
-            />
-          </path>
-        </g>
+      {/* ═══ Silver shine — mid ═══ */}
+      <div
+        className="absolute"
+        style={{
+          width: "65vw",
+          height: "5vh",
+          top: "55%",
+          left: "20%",
+          background: "linear-gradient(90deg, transparent, rgba(220,220,235,0.10) 25%, rgba(240,240,248,0.06) 50%, rgba(220,220,235,0.08) 75%, transparent)",
+          filter: "blur(8px)",
+          borderRadius: "50%",
+          animation: "liquid-shine-3 28s ease-in-out infinite",
+        }}
+      />
 
-        {/* ═══ Wave 3 — Silver ribbon, upper-mid ═══ */}
-        <g filter="url(#ribbon-blur-lg)" opacity="0.6">
-          <path
-            d="M1540,550 C1200,500 1000,620 720,580 C440,540 200,650 -100,600"
-            stroke="url(#silver-ribbon)"
-            strokeWidth="60"
-            fill="none"
-            strokeLinecap="round"
-          >
-            <animateTransform
-              attributeName="transform"
-              type="translate"
-              values="0,0; -30,20; 25,-10; 0,0"
-              dur="30s"
-              repeatCount="indefinite"
-            />
-          </path>
-        </g>
+      {/* ═══ Gold flow 3 — lower section, flowing opposite ═══ */}
+      <div
+        className="absolute"
+        style={{
+          width: "115vw",
+          height: "45vh",
+          top: "55%",
+          left: "-8%",
+          background: "linear-gradient(150deg, rgba(212,175,55,0.04) 0%, rgba(197,165,78,0.10) 30%, rgba(191,155,48,0.13) 55%, rgba(212,175,55,0.06) 80%, rgba(197,165,78,0.02) 100%)",
+          filter: "blur(55px)",
+          borderRadius: "60% 40% 45% 55% / 50% 50% 50% 50%",
+          animation: "liquid-flow-5 24s ease-in-out infinite",
+        }}
+      />
 
-        {/* ═══ Wave 4 — Silver shine line ═══ */}
-        <g opacity="0.4">
-          <path
-            d="M1500,570 C1180,520 980,640 720,600 C460,560 220,670 -50,620"
-            stroke="url(#silver-shine)"
-            strokeWidth="2"
-            fill="none"
-            strokeLinecap="round"
-          >
-            <animateTransform
-              attributeName="transform"
-              type="translate"
-              values="0,0; -25,18; 20,-8; 0,0"
-              dur="30s"
-              repeatCount="indefinite"
-            />
-          </path>
-        </g>
+      {/* ═══ Gold shine — lower ═══ */}
+      <div
+        className="absolute"
+        style={{
+          width: "75vw",
+          height: "7vh",
+          top: "72%",
+          left: "10%",
+          background: "linear-gradient(90deg, transparent, rgba(240,208,96,0.10) 20%, rgba(255,224,128,0.06) 45%, rgba(240,208,96,0.12) 70%, transparent)",
+          filter: "blur(10px)",
+          borderRadius: "50%",
+          animation: "liquid-shine-4 24s ease-in-out infinite",
+        }}
+      />
 
-        {/* ═══ Wave 5 — Large gold ribbon, mid section ═══ */}
-        <g filter="url(#ribbon-blur-lg)" opacity="0.5">
-          <path
-            d="M-100,950 C300,880 550,1050 720,980 C890,910 1150,1080 1540,1000"
-            stroke="url(#gold-ribbon)"
-            strokeWidth="100"
-            fill="none"
-            strokeLinecap="round"
-          >
-            <animateTransform
-              attributeName="transform"
-              type="translate"
-              values="0,0; 50,-25; -30,20; 0,0"
-              dur="35s"
-              repeatCount="indefinite"
-            />
-          </path>
-        </g>
+      {/* ═══ Silver flow 3 — bottom section ═══ */}
+      <div
+        className="absolute"
+        style={{
+          width: "125vw",
+          height: "38vh",
+          top: "70%",
+          left: "-18%",
+          background: "linear-gradient(130deg, rgba(190,190,205,0.03) 0%, rgba(200,200,215,0.08) 25%, rgba(180,180,195,0.10) 50%, rgba(195,195,210,0.05) 75%, rgba(185,185,200,0.02) 100%)",
+          filter: "blur(60px)",
+          borderRadius: "45% 55% 55% 45% / 55% 45% 50% 50%",
+          animation: "liquid-flow-6 26s ease-in-out infinite",
+        }}
+      />
 
-        {/* ═══ Wave 6 — Gold shine, mid ═══ */}
-        <g opacity="0.45">
-          <path
-            d="M-50,980 C350,910 580,1070 720,1010 C860,950 1130,1100 1500,1020"
-            stroke="url(#gold-shine)"
-            strokeWidth="2.5"
-            fill="none"
-            strokeLinecap="round"
-          >
-            <animateTransform
-              attributeName="transform"
-              type="translate"
-              values="0,0; 45,-22; -25,18; 0,0"
-              dur="35s"
-              repeatCount="indefinite"
-            />
-          </path>
-        </g>
-
-        {/* ═══ Wave 7 — Silver ribbon, lower-mid ═══ */}
-        <g filter="url(#ribbon-blur-lg)" opacity="0.55">
-          <path
-            d="M1540,1400 C1100,1350 900,1480 720,1420 C540,1360 300,1500 -100,1440"
-            stroke="url(#silver-ribbon)"
-            strokeWidth="70"
-            fill="none"
-            strokeLinecap="round"
-          >
-            <animateTransform
-              attributeName="transform"
-              type="translate"
-              values="0,0; -35,30; 20,-15; 0,0"
-              dur="28s"
-              repeatCount="indefinite"
-            />
-          </path>
-        </g>
-
-        {/* ═══ Wave 8 — Gold ribbon, lower ═══ */}
-        <g filter="url(#ribbon-blur-lg)" opacity="0.45">
-          <path
-            d="M-100,1850 C350,1780 600,1920 720,1870 C840,1820 1100,1960 1540,1890"
-            stroke="url(#gold-ribbon)"
-            strokeWidth="90"
-            fill="none"
-            strokeLinecap="round"
-          >
-            <animateTransform
-              attributeName="transform"
-              type="translate"
-              values="0,0; 40,20; -30,-10; 0,0"
-              dur="32s"
-              repeatCount="indefinite"
-            />
-          </path>
-        </g>
-
-        {/* ═══ Wave 9 — Gold shine, lower ═══ */}
-        <g opacity="0.4">
-          <path
-            d="M-50,1880 C380,1810 620,1940 720,1895 C820,1850 1080,1980 1500,1910"
-            stroke="url(#gold-shine)"
-            strokeWidth="2"
-            fill="none"
-            strokeLinecap="round"
-          >
-            <animateTransform
-              attributeName="transform"
-              type="translate"
-              values="0,0; 35,18; -25,-8; 0,0"
-              dur="32s"
-              repeatCount="indefinite"
-            />
-          </path>
-        </g>
-
-        {/* ═══ Wave 10 — Silver ribbon, near bottom ═══ */}
-        <g filter="url(#ribbon-blur-lg)" opacity="0.5">
-          <path
-            d="M1540,2350 C1150,2290 950,2420 720,2370 C490,2320 250,2450 -100,2390"
-            stroke="url(#silver-ribbon)"
-            strokeWidth="65"
-            fill="none"
-            strokeLinecap="round"
-          >
-            <animateTransform
-              attributeName="transform"
-              type="translate"
-              values="0,0; -40,25; 30,-15; 0,0"
-              dur="27s"
-              repeatCount="indefinite"
-            />
-          </path>
-        </g>
-
-        {/* ═══ Wave 11 — Silver shine, bottom ═══ */}
-        <g opacity="0.35">
-          <path
-            d="M1500,2370 C1130,2310 930,2440 720,2390 C510,2340 270,2470 -50,2410"
-            stroke="url(#silver-shine)"
-            strokeWidth="2"
-            fill="none"
-            strokeLinecap="round"
-          >
-            <animateTransform
-              attributeName="transform"
-              type="translate"
-              values="0,0; -35,22; 25,-12; 0,0"
-              dur="27s"
-              repeatCount="indefinite"
-            />
-          </path>
-        </g>
-
-        {/* ═══ Wave 12 — Final gold ribbon, bottom ═══ */}
-        <g filter="url(#ribbon-blur-lg)" opacity="0.4">
-          <path
-            d="M-100,2780 C400,2720 650,2850 720,2800 C790,2750 1100,2880 1540,2820"
-            stroke="url(#gold-ribbon)"
-            strokeWidth="75"
-            fill="none"
-            strokeLinecap="round"
-          >
-            <animateTransform
-              attributeName="transform"
-              type="translate"
-              values="0,0; 30,15; -20,10; 0,0"
-              dur="30s"
-              repeatCount="indefinite"
-            />
-          </path>
-        </g>
-      </svg>
+      {/* ═══ Gold flow 4 — bottom ═══ */}
+      <div
+        className="absolute"
+        style={{
+          width: "110vw",
+          height: "40vh",
+          top: "82%",
+          left: "-5%",
+          background: "linear-gradient(140deg, rgba(212,175,55,0.03) 0%, rgba(191,155,48,0.09) 35%, rgba(212,175,55,0.12) 60%, rgba(197,165,78,0.05) 100%)",
+          filter: "blur(55px)",
+          borderRadius: "50% 50% 40% 60% / 45% 55% 55% 45%",
+          animation: "liquid-flow-1 30s ease-in-out infinite reverse",
+        }}
+      />
     </div>
   );
 }

@@ -234,33 +234,75 @@ body {
   100% { transform: translateX(100vw); }
 }
 
-/* ─── Ambient Background Drifts ─── */
-/* Slow, organic drifting for gold/silver smoke blobs */
-@keyframes ambient-drift-1 {
-  0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.7; }
-  25% { transform: translate(60px, 40px) scale(1.05); opacity: 1; }
-  50% { transform: translate(100px, 20px) scale(1.1); opacity: 0.8; }
-  75% { transform: translate(40px, 60px) scale(1.02); opacity: 0.9; }
+/* ─── Liquid Flow Animations ─── */
+/* Morphing blob shapes + translation for liquid gold/silver ribbons */
+
+@keyframes liquid-flow-1 {
+  0% { transform: translate(0, 0) rotate(0deg); border-radius: 40% 60% 55% 45% / 50% 40% 60% 50%; }
+  25% { transform: translate(8vw, 3vh) rotate(2deg); border-radius: 55% 45% 40% 60% / 45% 55% 50% 50%; }
+  50% { transform: translate(12vw, -2vh) rotate(-1deg); border-radius: 45% 55% 60% 40% / 55% 45% 45% 55%; }
+  75% { transform: translate(5vw, 4vh) rotate(1.5deg); border-radius: 50% 50% 45% 55% / 50% 50% 55% 45%; }
+  100% { transform: translate(0, 0) rotate(0deg); border-radius: 40% 60% 55% 45% / 50% 40% 60% 50%; }
 }
 
-@keyframes ambient-drift-2 {
-  0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.8; }
-  33% { transform: translate(-70px, 30px) scale(1.08); opacity: 1; }
-  66% { transform: translate(-30px, -20px) scale(0.95); opacity: 0.7; }
+@keyframes liquid-flow-2 {
+  0% { transform: translate(0, 0) rotate(0deg); border-radius: 55% 45% 50% 50% / 45% 55% 45% 55%; }
+  30% { transform: translate(-10vw, 2vh) rotate(-2deg); border-radius: 45% 55% 55% 45% / 55% 45% 50% 50%; }
+  60% { transform: translate(-5vw, -3vh) rotate(1deg); border-radius: 50% 50% 40% 60% / 40% 60% 55% 45%; }
+  100% { transform: translate(0, 0) rotate(0deg); border-radius: 55% 45% 50% 50% / 45% 55% 45% 55%; }
 }
 
-@keyframes ambient-drift-3 {
-  0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.6; }
-  50% { transform: translate(-40px, -50px) scale(1.15); opacity: 1; }
+@keyframes liquid-flow-3 {
+  0% { transform: translate(0, 0) rotate(0deg); border-radius: 45% 55% 60% 40% / 55% 45% 55% 45%; }
+  20% { transform: translate(6vw, -4vh) rotate(1.5deg); border-radius: 55% 45% 45% 55% / 45% 55% 50% 50%; }
+  50% { transform: translate(10vw, 2vh) rotate(-1deg); border-radius: 40% 60% 50% 50% / 55% 45% 45% 55%; }
+  80% { transform: translate(4vw, -2vh) rotate(2deg); border-radius: 50% 50% 55% 45% / 50% 50% 50% 50%; }
+  100% { transform: translate(0, 0) rotate(0deg); border-radius: 45% 55% 60% 40% / 55% 45% 55% 45%; }
 }
 
-@keyframes ambient-drift-4 {
-  0%, 100% { transform: translateX(0) scaleX(1); opacity: 0.5; }
-  50% { transform: translateX(120px) scaleX(1.2); opacity: 1; }
+@keyframes liquid-flow-4 {
+  0% { transform: translate(0, 0) rotate(0deg); border-radius: 50% 50% 45% 55% / 40% 60% 40% 60%; }
+  35% { transform: translate(-8vw, -3vh) rotate(-1.5deg); border-radius: 45% 55% 55% 45% / 55% 45% 55% 45%; }
+  65% { transform: translate(-12vw, 3vh) rotate(1deg); border-radius: 55% 45% 40% 60% / 50% 50% 45% 55%; }
+  100% { transform: translate(0, 0) rotate(0deg); border-radius: 50% 50% 45% 55% / 40% 60% 40% 60%; }
 }
 
-@keyframes ambient-drift-5 {
-  0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.7; }
-  40% { transform: translate(-50px, -30px) scale(1.1); opacity: 1; }
-  80% { transform: translate(20px, -10px) scale(0.98); opacity: 0.6; }
+@keyframes liquid-flow-5 {
+  0% { transform: translate(0, 0) rotate(0deg); border-radius: 60% 40% 45% 55% / 50% 50% 50% 50%; }
+  30% { transform: translate(7vw, 5vh) rotate(2deg); border-radius: 45% 55% 55% 45% / 45% 55% 50% 50%; }
+  60% { transform: translate(11vw, -1vh) rotate(-1.5deg); border-radius: 50% 50% 50% 50% / 55% 45% 55% 45%; }
+  100% { transform: translate(0, 0) rotate(0deg); border-radius: 60% 40% 45% 55% / 50% 50% 50% 50%; }
+}
+
+@keyframes liquid-flow-6 {
+  0% { transform: translate(0, 0) rotate(0deg); border-radius: 45% 55% 55% 45% / 55% 45% 50% 50%; }
+  25% { transform: translate(-6vw, 4vh) rotate(-1deg); border-radius: 55% 45% 45% 55% / 45% 55% 55% 45%; }
+  55% { transform: translate(-10vw, -2vh) rotate(2deg); border-radius: 40% 60% 55% 45% / 50% 50% 45% 55%; }
+  80% { transform: translate(-4vw, 3vh) rotate(-0.5deg); border-radius: 50% 50% 50% 50% / 55% 45% 50% 50%; }
+  100% { transform: translate(0, 0) rotate(0deg); border-radius: 45% 55% 55% 45% / 55% 45% 50% 50%; }
+}
+
+/* Shine lines — horizontal drift along the ribbon surface */
+@keyframes liquid-shine-1 {
+  0% { transform: translateX(-10vw) scaleX(0.8); opacity: 0.6; }
+  50% { transform: translateX(15vw) scaleX(1.2); opacity: 1; }
+  100% { transform: translateX(-10vw) scaleX(0.8); opacity: 0.6; }
+}
+
+@keyframes liquid-shine-2 {
+  0% { transform: translateX(10vw) scaleX(1.1); opacity: 0.7; }
+  50% { transform: translateX(-12vw) scaleX(0.9); opacity: 1; }
+  100% { transform: translateX(10vw) scaleX(1.1); opacity: 0.7; }
+}
+
+@keyframes liquid-shine-3 {
+  0% { transform: translateX(-8vw); opacity: 0.5; }
+  50% { transform: translateX(10vw); opacity: 1; }
+  100% { transform: translateX(-8vw); opacity: 0.5; }
+}
+
+@keyframes liquid-shine-4 {
+  0% { transform: translateX(12vw) scaleX(0.9); opacity: 0.6; }
+  50% { transform: translateX(-8vw) scaleX(1.15); opacity: 1; }
+  100% { transform: translateX(12vw) scaleX(0.9); opacity: 0.6; }
 }
