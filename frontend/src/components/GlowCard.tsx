@@ -42,6 +42,20 @@ export function GlowCard({
     intensity === "subtle" ? 18000 : intensity === "medium" ? 14000 : 10000;
   const p = palette[glowColor] || palette.amber;
 
+  // Track card dimensions for responsive spot sizing
+  const [cardSize, setCardSize] = useState({ w: 400, h: 300 });
+  useEffect(() => {
+    if (!cardRef.current) return;
+    const ro = new ResizeObserver(([entry]) => {
+      setCardSize({ w: entry.contentRect.width, h: entry.contentRect.height });
+    });
+    ro.observe(cardRef.current);
+    return () => ro.disconnect();
+  }, []);
+
+  // Spot size scales with card — ~45% of the shorter dimension, min 120px
+  const baseSpot = Math.max(120, Math.min(cardSize.w, cardSize.h) * 0.45);
+
   // Intensity tuning
   const borderOpacity =
     intensity === "subtle" ? 0.5 : intensity === "medium" ? 0.7 : 0.85;
@@ -129,8 +143,8 @@ export function GlowCard({
     >
       {/* Outer halo — subtle bleed beyond card */}
       <div className="absolute -inset-[12px] rounded-[inherit] pointer-events-none" style={{ zIndex: 0 }}>
-        {renderBorderSpot(lightPos, 120, haloOpacity, p.core, 25, "halo-lead")}
-        {trails[3] && renderBorderSpot(trails[3], 100, haloOpacity * 0.3, p.edge, 20, "halo-mid")}
+        {renderBorderSpot(lightPos, baseSpot * 0.6, haloOpacity, p.core, 25, "halo-lead")}
+        {trails[3] && renderBorderSpot(trails[3], baseSpot * 0.5, haloOpacity * 0.3, p.edge, 20, "halo-mid")}
       </div>
 
       {/* Border glow — seamless continuous trail along 2px edge */}
@@ -145,28 +159,28 @@ export function GlowCard({
           }}
         >
           {/* Lead — gold, brightest */}
-          {renderBorderSpot(lightPos, 220, borderOpacity, p.core, 4, "b0")}
+          {renderBorderSpot(lightPos, baseSpot, borderOpacity, p.core, 4, "b0")}
           {/* Trails 1-3: gold, fading */}
-          {trails[0] && renderBorderSpot(trails[0], 210, borderOpacity * 0.8, p.core, 5, "b1")}
-          {trails[1] && renderBorderSpot(trails[1], 200, borderOpacity * 0.65, p.core, 5, "b2")}
-          {trails[2] && renderBorderSpot(trails[2], 190, borderOpacity * 0.5, p.core, 6, "b3")}
+          {trails[0] && renderBorderSpot(trails[0], baseSpot * 0.95, borderOpacity * 0.8, p.core, 5, "b1")}
+          {trails[1] && renderBorderSpot(trails[1], baseSpot * 0.9, borderOpacity * 0.65, p.core, 5, "b2")}
+          {trails[2] && renderBorderSpot(trails[2], baseSpot * 0.85, borderOpacity * 0.5, p.core, 6, "b3")}
           {/* Trails 4-5: gold→white transition */}
-          {trails[3] && renderBorderSpot(trails[3], 180, borderOpacity * 0.35, p.core, 6, "b4c")}
-          {trails[3] && renderBorderSpot(trails[3], 170, borderOpacity * 0.2, p.edge, 5, "b4w")}
-          {trails[4] && renderBorderSpot(trails[4], 170, borderOpacity * 0.25, p.edge, 7, "b5")}
-          {trails[4] && renderBorderSpot(trails[4], 160, borderOpacity * 0.15, p.core, 6, "b5c")}
+          {trails[3] && renderBorderSpot(trails[3], baseSpot * 0.8, borderOpacity * 0.35, p.core, 6, "b4c")}
+          {trails[3] && renderBorderSpot(trails[3], baseSpot * 0.75, borderOpacity * 0.2, p.edge, 5, "b4w")}
+          {trails[4] && renderBorderSpot(trails[4], baseSpot * 0.75, borderOpacity * 0.25, p.edge, 7, "b5")}
+          {trails[4] && renderBorderSpot(trails[4], baseSpot * 0.7, borderOpacity * 0.15, p.core, 6, "b5c")}
           {/* Trails 6-7: mostly white */}
-          {trails[5] && renderBorderSpot(trails[5], 160, borderOpacity * 0.18, p.edge, 7, "b6")}
-          {trails[6] && renderBorderSpot(trails[6], 150, borderOpacity * 0.12, p.edge, 8, "b7")}
+          {trails[5] && renderBorderSpot(trails[5], baseSpot * 0.7, borderOpacity * 0.18, p.edge, 7, "b6")}
+          {trails[6] && renderBorderSpot(trails[6], baseSpot * 0.65, borderOpacity * 0.12, p.edge, 8, "b7")}
           {/* Trails 8-9: faint white tail */}
-          {trails[7] && renderBorderSpot(trails[7], 140, borderOpacity * 0.08, p.edge, 9, "b8")}
-          {trails[8] && renderBorderSpot(trails[8], 120, borderOpacity * 0.04, p.edge, 10, "b9")}
+          {trails[7] && renderBorderSpot(trails[7], baseSpot * 0.6, borderOpacity * 0.08, p.edge, 9, "b8")}
+          {trails[8] && renderBorderSpot(trails[8], baseSpot * 0.5, borderOpacity * 0.04, p.edge, 10, "b9")}
         </div>
       </div>
 
       {/* Inner wash — very subtle */}
       <div className="absolute inset-0 rounded-[inherit] pointer-events-none overflow-hidden" style={{ zIndex: 2 }}>
-        {renderBorderSpot(lightPos, 160, 0.03, p.core, 20, "wash")}
+        {renderBorderSpot(lightPos, baseSpot * 0.7, 0.03, p.core, 20, "wash")}
       </div>
 
       {/* Mouse spotlight on hover */}
