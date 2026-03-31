@@ -56,9 +56,9 @@ export function GlowCard({
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      {/* SINGLE glow layer — wide, blurred, fades smoothly to white.
-          No overflow:hidden so glow can bleed across neighboring cards. */}
-      <div className="absolute -inset-[20px] pointer-events-none" style={{ zIndex: 0 }}>
+      {/* SINGLE glow layer — clipped to border zone around the card.
+          Inner white card covers center, so glow only shows in the 20px edge zone. */}
+      <div className="absolute -inset-[20px] overflow-hidden rounded-[inherit] pointer-events-none" style={{ zIndex: 0 }}>
         <div
           className="absolute rounded-full aspect-square"
           style={{
