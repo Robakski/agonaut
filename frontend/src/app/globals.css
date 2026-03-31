@@ -174,6 +174,22 @@ body {
   animation: hero-beam 6s ease-in-out infinite;
 }
 
+/* Mesh gradient drifting blobs */
+@keyframes mesh-drift-1 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(80px, 40px) scale(1.1); }
+  66% { transform: translate(-40px, 20px) scale(0.95); }
+}
+@keyframes mesh-drift-2 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(-60px, 30px) scale(1.05); }
+  66% { transform: translate(50px, -20px) scale(1.1); }
+}
+@keyframes mesh-drift-3 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(-30px, -30px) scale(1.15); }
+}
+
 /* Gold particle float */
 @keyframes gold-particle {
   0%, 100% { transform: translateY(0) translateX(0) scale(1); opacity: 0; }
@@ -203,11 +219,11 @@ body {
   animation: breathe-glow 3s ease-in-out infinite;
 }
 
-/* Gradient text shimmer — slow gold to silver sweep */
+/* Gradient text shimmer — very slow gold ↔ silver sweep */
 @keyframes text-shimmer {
   0% { background-position: 0% center; }
-  100% { background-position: 300% center; }
+  100% { background-position: 400% center; }
 }
 .animate-text-shimmer {
-  animation: text-shimmer 8s ease-in-out infinite;
+  animation: text-shimmer 14s ease-in-out infinite;
 }

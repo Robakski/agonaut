@@ -27,10 +27,10 @@ export function GlowCard({
 
   const palette: Record<string, { stops: string; spot: string; shadow: string; shadowHover: string }> = {
     amber: {
-      stops: "rgba(245,158,11,0.8), transparent 40%, rgba(217,119,6,0.6), transparent 60%, rgba(245,158,11,0.8)",
-      spot: "rgba(245,158,11,0.15)",
-      shadow: "0 0 40px -10px rgba(245,158,11,0.1)",
-      shadowHover: "0 0 60px -10px rgba(245,158,11,0.2)",
+      stops: "rgba(212,175,55,0.7), transparent 40%, rgba(197,165,78,0.5), transparent 60%, rgba(212,175,55,0.7)",
+      spot: "rgba(212,175,55,0.12)",
+      shadow: "0 0 40px -10px rgba(212,175,55,0.08)",
+      shadowHover: "0 0 60px -10px rgba(212,175,55,0.18)",
     },
     silver: {
       stops: "rgba(203,213,225,0.9), transparent 40%, rgba(148,163,184,0.7), transparent 60%, rgba(203,213,225,0.9)",
@@ -45,15 +45,15 @@ export function GlowCard({
       shadowHover: "0 0 60px -10px rgba(59,130,246,0.2)",
     },
     gold: {
-      stops: "rgba(234,179,8,0.9), transparent 40%, rgba(202,138,4,0.7), transparent 60%, rgba(234,179,8,0.9)",
-      spot: "rgba(234,179,8,0.15)",
-      shadow: "0 0 40px -10px rgba(234,179,8,0.12)",
-      shadowHover: "0 0 60px -10px rgba(234,179,8,0.25)",
+      stops: "rgba(212,175,55,0.9), transparent 40%, rgba(184,152,40,0.6), transparent 60%, rgba(212,175,55,0.9)",
+      spot: "rgba(212,175,55,0.15)",
+      shadow: "0 0 40px -10px rgba(212,175,55,0.1)",
+      shadowHover: "0 0 60px -10px rgba(212,175,55,0.22)",
     },
   };
 
   const borderPx = intensity === "subtle" ? 1 : intensity === "medium" ? 1.5 : 2;
-  const speed = intensity === "subtle" ? "12s" : intensity === "medium" ? "8s" : "5s";
+  const speed = intensity === "subtle" ? "20s" : intensity === "medium" ? "14s" : "10s";
   const p = palette[glowColor] || palette.amber;
 
   const handleMouseMove = useCallback((e: React.MouseEvent) => {

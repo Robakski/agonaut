@@ -8,42 +8,40 @@ export default function Home() {
 
   return (
     <div className="overflow-hidden">
-      {/* ═══ Hero — With dramatic gold light beam ═══ */}
+      {/* ═══ Hero — Floating mesh gradient background ═══ */}
       <section className="relative">
-        {/* Large ambient glow — top center */}
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_40%_at_50%_0%,rgba(245,158,11,0.12),transparent_70%)]" />
-
-        {/* Gold light beam — bright vertical ray */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 h-[70%] animate-hero-beam pointer-events-none">
-          {/* Core beam — bright line */}
-          <div className="absolute left-1/2 -translate-x-1/2 w-[2px] h-full bg-gradient-to-b from-amber-300/80 via-amber-400/30 to-transparent" />
-          {/* Inner glow */}
-          <div className="absolute left-1/2 -translate-x-1/2 w-8 h-full bg-gradient-to-b from-amber-300/30 via-amber-400/10 to-transparent blur-md" />
-          {/* Mid glow */}
-          <div className="absolute left-1/2 -translate-x-1/2 w-24 h-[90%] bg-gradient-to-b from-amber-400/15 via-amber-300/5 to-transparent blur-xl" />
-          {/* Wide ambient spread */}
-          <div className="absolute left-1/2 -translate-x-1/2 w-64 h-[80%] bg-gradient-to-b from-amber-400/8 via-amber-200/3 to-transparent blur-3xl" />
-          {/* Flare at top */}
-          <div className="absolute left-1/2 -translate-x-1/2 -top-2 w-20 h-20 bg-amber-400/20 rounded-full blur-2xl" />
-        </div>
-
-        {/* Floating gold particles — larger and more visible */}
-        <div className="absolute inset-0 pointer-events-none">
-          {[...Array(8)].map((_, i) => (
-            <div
-              key={i}
-              className="absolute rounded-full"
-              style={{
-                width: `${2 + (i % 3)}px`,
-                height: `${2 + (i % 3)}px`,
-                background: `radial-gradient(circle, rgba(245,158,11,${0.4 + (i % 3) * 0.15}), transparent)`,
-                boxShadow: `0 0 ${4 + i * 2}px rgba(245,158,11,0.3)`,
-                left: `${15 + i * 10}%`,
-                top: `${25 + (i % 4) * 12}%`,
-                animation: `gold-particle ${4 + i * 0.7}s ease-in-out ${i * 0.6}s infinite`,
-              }}
-            />
-          ))}
+        {/* Drifting gold/silver mesh blobs */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          {/* Gold blob — drifts slowly */}
+          <div
+            className="absolute w-[500px] h-[500px] rounded-full blur-[120px] opacity-[0.07]"
+            style={{
+              background: "radial-gradient(circle, #D4AF37, transparent 70%)",
+              animation: "mesh-drift-1 20s ease-in-out infinite",
+              top: "-10%",
+              left: "20%",
+            }}
+          />
+          {/* Silver blob — drifts opposite */}
+          <div
+            className="absolute w-[400px] h-[400px] rounded-full blur-[100px] opacity-[0.06]"
+            style={{
+              background: "radial-gradient(circle, #C0C0C0, transparent 70%)",
+              animation: "mesh-drift-2 25s ease-in-out infinite",
+              top: "5%",
+              right: "15%",
+            }}
+          />
+          {/* Warm gold accent — smaller, brighter */}
+          <div
+            className="absolute w-[300px] h-[300px] rounded-full blur-[80px] opacity-[0.05]"
+            style={{
+              background: "radial-gradient(circle, #C5A54E, transparent 70%)",
+              animation: "mesh-drift-3 18s ease-in-out infinite",
+              top: "20%",
+              left: "50%",
+            }}
+          />
         </div>
 
         <div className="relative mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 pt-24 pb-16 text-center">
@@ -55,7 +53,13 @@ export default function Home() {
           <h1 className="text-5xl sm:text-6xl font-extrabold tracking-[-0.04em] leading-[1.05] text-slate-900 mb-6">
             {t("heading1")}
             <br />
-            <span className="bg-gradient-to-r from-amber-600 via-yellow-500 via-50% to-slate-400 bg-clip-text text-transparent bg-[length:300%_auto] animate-text-shimmer">
+            <span
+              className="bg-clip-text text-transparent animate-text-shimmer"
+              style={{
+                backgroundImage: "linear-gradient(90deg, #D4AF37, #C5A54E, #D4AF37, #B8B8B8, #A8A8A8, #B8B8B8, #D4AF37, #C5A54E, #D4AF37)",
+                backgroundSize: "400% 100%",
+              }}
+            >
               {t("heading2")}
             </span>
           </h1>
