@@ -47,6 +47,7 @@ def _ensure_db():
             CREATE INDEX IF NOT EXISTS idx_bounties_sponsor ON bounties(sponsor);
             CREATE INDEX IF NOT EXISTS idx_bounties_created ON bounties(created_at);
 
+
             CREATE TABLE IF NOT EXISTS agent_participations (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 round_address TEXT NOT NULL,
@@ -63,6 +64,11 @@ def _ensure_db():
         # Migration: add is_private if missing
         try:
             db.execute("ALTER TABLE bounties ADD COLUMN is_private INTEGER DEFAULT 0")
+        except Exception:
+            pass
+        # Migration: add commit_deadline if missing (V5 upgrade — timer starts at deposit)
+        try:
+            db.execute("ALTER TABLE bounties ADD COLUMN commit_deadline INTEGER DEFAULT 0")
         except Exception:
             pass
         # Migration: add agent_participations if missing (idempotent via IF NOT EXISTS above)
@@ -129,13 +135,13 @@ def index_bounty(
         )
 
 
-def update_bounty_phase(bounty_id: int, phase: str, agent_count: int = 0, deposit_eth: float = 0):
+def update_bounty_phase(bounty_id: int, phase: str, agent_count: int = 0, deposit_eth: float = 0, commit_deadline: int = 0):
     """Update cached phase/agent count from on-chain state."""
     _ensure_db()
     with _get_db() as db:
         db.execute(
-            "UPDATE bounties SET phase=?, agent_count=?, deposit_eth=?, updated_at=? WHERE bounty_id=?",
-            (phase, agent_count, deposit_eth, int(time.time()), bounty_id),
+            "UPDATE bounties SET phase=?, agent_count=?, deposit_eth=?, commit_deadline=?, updated_at=? WHERE bounty_id=?",
+            (phase, agent_count, deposit_eth, commit_deadline, int(time.time()), bounty_id),
         )
 
 

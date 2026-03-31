@@ -292,11 +292,13 @@ async def list_bounties(
                         b["phase"] = details["phase"]
                         b["agent_count"] = details["agent_count"]
                         b["deposit_eth"] = details["deposit_eth"]
+                        b["commit_deadline"] = details.get("commit_deadline", 0)
                         # Update index (fire-and-forget)
                         bounty_index.update_bounty_phase(
                             b["bounty_id"], details["phase"],
                             agent_count=details["agent_count"],
                             deposit_eth=details["deposit_eth"],
+                            commit_deadline=details.get("commit_deadline", 0),
                         )
                     except Exception:
                         pass  # Use cached phase
@@ -313,6 +315,7 @@ async def list_bounties(
                 max_agents=b.get("max_agents", 0),
                 phase=b.get("phase", "CREATED"),
                 commit_hours=b.get("commit_hours", 24),
+                commit_deadline=b.get("commit_deadline", 0) or 0,
                 created_at=int(b.get("created_at", 0)),
                 is_private=bool(b.get("is_private", 0)),
             )
@@ -511,6 +514,7 @@ async def get_bounty(bounty_id: int):
                 bounty_id, details["phase"],
                 agent_count=details["agent_count"],
                 deposit_eth=details["deposit_eth"],
+                commit_deadline=details.get("commit_deadline", 0),
             )
         except Exception as e:
             logger.warning(f"Failed to read on-chain state for bounty {bounty_id}: {e}")
