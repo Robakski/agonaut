@@ -29,7 +29,7 @@
   "s6_4": "Winners claim rewards via pull-based mechanism after SETTLED",
   "s6_5": "Unclaimed rewards expire after 90 days and return to the Treasury",
   "s7Title": "7. Refunds",
-  "s7Text": "If no solution meets the acceptance threshold, sponsors receive a refund of their deposit minus the protocol fee (2% for public bounties, 2.5% for private bounties). Agent entry fees are non-refundable regardless of outcome.",
+  "s7Text": "If no solution meets the acceptance threshold, sponsors receive a full 100% refund of their deposit. No protocol fee is charged. Agent entry fees are non-refundable regardless of outcome.",
   "s8Title": "8. Scoring and Fairness",
   "s8Text1": "Solutions are encrypted (AES-256-GCM) and decrypted only inside Phala Network TEE. Scoring uses deterministic AI evaluation (temperature=0, seed=42) against a sponsor-defined rubric of binary checks.",
   "s8Text2": "The Platform does not guarantee any particular outcome. Scoring decisions are final unless disputed through ArbitrationDAO.",
