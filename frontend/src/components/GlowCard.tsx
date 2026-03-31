@@ -26,8 +26,6 @@ export function GlowCard({
   const [mousePos, setMousePos] = useState({ x: 50, y: 50 });
   const [isHovered, setIsHovered] = useState(false);
   const [lightPos, setLightPos] = useState({ x: 0, y: 0 });
-  const [trailPos1, setTrailPos1] = useState({ x: 0, y: 0 });
-  const [trailPos2, setTrailPos2] = useState({ x: 0, y: 0 });
   const animRef = useRef<number>(0);
   const startRef = useRef<number>(0);
 
@@ -59,10 +57,8 @@ export function GlowCard({
     return { x: 0, y: (1 - (t - 3)) * 100 };
   }
 
-  // Animate lead + 5 trailing positions for smooth continuous glow
-  const [trailPos3, setTrailPos3] = useState({ x: 0, y: 0 });
-  const [trailPos4, setTrailPos4] = useState({ x: 0, y: 0 });
-  const [trailPos5, setTrailPos5] = useState({ x: 0, y: 0 });
+  // 9 trail positions for seamless continuous glow
+  const [trails, setTrails] = useState<{x:number;y:number}[]>(Array(9).fill({x:0,y:0}));
 
   useEffect(() => {
     const animate = (time: number) => {
@@ -70,13 +66,13 @@ export function GlowCard({
       const elapsed = time - startRef.current;
       const progress = (elapsed % duration) / duration;
 
-      // Lead + 5 trails spaced 5% apart = ~30% of perimeter covered
+      // Lead + 8 trails spaced 3.5% apart = ~32% of perimeter covered
       setLightPos(perimeterPos(progress));
-      setTrailPos1(perimeterPos((progress - 0.05 + 1) % 1));
-      setTrailPos2(perimeterPos((progress - 0.10 + 1) % 1));
-      setTrailPos3(perimeterPos((progress - 0.15 + 1) % 1));
-      setTrailPos4(perimeterPos((progress - 0.20 + 1) % 1));
-      setTrailPos5(perimeterPos((progress - 0.25 + 1) % 1));
+      const t: {x:number;y:number}[] = [];
+      for (let i = 1; i <= 9; i++) {
+        t.push(perimeterPos((progress - i * 0.035 + 1) % 1));
+      }
+      setTrails(t);
 
       animRef.current = requestAnimationFrame(animate);
     };
@@ -134,10 +130,10 @@ export function GlowCard({
       {/* Outer halo — subtle bleed beyond card */}
       <div className="absolute -inset-[12px] rounded-[inherit] pointer-events-none" style={{ zIndex: 0 }}>
         {renderBorderSpot(lightPos, 120, haloOpacity, p.core, 25, "halo-lead")}
-        {renderBorderSpot(trailPos2, 100, haloOpacity * 0.4, p.edge, 20, "halo-mid")}
+        {trails[3] && renderBorderSpot(trails[3], 100, haloOpacity * 0.3, p.edge, 20, "halo-mid")}
       </div>
 
-      {/* Border glow — smooth continuous trail along 2px edge */}
+      {/* Border glow — seamless continuous trail along 2px edge */}
       <div className="absolute inset-0 rounded-[inherit] pointer-events-none overflow-hidden" style={{ zIndex: 1 }}>
         <div
           className="absolute inset-0 rounded-[inherit]"
@@ -148,20 +144,23 @@ export function GlowCard({
             padding: "2px",
           }}
         >
-          {/* Lead — gold, brightest, largest */}
-          {renderBorderSpot(lightPos, 200, borderOpacity, p.core, 4, "b0")}
-          {/* Trail 1 — gold, slightly dimmer */}
-          {renderBorderSpot(trailPos1, 190, borderOpacity * 0.75, p.core, 5, "b1")}
-          {/* Trail 2 — gold→white transition */}
-          {renderBorderSpot(trailPos2, 180, borderOpacity * 0.55, p.core, 6, "b2c")}
-          {renderBorderSpot(trailPos2, 170, borderOpacity * 0.3, p.edge, 5, "b2w")}
-          {/* Trail 3 — more white */}
-          {renderBorderSpot(trailPos3, 160, borderOpacity * 0.35, p.edge, 7, "b3")}
-          {renderBorderSpot(trailPos3, 150, borderOpacity * 0.2, p.core, 6, "b3c")}
-          {/* Trail 4 — mostly white, fading */}
-          {renderBorderSpot(trailPos4, 140, borderOpacity * 0.2, p.edge, 8, "b4")}
-          {/* Trail 5 — faint white tail */}
-          {renderBorderSpot(trailPos5, 120, borderOpacity * 0.1, p.edge, 10, "b5")}
+          {/* Lead — gold, brightest */}
+          {renderBorderSpot(lightPos, 220, borderOpacity, p.core, 4, "b0")}
+          {/* Trails 1-3: gold, fading */}
+          {trails[0] && renderBorderSpot(trails[0], 210, borderOpacity * 0.8, p.core, 5, "b1")}
+          {trails[1] && renderBorderSpot(trails[1], 200, borderOpacity * 0.65, p.core, 5, "b2")}
+          {trails[2] && renderBorderSpot(trails[2], 190, borderOpacity * 0.5, p.core, 6, "b3")}
+          {/* Trails 4-5: gold→white transition */}
+          {trails[3] && renderBorderSpot(trails[3], 180, borderOpacity * 0.35, p.core, 6, "b4c")}
+          {trails[3] && renderBorderSpot(trails[3], 170, borderOpacity * 0.2, p.edge, 5, "b4w")}
+          {trails[4] && renderBorderSpot(trails[4], 170, borderOpacity * 0.25, p.edge, 7, "b5")}
+          {trails[4] && renderBorderSpot(trails[4], 160, borderOpacity * 0.15, p.core, 6, "b5c")}
+          {/* Trails 6-7: mostly white */}
+          {trails[5] && renderBorderSpot(trails[5], 160, borderOpacity * 0.18, p.edge, 7, "b6")}
+          {trails[6] && renderBorderSpot(trails[6], 150, borderOpacity * 0.12, p.edge, 8, "b7")}
+          {/* Trails 8-9: faint white tail */}
+          {trails[7] && renderBorderSpot(trails[7], 140, borderOpacity * 0.08, p.edge, 9, "b8")}
+          {trails[8] && renderBorderSpot(trails[8], 120, borderOpacity * 0.04, p.edge, 10, "b9")}
         </div>
       </div>
 
